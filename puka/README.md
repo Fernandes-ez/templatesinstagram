@@ -1,6 +1,6 @@
 # Templates de Instagram da Puka (direção "A Deixa")
 
-Gera 9 templates (10 peças + carrossel contínuo de 4 lâminas) em **JPG** prontos para publicar (1080×1350 ou 1080×1920, em `output/jpg/`) e um PNG de prévia de cada um. O PSD é opcional: `npm run generate:psd` gera também os `.psd` com camadas editáveis, para quem quiser mexer à mão no Photoshop. O n8n não usa PSD. Segue o manual da marca (`puka-manual.html`, repositório `pukacrm-landing`): uma deixa por peça, escala só pequena ou gigante, linha de passagem, hastes como estrutura, nada de balão verde de WhatsApp.
+Gera 10 templates (10 peças + 2 carrosséis contínuos) em **JPG** prontos para publicar (1080×1350 ou 1080×1920, em `output/jpg/`) e um PNG de prévia de cada um. O PSD é opcional: `npm run generate:psd` gera também os `.psd` com camadas editáveis, para quem quiser mexer à mão no Photoshop. O n8n não usa PSD. Segue o manual da marca (`puka-manual.html`, repositório `pukacrm-landing`): uma deixa por peça, escala só pequena ou gigante, linha de passagem, hastes como estrutura, nada de balão verde de WhatsApp.
 
 | # | Template | Peças | O que é |
 |---|---|---|---|
@@ -14,6 +14,7 @@ Gera 9 templates (10 peças + carrossel contínuo de 4 lâminas) em **JPG** pron
 | 8 | Foto | `feed_foto` | Máscara "corte da deixa": a foto termina na curva do k |
 | 9 | Novidade / Em breve | `feed_novidade_agenda`, `feed_novidade_copilot_em_breve` | Etiqueta, título e 3 itens com ícone da marca |
 | 10 | Carrossel contínuo "A noite vira dia" | `carrossel_noite_dia_4320x1350` (panorama) + 4 fatias em `output/carrossel_noite_dia/` | Coxia (23:47) até a curva do k gigante, Roteiro (08:02) depois. A borda da noite segue a deixa; a lacuna e o bloco de Ribalta fazem a passagem, e a manhã espia na borda da lâmina 2 |
+| 11 | Carrossel contínuo "A conversa que rola" | `carrossel_conversa_5400x1350` (panorama) + 5 fatias em `output/carrossel_conversa/` | Blocos de mensagem grandes em zigue-zague atravessando as emendas; a linha de passagem curta marca a vez da equipe |
 
 ## Rodar
 

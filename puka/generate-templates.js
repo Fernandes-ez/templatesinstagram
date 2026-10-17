@@ -230,8 +230,8 @@ class Doc {
     return { retoFim: x + retoW, curvaIni: ini };
   }
 
-  /** Bloco de mensagem. cliente = Papel com borda; ia = barra Ponto; pessoa = barra Ribalta. Nunca balão arredondado. */
-  mensagem({ tipo, x, y, w, h, rotulo, corpo, escuro = false, nome }) {
+  /** Bloco de mensagem. cliente = Papel com borda; ia = barra Ponto; pessoa = barra Ribalta. Nunca balão arredondado. `escala` aumenta texto e respiros. */
+  mensagem({ tipo, x, y, w, h, rotulo, corpo, escuro = false, nome, escala = 1 }) {
     const n = nome ?? `Msg_${tipo}`;
     const fundo = tipo === "cliente" ? (escuro ? "#2a2632" : K.papel) : escuro ? "#2a2632" : K.rotunda;
     const barra = tipo === "ia" ? (escuro ? K.pontoClaro : K.ponto) : tipo === "pessoa" ? (escuro ? K.ribaltaAcesa : K.ribalta) : null;
@@ -244,12 +244,12 @@ class Doc {
         ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
       } else {
         ctx.fillStyle = barra;
-        ctx.fillRect(x, y, 10, h);
+        ctx.fillRect(x, y, 10 * escala, h);
       }
     });
     const corRot = tipo === "ia" ? (escuro ? K.pontoClaro : K.ponto) : tipo === "pessoa" ? (escuro ? K.ribaltaAcesa : K.ribaltaFunda) : escuro ? K.roteiro : K.bastidor;
-    this.texto("Texto", `${n}_rotulo`, rotulo, { font: "mono", size: 24, cor: corRot, x: x + 36, y: y + 50, tracking: 20 });
-    this.texto("Texto", `${n}_texto`, corpo, { size: 34, leading: 46, cor: escuro ? K.roteiro : K.coxia, x: x + 36, y: y + 104 });
+    this.texto("Texto", `${n}_rotulo`, rotulo, { font: "mono", size: Math.round(24 * escala), cor: corRot, x: x + 36 * escala, y: y + 50 * escala, tracking: 20 });
+    this.texto("Texto", `${n}_texto`, corpo, { size: Math.round(34 * escala), leading: Math.round(46 * escala), cor: escuro ? K.roteiro : K.coxia, x: x + 36 * escala, y: y + 104 * escala });
   }
 
   /** Botão principal: Ribalta Funda com texto Roteiro, corte seco. */
@@ -666,11 +666,46 @@ async function carrosselNoiteDia() {
   salvarPanorama(d, N, "carrossel_noite_dia", "carrossel_noite_dia");
 }
 
+/** Carrossel contínuo, "A conversa que rola": blocos de mensagem grandes em zigue-zague, atravessando as emendas.
+ *  O texto de cada bloco fica inteiro numa lâmina; o bloco é que cruza a emenda. */
+async function carrosselConversa() {
+  const N = 5;
+  const SW = FEED.largura;
+  const d = novoPano("carrossel_conversa_5400x1350", N);
+  const M = d.M;
+  const E = 1.5;
+  // lâmina 1: capa
+  await d.logo(B.logo.principalCor, { x: M, y: 96, largura: 190 });
+  d.titulo("Como a conversa\npassa de mão.", { x: M, y: 330, size: 100, cor: K.coxia });
+  d.mensagem({ tipo: "cliente", x: 470, y: 640, w: 1000, h: 270, escala: E, rotulo: "cliente · 23:47", corpo: "Oi, ainda dá\npra matricular hoje?" });
+  d.etiqueta("Arrasta pro lado", { x: M, y: 1230, medium: true, size: 26, cor: K.coxia });
+  // lâmina 2: a IA responde
+  d.titulo("A IA responde\nna hora.", { x: SW + M + 60, y: 330, size: 92, cor: K.coxia });
+  d.mensagem({ tipo: "ia", x: 1480, y: 940, w: 1100, h: 270, escala: E, rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu\nreserve uma aula grátis?" });
+  // lâmina 3: a passagem
+  d.titulo("Quando precisa,\nela passa a vez.", { x: SW * 2 + M + 60, y: 330, size: 92, cor: K.coxia });
+  d.linhaPassagem({ x: 2380, y: 1300, largura: 760, retoFrac: 0.45 });
+  d.etiqueta("passou para a equipe", { x: 2380, y: 1255, size: 24, cor: K.ribaltaFunda });
+  // lâmina 4: a pessoa entra
+  d.titulo("O time entra\ncom o histórico.", { x: SW * 3 + M + 60, y: 330, size: 92, cor: K.coxia });
+  d.mensagem({ tipo: "pessoa", x: 2620, y: 640, w: 1100, h: 270, escala: E, rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua\naula pra hoje às 9h." });
+  d.mensagem({ tipo: "cliente", x: 3900, y: 940, w: 1000, h: 200, escala: E, rotulo: "cliente · 08:05", corpo: "Perfeito, obrigada!" });
+  // lâmina 5: fechamento
+  const x5 = SW * 4 + M;
+  d.titulo("A IA dá a deixa.\nSeu time entra\nem cena.", { x: x5, y: 330, size: 96, cor: K.coxia });
+  d.botao("Teste grátis no link da bio", { x: x5, y: 780 });
+  await d.logo(B.logo.principalCor, { x: SW * N - M, y: 1190, largura: 190, align: "right" });
+  d.etiqueta("simulação · exemplo", { nome: "Aviso_exemplo", x: x5, y: 1290, size: 20, cor: K.bastidor });
+  d.grade();
+  salvarPanorama(d, N, "carrossel_conversa", "carrossel_conversa");
+}
+
 (async () => {
   for (const dir of ["", "previews", "jpg", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
   for (const gerar of [storyConversa, frase, antesDepois, numero, lista, tela, enquete, foto]) await gerar();
   for (const n of NOVIDADES) await novidade(n.slug, n);
   await carrosselNoiteDia();
+  await carrosselConversa();
 })().catch((e) => {
   console.error(e);
   process.exit(1);
