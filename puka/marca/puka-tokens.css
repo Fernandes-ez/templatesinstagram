@@ -1,0 +1,19 @@
+:root {
+  /* cores */
+  --puka-roteiro: #F4EEE4;       /* fundo */
+  --puka-coxia: #1E1B24;         /* texto, estrutura */
+  --puka-ponto: #2D3F9E;         /* IA */
+  --puka-ribalta: #D2502D;       /* a pessoa: gráfico e texto 24px+ */
+  --puka-ribalta-funda: #A83A1C; /* texto pequeno, links, botão */
+  --puka-ribalta-acesa: #E8704A; /* ribalta sobre coxia */
+  --puka-ponto-claro: #8E9BE0;   /* ponto sobre coxia */
+  --puka-rotunda: #E6DCCB;       /* superfícies */
+  --puka-bastidor: #5E5868;      /* texto secundário */
+  /* tipografia */
+  --puka-display: "Bricolage Grotesque", "Arial Narrow", sans-serif;
+  --puka-texto: "Atkinson Hyperlegible Next", system-ui, sans-serif;
+  --puka-mono: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+  /* sistema */
+  --puka-lacuna: 0.25em;         /* 1/4 da haste */
+  --puka-raio: 0;                /* hastes não têm canto arredondado */
+}
