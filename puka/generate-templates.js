@@ -637,11 +637,117 @@ async function carrosselContinuo() {
   }
 }
 
+
+/** Salva a arte contínua (PSD + prévia) e as fatias de 1080×1350 prontas para o Instagram. */
+function salvarPanorama(d, N, pasta, prefixo) {
+  const SW = FEED.largura;
+  for (let i = 1; i < N; i++) d.guias.push({ location: SW * i, direction: "vertical" });
+  const composta = d.salvar();
+  const dir = path.join(OUT, pasta);
+  fs.mkdirSync(dir, { recursive: true });
+  for (let i = 0; i < N; i++) {
+    const c = createCanvas(SW, FEED.altura);
+    c.getContext("2d").drawImage(composta, -i * SW, 0);
+    fs.writeFileSync(path.join(dir, `${prefixo}_${String(i + 1).padStart(2, "0")}.png`), c.toBuffer("image/png"));
+  }
+}
+const novoPano = (nome, N) => new Doc(nome, { largura: FEED.largura * N, altura: FEED.altura, margem: FEED.margem }, K.roteiro);
+
+/** Conceito A: "A deixa chegando". O k gigante, cortado em cima e embaixo, atravessa as lâminas: a haste espia na borda da capa e a deixa chega pela direita. */
+async function carrosselDeixaChegando() {
+  const N = 4;
+  const SW = FEED.largura;
+  const d = novoPano("carrossel_deixa_chegando_4320x1350", N);
+  const M = d.M;
+  d.simbolo({ x: 860, y: -420, altura: 2100, corHaste: K.coxia, corDeixa: K.ribalta });
+  await d.logo(B.logo.principalCor, { x: M, y: 96, largura: 190 });
+  d.titulo("A IA\nsegura a\nconversa.", { x: M, y: 440, size: 130, cor: K.coxia });
+  d.etiqueta("Arrasta pro lado", { x: M, y: 1230, medium: true, size: 26, cor: K.coxia });
+  const x3 = SW * 2 + 330;
+  d.etiqueta("08:02", { x: x3, y: 420, medium: true, size: 30, cor: K.ribaltaFunda });
+  d.titulo("O time\nentra na deixa.", { x: x3, y: 570, size: 96, cor: K.coxia });
+  d.texto("Texto", "Apoio", "Com o histórico\nda conversa junto.", { size: 36, leading: 50, cor: K.bastidor, x: x3, y: 830 });
+  const x4 = SW * 3 + M;
+  d.titulo("Ninguém repete\na pergunta.", { x: x4, y: 440, size: 100, cor: K.coxia });
+  d.botao("Teste grátis no link da bio", { x: x4, y: 760 });
+  await d.logo(B.logo.principalCor, { x: x4, y: 940, largura: 200 });
+  d.grade();
+  salvarPanorama(d, N, "carrossel_deixa_chegando", "carrossel_deixa_chegando");
+}
+
+/** Conceito B: "A noite vira dia". Coxia (23:47) até o corte seco, Roteiro (08:02) depois. O corte tem a lacuna e uma haste em Ribalta: é a passagem. */
+async function carrosselNoiteDia() {
+  const N = 4;
+  const SW = FEED.largura;
+  const d = novoPano("carrossel_noite_dia_4320x1350", N);
+  const M = d.M;
+  const corte = SW * 2 - 80; // a manhã espia na borda da lâmina 2
+  d.bloco({ x: 0, y: 0, w: corte - B.lacuna, h: FEED.altura, cor: K.coxia, nome: "Noite" });
+  d.bloco({ x: corte, y: 0, w: 26, h: FEED.altura, cor: K.ribalta, nome: "Haste_da_passagem" });
+  // noite
+  d.etiqueta("Noite · quinta-feira", { x: M, y: 160, cor: K.roteiro });
+  d.titulo("23:47", { x: M, y: 640, size: 330, cor: K.roteiro });
+  d.texto("Texto", "Noite_msg", "“Oi, ainda dá pra\nmatricular hoje?”", { size: 44, leading: 60, cor: K.roteiro, x: M, y: 790 });
+  await d.logo(B.logo.principalNegativo, { x: M, y: 1190, largura: 190 });
+  const x2 = SW + M;
+  d.etiqueta("23:47 · IA", { x: x2, y: 160, cor: K.pontoClaro });
+  d.titulo("A IA\nresponde.", { x: x2, y: 400, size: 130, cor: K.roteiro });
+  d.mensagem({ tipo: "ia", x: x2, y: 760, w: 880, h: 200, rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu reserve\numa aula grátis pra amanhã?", escuro: true });
+  // manhã
+  const x3 = SW * 2 + M;
+  d.etiqueta("Manhã · sexta-feira", { x: x3, y: 160, cor: K.bastidor });
+  d.titulo("08:02", { x: x3, y: 640, size: 300, cor: K.ribalta });
+  d.texto("Texto", "Manha_msg", "A Marina chegou, viu a conversa\ne assumiu.", { size: 40, leading: 56, cor: K.coxia, x: x3, y: 790 });
+  const x4 = SW * 3 + M;
+  d.titulo("O time entra\ncom o histórico.", { x: x4, y: 330, size: 92, cor: K.coxia });
+  d.mensagem({ tipo: "pessoa", x: x4, y: 600, w: 860, h: 200, rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua aula\npra hoje às 9h." });
+  d.botao("Teste grátis no link da bio", { x: x4, y: 900 });
+  await d.logo(B.logo.principalCor, { x: SW * N - M, y: 1190, largura: 190, align: "right" });
+  d.etiqueta("simulação · exemplo", { nome: "Aviso_exemplo", x: x4, y: 1290, size: 20, cor: K.bastidor });
+  d.grade();
+  salvarPanorama(d, N, "carrossel_noite_dia", "carrossel_noite_dia");
+}
+
+/** Conceito C: "A conversa que rola". Blocos de mensagem em zigue-zague pela altura, atravessando as emendas; o texto de cada um fica inteiro numa lâmina. */
+async function carrosselConversa() {
+  const N = 5;
+  const SW = FEED.largura;
+  const d = novoPano("carrossel_conversa_5400x1350", N);
+  const M = d.M;
+  // lâmina 1: capa
+  await d.logo(B.logo.principalCor, { x: M, y: 96, largura: 190 });
+  d.titulo("Como a conversa\npassa de mão.", { x: M, y: 330, size: 100, cor: K.coxia });
+  d.mensagem({ tipo: "cliente", x: 500, y: 700, w: 760, h: 180, rotulo: "cliente · 23:47", corpo: "Oi, ainda dá\npra matricular hoje?" });
+  d.etiqueta("Arrasta pro lado", { x: M, y: 1230, medium: true, size: 26, cor: K.coxia });
+  // lâmina 2: a IA responde
+  d.titulo("A IA responde\nna hora.", { x: SW + M + 60, y: 330, size: 92, cor: K.coxia });
+  d.mensagem({ tipo: "ia", x: 1560, y: 880, w: 900, h: 190, rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu reserve\numa aula grátis pra amanhã?" });
+  // lâmina 3: a passagem
+  const x3 = SW * 2 + M + 60;
+  d.titulo("Quando precisa,\nela passa a vez.", { x: x3, y: 330, size: 92, cor: K.coxia });
+  d.linhaPassagem({ x: 2480, y: 1190, largura: 520, retoFrac: 0.45 });
+  d.etiqueta("passou para a equipe", { x: 2480, y: 1250, size: 22, cor: K.ribaltaFunda });
+  // lâmina 4: a pessoa entra
+  d.titulo("O time entra\ncom o histórico.", { x: SW * 3 + M + 60, y: 330, size: 92, cor: K.coxia });
+  d.mensagem({ tipo: "pessoa", x: 3180, y: 640, w: 900, h: 190, rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua aula\npra hoje às 9h." });
+  // lâmina 5: fechamento
+  const x5 = SW * 4 + M;
+  d.titulo("A IA dá a deixa.\nSeu time entra\nem cena.", { x: x5, y: 330, size: 96, cor: K.coxia });
+  d.botao("Teste grátis no link da bio", { x: x5, y: 780 });
+  await d.logo(B.logo.principalCor, { x: SW * N - M, y: 1190, largura: 190, align: "right" });
+  d.etiqueta("simulação · exemplo", { nome: "Aviso_exemplo", x: x5, y: 1290, size: 20, cor: K.bastidor });
+  d.grade();
+  salvarPanorama(d, N, "carrossel_conversa", "carrossel_conversa");
+}
+
 (async () => {
   for (const dir of ["", "previews", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
   for (const gerar of [storyConversa, frase, antesDepois, numero, lista, tela, enquete, foto]) await gerar();
   for (const n of NOVIDADES) await novidade(n.slug, n);
   await carrosselContinuo();
+  await carrosselDeixaChegando();
+  await carrosselNoiteDia();
+  await carrosselConversa();
 })().catch((e) => {
   console.error(e);
   process.exit(1);
