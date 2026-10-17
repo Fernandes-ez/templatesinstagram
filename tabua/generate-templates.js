@@ -645,6 +645,84 @@ async function fotoTitulo() {
   d.salvar();
 }
 
+/** 11. Novidade / Em breve: faixa, título com letreiro e uma placa de papel com 3 itens e carimbo. Fundo Verde. */
+async function novidade(slug, { faixa, titulo, itens, carimbo, tamanho = 100 }) {
+  const o_size = tamanho;
+  const d = new Doc(`feed_novidade_${slug}_1080x1350`, FEED, K.verdeBoteco);
+  const M = d.M;
+  await d.padrao("verde", { y: 0, h: 1350 });
+  d.faixa(faixa, { x: M, y: 96 });
+  const t = d.titulo(titulo, { x: M, y: 330, size: o_size, cor: K.cal, sombra: K.amareloOvo, fundo: K.verdeBoteco });
+  const c = { x: M, y: t.base + 96, w: FEED.largura - 2 * M, h: 560 };
+  d.forma("Grafismos", "Papel_placa", placaPath(c.x, c.y, c.w, c.h), K.cal);
+  const px = c.x + 56;
+  let y = c.y + 84;
+  for (const [i, [icone, nome, texto]] of itens.entries()) {
+    d.forma("Grafismos", `Item${i + 1}_icone_placa`, placaPath(px, y, 96, 96), K.verdeBoteco);
+    await d.icone(icone, { x: px + 20, y: y + 20, size: 56, cor: K.cal, nome: `Item${i + 1}_icone` });
+    d.texto("Texto", `Item${i + 1}_titulo`, nome, { font: "subtitulo", size: 38, cor: K.tinta, x: px + 128, y: y + 36 });
+    d.texto("Texto", `Item${i + 1}_texto`, texto, { size: 28, cor: K.tinta, x: px + 128, y: y + 82 });
+    y += 150;
+  }
+  // carimbo no canto da placa, girado −6° (só em papel Cal)
+  medidor.font = `34px ${FAM.etiqueta}`;
+  const cw = [...carimbo].reduce((a, ch) => a + medidor.measureText(ch).width, 0) + (60 / 1000) * 34 * (carimbo.length - 1) + 56;
+  const cb = { cx: c.x + c.w - cw / 2 - 40, cy: c.y - 6, w: cw, h: 76 };
+  d.pixel("Grafismos", "Carimbo_fundo", (ctx) => {
+    ctx.translate(cb.cx, cb.cy);
+    ctx.rotate((-6 * Math.PI) / 180);
+    ctx.fillStyle = K.cal;
+    ctx.fillRect(-cb.w / 2 - 12, -cb.h / 2 - 12, cb.w + 24, cb.h + 24);
+    ctx.strokeStyle = K.vermelhoPlaca;
+    ctx.lineWidth = 5;
+    ctx.strokeRect(-cb.w / 2, -cb.h / 2, cb.w, cb.h);
+    ctx.lineWidth = 2;
+    ctx.strokeRect(-cb.w / 2 - 7, -cb.h / 2 - 7, cb.w + 14, cb.h + 14);
+  });
+  d.texto("Texto", "Carimbo_texto", carimbo, { font: "etiqueta", size: 34, tracking: 60, cor: K.vermelhoPlaca, x: cb.cx, y: cb.cy + 12, align: "center", rot: -6 });
+  await d.logo(B.logo.principalNegativo, { x: M, y: 1176, largura: 220 });
+  d.texto("Texto", "Rodape_@tabua", "@tabua.app", { font: "corpoBold", size: 26, cor: K.cal, x: FEED.largura - M, y: 1240, align: "right" });
+  d.grade();
+  d.salvar();
+}
+
+const NOVIDADES = [
+  {
+    slug: "retirada_agendada",
+    faixa: "Novidade",
+    titulo: "Retirada com\nhora marcada.",
+    carimbo: "NOVO",
+    itens: [
+      ["relogio", "O cliente escolhe o horário", "Só aparecem horários em que a casa abre."],
+      ["cozinha", "Cozinha sem atropelo", "Você define quantos pedidos cabem por horário."],
+      ["cardapio", "Você liga quando quiser", "Vem desligada. Ativa nas configurações."],
+    ],
+  },
+  {
+    slug: "balcao",
+    faixa: "Novo módulo",
+    titulo: "Balcão e telefone\nno mesmo painel.",
+    carimbo: "NOVO",
+    itens: [
+      ["comanda", "Lança o pedido na hora", "Balcão, telefone e WhatsApp num só lugar."],
+      ["conversa", "Pagamento dividido", "Dinheiro, Pix e cartão no mesmo pedido, com troco."],
+      ["impressora", "Comanda sai sozinha", "Na cozinha, sem apertar nada."],
+    ],
+  },
+  {
+    slug: "estoque_em_breve",
+    faixa: "Em breve",
+    titulo: "Acabou? O cardápio\navisa sozinho.",
+    carimbo: "EM BREVE",
+    tamanho: 90,
+    itens: [
+      ["cardapio", "Esgotado automático", "Zerou o estoque, o item sai do ar."],
+      ["relogio", "Alerta de mínimo", "Você vê o que está acabando."],
+      ["comanda", "Entrada, perda e ajuste", "Cada movimento fica no histórico."],
+    ],
+  },
+];
+
 /** 7. Story: comanda chegando (Nº 047, itens, total em preço de placa, carimbo). Zonas seguras de 250 px. */
 async function story() {
   const S = B.story;
@@ -724,6 +802,7 @@ async function story() {
 (async () => {
   for (const dir of ["", "previews", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
   for (const gerar of [anuncio, dica, capa, miolo, final, antesDepois, story, telaCardapio, enquete, fotoTitulo]) await gerar();
+  for (const n of NOVIDADES) await novidade(n.slug, n);
 })().catch((e) => {
   console.error(e);
   process.exit(1);

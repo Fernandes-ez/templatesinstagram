@@ -1,6 +1,6 @@
 # Templates de Instagram da Tábua (direção "Letreiro")
 
-Gera 8 templates (10 peças) em `.psd` com camadas editáveis e um `.png` de prévia de cada um.
+Gera 9 templates (13 peças) em `.psd` com camadas editáveis e um `.png` de prévia de cada um.
 Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar.
 
 | Template | Peça(s) | O que é |
@@ -13,6 +13,9 @@ Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar
 | 6. Tela do produto | `feed_tela_cardapio_1080x1350` | Cardápio de exemplo (restaurante fictício) em placa |
 | 7. Enquete | `feed_enquete_1080x1350` | Pergunta com duas respostas (A e B) para os comentários |
 | 8. Foto + título | `feed_foto_titulo_1080x1350` | Foto real do balcão em placa e frase curta (precisa de foto) |
+| 9. Novidade / Em breve | `feed_novidade_*` (retirada agendada, balcão, estoque) | Faixa, título, placa com 3 itens e carimbo "NOVO" ou "EM BREVE". Textos em `NOVIDADES` |
+
+O que o produto já entrega e o que pode (ou não) virar post está em [CONTEUDO.md](CONTEUDO.md).
 
 ## Rodar
 
