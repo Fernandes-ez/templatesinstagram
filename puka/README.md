@@ -1,6 +1,6 @@
 # Templates de Instagram da Puka (direção "A Deixa")
 
-Gera 9 templates (11 peças + carrossel contínuo de 6 lâminas) em **JPG** prontos para publicar (1080×1350 ou 1080×1920, em `output/jpg/`) e um PNG de prévia de cada um. O PSD é opcional: `npm run generate:psd` gera também os `.psd` com camadas editáveis, para quem quiser mexer à mão no Photoshop. O n8n não usa PSD. Segue o manual da marca (`puka-manual.html`, repositório `pukacrm-landing`): uma deixa por peça, escala só pequena ou gigante, linha de passagem, hastes como estrutura, nada de balão verde de WhatsApp.
+Gera 9 templates (10 peças + carrossel contínuo de 4 lâminas) em **JPG** prontos para publicar (1080×1350 ou 1080×1920, em `output/jpg/`) e um PNG de prévia de cada um. O PSD é opcional: `npm run generate:psd` gera também os `.psd` com camadas editáveis, para quem quiser mexer à mão no Photoshop. O n8n não usa PSD. Segue o manual da marca (`puka-manual.html`, repositório `pukacrm-landing`): uma deixa por peça, escala só pequena ou gigante, linha de passagem, hastes como estrutura, nada de balão verde de WhatsApp.
 
 | # | Template | Peças | O que é |
 |---|---|---|---|
@@ -13,7 +13,7 @@ Gera 9 templates (11 peças + carrossel contínuo de 6 lâminas) em **JPG** pron
 | 7 | Enquete | `feed_enquete` | Pergunta com respostas A, B e C |
 | 8 | Foto | `feed_foto` | Máscara "corte da deixa": a foto termina na curva do k |
 | 9 | Novidade / Em breve | `feed_novidade_agenda`, `feed_novidade_copilot_em_breve` | Etiqueta, título e 3 itens com ícone da marca |
-| 10 | Carrossel contínuo | `carrossel_continuo_6480x1350` (panorama) + 6 fatias em `output/carrossel_continuo/` | A linha de passagem atravessa as 6 lâminas: reta em Ponto, a lacuna, e a curva em Ribalta |
+| 10 | Carrossel contínuo "A noite vira dia" | `carrossel_noite_dia_4320x1350` (panorama) + 4 fatias em `output/carrossel_noite_dia/` | Coxia (23:47) até a curva do k gigante, Roteiro (08:02) depois. A borda da noite segue a deixa; a lacuna e o bloco de Ribalta fazem a passagem, e a manhã espia na borda da lâmina 2 |
 
 ## Rodar
 
@@ -39,6 +39,5 @@ npm run generate:psd    # opcional: também gera os .psd, só para edição manu
 
 - Haste reta, sem cantos arredondados. Deixa só em Ribalta (ou Ribalta Acesa no escuro), uma por peça, entrando pela direita.
 - IA em Ponto, pessoa em Ribalta, nunca o contrário. Texto pequeno em Ribalta Funda.
-- A lacuna nunca fecha e fica sempre à vista (no carrossel, dentro da lâmina 4, longe da emenda).
-- Sem sobreposição: nada fica atrás de texto. A faixa de padrão do carrossel é desenhada por código, com fileiras inteiras (nunca cortadas na vertical).
-- **Exceção deliberada ao manual:** na faixa do carrossel todo k tem a deixa laranja. O manual manda só algumas deixas, nunca duas vizinhas. Decisão do dono da marca: se mudar de ideia, é só trocar a cor da deixa por `#E2D6C3` nas posições desejadas em `padraoK()`.
+- A lacuna nunca fecha e fica sempre à vista, longe das emendas das lâminas.
+- Sem sobreposição: nada fica atrás de texto.
