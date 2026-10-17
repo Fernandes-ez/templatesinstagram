@@ -1,0 +1,23 @@
+@font-face{font-family:"Anybody";src:url(fonts/Anybody.ttf);font-weight:100 900;font-stretch:50% 150%}
+@font-face{font-family:"Anybody";src:url(fonts/Anybody-Italic.ttf);font-weight:100 900;font-stretch:50% 150%;font-style:italic}
+@font-face{font-family:"Atkinson";src:url(fonts/AtkinsonHyperlegible-Regular.ttf);font-weight:400}
+@font-face{font-family:"Atkinson";src:url(fonts/AtkinsonHyperlegible-Bold.ttf);font-weight:700}
+@font-face{font-family:"Atkinson";src:url(fonts/AtkinsonHyperlegible-Italic.ttf);font-weight:400;font-style:italic}
+:root{--verde:#1E5B43;--cal:#F6F1E6;--tinta:#1A1A17;--ovo:#F2B91E;--placa:#C8372D;--azulejo:#D5E5D9;
+--disp:"Anybody",sans-serif;--txt:"Atkinson",sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--txt);color:var(--tinta);-webkit-font-smoothing:antialiased}
+.d{font-family:var(--disp);font-weight:900;font-stretch:75%;letter-spacing:-.005em;line-height:.92}
+.dx{font-family:var(--disp);font-weight:800;font-stretch:60%;text-transform:uppercase;letter-spacing:.06em}
+/* letreiro: sombra solta (respiro na cor do fundo + sombra deslocada) */
+.letreiro{--bg:var(--cal);--sh:var(--tinta);--o:.06em;
+ text-shadow:calc(var(--o)*.45) calc(var(--o)*.45) 0 var(--bg),calc(var(--o)*.6) calc(var(--o)*.6) 0 var(--bg),var(--o) var(--o) 0 var(--sh),calc(var(--o)*1.1) calc(var(--o)*1.1) 0 var(--sh)}
+.placa{--r:28px;-webkit-mask:radial-gradient(circle var(--r) at 0 0,#0000 98%,#000) top left/51% 51% no-repeat,radial-gradient(circle var(--r) at 100% 0,#0000 98%,#000) top right/51% 51% no-repeat,radial-gradient(circle var(--r) at 0 100%,#0000 98%,#000) bottom left/51% 51% no-repeat,radial-gradient(circle var(--r) at 100% 100%,#0000 98%,#000) bottom right/51% 51% no-repeat}
+.faixa{display:inline-flex;align-items:center;justify-content:center;padding:0 1.3em;height:2.1em;background:var(--ovo);color:var(--tinta);font-family:var(--disp);font-weight:800;font-stretch:60%;text-transform:uppercase;letter-spacing:.06em;clip-path:polygon(0 0,100% 0,calc(100% - .7em) 50%,100% 100%,0 100%,.7em 50%)}
+.preco{font-family:var(--disp);font-weight:900;font-stretch:70%;display:inline-flex;align-items:flex-start;line-height:.85}
+.preco .rs{font-size:.32em;margin-right:.08em;margin-top:.12em}
+.preco .c{font-size:.42em;text-decoration:underline;text-decoration-thickness:.07em;text-underline-offset:.12em;margin-left:.04em}
+.ph{position:relative;overflow:hidden;background:#C9B99A}
+.ph::after{content:attr(data-cap);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:var(--disp);font-weight:700;font-stretch:60%;text-transform:uppercase;letter-spacing:.12em;font-size:14px;color:rgba(26,26,23,.55);text-align:center;white-space:pre}
+.ph.v{background:#6F8F7E}.ph.o{background:#E3C06A}.ph.t{background:#5B5347}
+.ph.v::after,.ph.t::after{color:rgba(246,241,230,.7)}

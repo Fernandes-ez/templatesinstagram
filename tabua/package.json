@@ -1,0 +1,20 @@
+{
+  "name": "tabua-instagram-templates",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Templates de posts do Instagram da Tábua (direção Letreiro) em .psd com camadas editáveis",
+  "type": "commonjs",
+  "scripts": {
+    "fonts": "python prepare-fonts.py",
+    "generate": "node generate-templates.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.9",
+    "@resvg/resvg-js": "^2.6.2",
+    "ag-psd": "^31.0.2",
+    "fontkit": "^2.0.4"
+  }
+}
