@@ -1,6 +1,6 @@
 # Templates de Instagram da Puka (direção "A Deixa")
 
-Gera 9 templates (11 peças + carrossel contínuo de 6 lâminas) em `.psd` com camadas editáveis e um `.png` de prévia de cada um. Segue o manual da marca (`puka-manual.html`, repositório `pukacrm-landing`): uma deixa por peça, escala só pequena ou gigante, linha de passagem, hastes como estrutura, nada de balão verde de WhatsApp.
+Gera 9 templates (11 peças + carrossel contínuo de 6 lâminas) em **JPG** prontos para publicar (1080×1350 ou 1080×1920, em `output/jpg/`) e um PNG de prévia de cada um. O PSD é opcional: `npm run generate:psd` gera também os `.psd` com camadas editáveis, para quem quiser mexer à mão no Photoshop. O n8n não usa PSD. Segue o manual da marca (`puka-manual.html`, repositório `pukacrm-landing`): uma deixa por peça, escala só pequena ou gigante, linha de passagem, hastes como estrutura, nada de balão verde de WhatsApp.
 
 | # | Template | Peças | O que é |
 |---|---|---|---|
@@ -13,14 +13,15 @@ Gera 9 templates (11 peças + carrossel contínuo de 6 lâminas) em `.psd` com c
 | 7 | Enquete | `feed_enquete` | Pergunta com respostas A, B e C |
 | 8 | Foto | `feed_foto` | Máscara "corte da deixa": a foto termina na curva do k |
 | 9 | Novidade / Em breve | `feed_novidade_agenda`, `feed_novidade_copilot_em_breve` | Etiqueta, título e 3 itens com ícone da marca |
-| 10 | Carrossel contínuo | `carrossel_continuo_6480x1350.psd` + 6 fatias em `output/carrossel_continuo/` | A linha de passagem atravessa as 6 lâminas: reta em Ponto, a lacuna, e a curva em Ribalta |
+| 10 | Carrossel contínuo | `carrossel_continuo_6480x1350` (panorama) + 6 fatias em `output/carrossel_continuo/` | A linha de passagem atravessa as 6 lâminas: reta em Ponto, a lacuna, e a curva em Ribalta |
 
 ## Rodar
 
 ```bash
 cd puka
 npm install
-npm run generate   # output/*.psd, output/previews/*.png, output/carrossel_continuo/*.png
+npm run generate        # output/jpg/*.jpg para publicar e output/previews/*.png para conferir
+npm run generate:psd    # opcional: também gera os .psd, só para edição manual
 ```
 
 `marca/` é uma cópia do pacote da marca (logos, ícones, padrão, fontes). Cores e caminhos ficam em `brand.config.js`; o texto de cada peça, em `generate-templates.js`.

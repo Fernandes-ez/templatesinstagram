@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "fonts": "python prepare-fonts.py",
-    "generate": "node generate-templates.js"
+    "generate": "node generate-templates.js",
+    "generate:psd": "node generate-templates.js --psd"
   },
   "engines": {
     "node": ">=20"

@@ -1,6 +1,6 @@
 # Templates de Instagram da Tábua (direção "Letreiro")
 
-Gera 10 templates (20 peças) em `.psd` com camadas editáveis e um `.png` de prévia de cada um.
+Gera 10 templates (20 peças) em **JPG** prontos para publicar (1080×1350 ou 1080×1920, em `output/jpg/`) e um PNG de prévia de cada um. O PSD é opcional: `npm run generate:psd` gera também os `.psd` com camadas editáveis, para quem quiser mexer à mão no Photoshop. O n8n não usa PSD.
 Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar.
 
 | Template | Peça(s) | O que é |
@@ -14,7 +14,7 @@ Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar
 | 7. Enquete | `feed_enquete_1080x1350` | Pergunta com duas respostas (A e B) para os comentários |
 | 8. Foto + título | `feed_foto_titulo_1080x1350` | Foto real do balcão em placa e frase curta (precisa de foto) |
 | 9. Novidade / Em breve | `feed_novidade_*` (retirada agendada, balcão, estoque) | Faixa, título, placa com 3 itens e carimbo "NOVO" ou "EM BREVE". Textos em `NOVIDADES` |
-| 10. Carrossel contínuo | `carrossel_continuo_6480x1350.psd` + 6 fatias em `output/carrossel_continuo/` | Uma arte única fatiada em 6 lâminas: o azulejo, o fio tracejado e as placas com ícone atravessam as emendas |
+| 10. Carrossel contínuo | `carrossel_continuo_6480x1350` (panorama) + 6 fatias em `output/carrossel_continuo/` | Uma arte única fatiada em 6 lâminas: o azulejo, o fio tracejado e as placas com ícone atravessam as emendas |
 
 O que o produto já entrega e o que pode (ou não) virar post está em [CONTEUDO.md](CONTEUDO.md).
 
@@ -23,7 +23,7 @@ O que o produto já entrega e o que pode (ou não) virar post está em [CONTEUDO
 ```bash
 cd tabua
 npm install
-npm run generate   # output/*.psd, output/previews/*.png, output/assets/*.png
+npm run generate   # output/jpg/*.jpg (publicar), output/previews/*.png (conferir)
 ```
 
 `marca/` é uma cópia do pacote da marca do repositório `tabuaapp` (fontes Anybody e Atkinson, logos, azulejo, ícones). Se a marca mudar lá, copie de novo.

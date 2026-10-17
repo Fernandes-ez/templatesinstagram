@@ -11,6 +11,7 @@ const B = require("./brand.config.js");
 initializeCanvas((w, h) => createCanvas(w, h));
 
 const K = B.cores;
+const COM_PSD = process.argv.includes("--psd"); // o PSD é só para edição manual no Photoshop; o n8n usa os JPG
 const OUT = path.join(__dirname, "output");
 const ICONES = ["agenda", "conversa", "deixa", "equipe", "etapas", "historico", "lead", "ponto"];
 const GRUPOS = ["Fundo", "Padrao", "Grafismos", "Imagem (substituir)", "Texto", "Logo", "Guias"];
@@ -414,10 +415,11 @@ class Doc {
       children: this.raiz,
       imageResources: { gridAndGuidesInformation: { guides: this.guias }, resolutionInfo: resolucao72 },
     };
-    fs.writeFileSync(path.join(OUT, `${this.nome}.psd`), writePsdBuffer(psd, { generateThumbnail: true, trimImageData: true }));
+    if (COM_PSD) fs.writeFileSync(path.join(OUT, `${this.nome}.psd`), writePsdBuffer(psd, { generateThumbnail: true, trimImageData: true }));
     fs.writeFileSync(path.join(OUT, "previews", `${this.nome}.png`), composta.toBuffer("image/png"));
+    if (this.W === B.feed.largura || this.W === (B.story?.largura ?? B.feed.largura)) fs.writeFileSync(path.join(OUT, "jpg", `${this.nome}.jpg`), composta.toBuffer("image/jpeg", 92));
     for (const a of this.avisos) console.warn(`  aviso ${this.nome}: ${a}`);
-    console.log(`ok  ${this.nome}.psd`);
+    console.log(`ok  ${this.nome}${COM_PSD ? " (+ .psd)" : ""}`);
     return composta;
   }
 }
@@ -634,6 +636,7 @@ async function carrosselContinuo() {
     const c = createCanvas(SW, FEED.altura);
     c.getContext("2d").drawImage(composta, -i * SW, 0);
     fs.writeFileSync(path.join(dir, `carrossel_continuo_${String(i + 1).padStart(2, "0")}.png`), c.toBuffer("image/png"));
+    fs.writeFileSync(path.join(dir, `carrossel_continuo_${String(i + 1).padStart(2, "0")}.jpg`), c.toBuffer("image/jpeg", 92));
   }
 }
 
@@ -649,6 +652,7 @@ function salvarPanorama(d, N, pasta, prefixo) {
     const c = createCanvas(SW, FEED.altura);
     c.getContext("2d").drawImage(composta, -i * SW, 0);
     fs.writeFileSync(path.join(dir, `${prefixo}_${String(i + 1).padStart(2, "0")}.png`), c.toBuffer("image/png"));
+    fs.writeFileSync(path.join(dir, `${prefixo}_${String(i + 1).padStart(2, "0")}.jpg`), c.toBuffer("image/jpeg", 92));
   }
 }
 const novoPano = (nome, N) => new Doc(nome, { largura: FEED.largura * N, altura: FEED.altura, margem: FEED.margem }, K.roteiro);
@@ -741,7 +745,7 @@ async function carrosselConversa() {
 }
 
 (async () => {
-  for (const dir of ["", "previews", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
+  for (const dir of ["", "previews", "jpg", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
   for (const gerar of [storyConversa, frase, antesDepois, numero, lista, tela, enquete, foto]) await gerar();
   for (const n of NOVIDADES) await novidade(n.slug, n);
   await carrosselContinuo();
