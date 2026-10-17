@@ -2,11 +2,16 @@
 
 Levantado por busca na web. **Os @ do Instagram não foram confirmados** (a busca não indexa perfis), exceto onde indicado. Para cada candidato, abra o perfil, confirme que é o oficial e que é conta **Business/Creator** (só essas aparecem na Business Discovery).
 
-## Já no radar
-| Perfil | Origem |
+## Já no radar (confirmados por você)
+| Perfil | Grupo |
 |---|---|
-| `goomer_br` | achado por você; um guia de terceiros ([Saipos](https://saipos.com/integracoes/goomer/goomer-telefone)) cita o mesmo @ |
-| `cardapio.web` | achado por você |
+| `goomer_br` | direto (cardápio digital) |
+| `cardapio.web` | direto |
+| `olaclickbrasil` | direto |
+| `instadelivery.com.br` | direto |
+| `menudinobr` | **adjacente**: plataforma de delivery, outro segmento; só referência de linguagem com o dono de restaurante |
+
+Anota AI, Neemo e Abrahão: sem perfil encontrado, ficam fora.
 
 ## Concorrentes diretos (cardápio digital e pedido próprio): procurar o @
 | Empresa | O que a busca mostrou | Fonte |
