@@ -7,7 +7,7 @@
 1. **Segunda, 7h** (ou pelo gatilho manual) monta a lista de alvos por marca.
 2. **Perfis** (Business Discovery): últimos 25 posts de cada concorrente ou marca similar, com formato, legenda, curtidas e comentários.
 3. **Hashtags**: posts em destaque de 3 hashtags por marca.
-4. **Web** (Perplexity): blogs, novidades e tendências do mês.
+4. **Web** (Gemini com busca no Google): blogs, novidades e tendências do mês, com as fontes citadas.
 5. Calcula o **engajamento** por post (interações ÷ seguidores) e o mix de formatos no topo.
 6. O Gemini devolve **padrões, ganchos, lacunas e ideias** (com o modelo de post sugerido).
 7. Salva em `instagram_referencias` e manda o resumo no Telegram.
@@ -16,7 +16,7 @@
 
 1. **Nó "Alvos do radar":** troque os `PREENCHER` (`ig_user_id` de cada marca, perfis a monitorar, hashtags). Alvo que começa com `PREENCHER` é ignorado: o fluxo roda sem quebrar, só com a busca na web.
 2. **Data Table `instagram_referencias`**, colunas de texto: `marca`, `semana`, `briefing`, `erros`, `urls_validas`; e de número: `posts_analisados`.
-3. **Credenciais** (as mesmas do fluxo principal): Meta Graph API (Instagram), Perplexity, Gemini (texto), Telegram. Troque `PREENCHER_CHAT_ID` no nó do Telegram.
+3. **Credenciais** (as mesmas do fluxo principal): Meta Graph API (Instagram), Gemini (texto; a mesma credencial serve à busca na web), Telegram. Troque `PREENCHER_CHAT_ID` no nó do Telegram.
 4. Perfis monitorados precisam ser contas **Business ou Creator públicas**. Conta pessoal ou inexistente vem como erro no resumo, não derruba o fluxo.
 
 ## Limites conhecidos
@@ -51,4 +51,4 @@ Adicione `${radar}` ao prompt do "Redator da marca". O redator escolhe uma ideia
 - Dado de mercado só com URL de busca.
 - Dados vazios viram alerta, não tendência inventada.
 
-> Este JSON foi montado e validado (estrutura, conexões e lógica dos nós de código com dados simulados), mas **não foi importado numa instância n8n real**. Na primeira importação, confira os nós Meta Graph API e Perplexity (parâmetros variam entre versões do n8n) e rode com o gatilho manual.
+> Este JSON foi montado e validado (estrutura, conexões e lógica dos nós de código com dados simulados), mas **não foi importado numa instância n8n real**. Na primeira importação, confira os nós Meta Graph API e "Buscar na web (Gemini + Google)" (o modelo `gemini-2.5-flash` e o formato da resposta podem variar; as URLs das fontes vêm como links de redirecionamento do Google) (parâmetros variam entre versões do n8n) e rode com o gatilho manual.

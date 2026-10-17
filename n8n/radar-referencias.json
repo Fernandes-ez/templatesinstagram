@@ -286,29 +286,29 @@
     },
     {
       "parameters": {
-        "resource": "search",
-        "operation": "search",
-        "query": "={{ $json.consulta }}",
-        "simplify": true,
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Pesquise na web, em português do Brasil, conteúdo dos últimos 30 dias sobre: ' + $json.consulta + '. Responda em até 8 tópicos curtos. Cada tópico: o que aconteceu ou o que está em alta e por que importa para conteúdo de Instagram de uma marca pequena. Não invente: se não encontrar, diga que não encontrou.' }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) }}",
         "options": {
-          "country": "BR",
-          "searchLanguageFilter": "pt",
-          "searchRecencyFilter": "month",
-          "maxResults": 8
+          "timeout": 60000
         }
       },
       "id": "e433c16f-433f-4436-8ae7-e919140b1cc2",
-      "name": "Buscar na web (Perplexity)",
-      "type": "n8n-nodes-base.perplexity",
-      "typeVersion": 3,
+      "name": "Buscar na web (Gemini + Google)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         720,
         280
       ],
       "credentials": {
-        "perplexityApi": {
+        "googlePalmApi": {
           "id": "",
-          "name": "Perplexity"
+          "name": "Gemini (texto, projeto gratuito)"
         }
       },
       "onError": "continueRegularOutput",
@@ -318,7 +318,7 @@
     {
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const ctx = $('Alvos do radar').item.json;\nconst j = $input.item.json || {};\nconst r = Array.isArray(j.results) ? j.results : [];\nreturn { json: { marca_id: ctx.marca_id, fonte: 'web', alvo: ctx.alvo, erro: r.length ? undefined : 'sem resultados',\n  resultados: r.filter((x) => x && x.url && x.title).slice(0, 8).map((x) => ({ titulo: x.title, url: x.url, data: x.date || x.last_updated || '', trecho: String(x.snippet || '').replace(/\\s+/g, ' ').slice(0, 500) })) } };\n"
+        "jsCode": "const ctx = $('Alvos do radar').item.json;\nconst j = $input.item.json || {};\nconst cand = (j.candidates || [])[0] || {};\nconst resumo = ((cand.content || {}).parts || []).map((p) => p.text || '').join('\\n').replace(/\\s+/g, ' ').trim();\nconst fontes = ((cand.groundingMetadata || {}).groundingChunks || []).map((c) => c.web).filter((x) => x && x.uri);\nconst vistos = new Set();\nconst unicas = fontes.filter((f) => (vistos.has(f.uri) ? false : vistos.add(f.uri)));\nconst resultados = unicas.slice(0, 8).map((f, i) => ({ titulo: f.title || f.uri, url: f.uri, data: '', trecho: i === 0 ? resumo.slice(0, 1500) : '(ver resumo na 1ª fonte)' }));\nif (!resultados.length && resumo) resultados.push({ titulo: 'Resumo da busca (sem fontes)', url: '', data: '', trecho: resumo.slice(0, 1500) });\nreturn { json: { marca_id: ctx.marca_id, fonte: 'web', alvo: ctx.alvo, erro: resultados.length ? undefined : (j.error && j.error.message) || 'sem resultados', resultados } };\n"
       },
       "id": "88afff4a-ca6f-4602-9067-961f9ebf7cec",
       "name": "Normalizar web",
@@ -522,7 +522,7 @@
     },
     {
       "parameters": {
-        "content": "## Radar de referências (semanal)\nPara cada marca: lê posts recentes de concorrentes e marcas similares (Business Discovery), posts em destaque de hashtags e a web (Perplexity); calcula engajamento; o Gemini devolve padrões, lacunas e ideias; salva em `instagram_referencias` e avisa no Telegram.\n\n**Antes de ativar:** preencha os PREENCHER do nó *Alvos do radar* e crie a Data Table `instagram_referencias` (marca, semana, briefing, erros, urls_validas: texto · posts_analisados: número). Perfis precisam ser contas **Business/Creator** públicas. Nunca copie legenda ou imagem; use só o ângulo.",
+        "content": "## Radar de referências (semanal)\nPara cada marca: lê posts recentes de concorrentes e marcas similares (Business Discovery), posts em destaque de hashtags e a web (Gemini com busca no Google); calcula engajamento; o Gemini devolve padrões, lacunas e ideias; salva em `instagram_referencias` e avisa no Telegram.\n\n**Antes de ativar:** preencha os PREENCHER do nó *Alvos do radar* e crie a Data Table `instagram_referencias` (marca, semana, briefing, erros, urls_validas: texto · posts_analisados: número). Perfis precisam ser contas **Business/Creator** públicas. Nunca copie legenda ou imagem; use só o ângulo.",
         "height": 320,
         "width": 760,
         "color": 4
@@ -589,7 +589,7 @@
         ],
         [
           {
-            "node": "Buscar na web (Perplexity)",
+            "node": "Buscar na web (Gemini + Google)",
             "type": "main",
             "index": 0
           }
@@ -623,17 +623,6 @@
         [
           {
             "node": "Normalizar hashtag",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Buscar na web (Perplexity)": {
-      "main": [
-        [
-          {
-            "node": "Normalizar web",
             "type": "main",
             "index": 0
           }
@@ -744,6 +733,17 @@
         [
           {
             "node": "Avisar no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar na web (Gemini + Google)": {
+      "main": [
+        [
+          {
+            "node": "Normalizar web",
             "type": "main",
             "index": 0
           }
