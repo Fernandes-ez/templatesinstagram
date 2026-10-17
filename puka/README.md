@@ -39,4 +39,5 @@ npm run generate   # output/*.psd, output/previews/*.png, output/carrossel_conti
 - Haste reta, sem cantos arredondados. Deixa só em Ribalta (ou Ribalta Acesa no escuro), uma por peça, entrando pela direita.
 - IA em Ponto, pessoa em Ribalta, nunca o contrário. Texto pequeno em Ribalta Funda.
 - A lacuna nunca fecha e fica sempre à vista (no carrossel, dentro da lâmina 4, longe da emenda).
-- Sem sobreposição: nada fica atrás de texto. O padrão oficial (campo de hastes com deixas) não entra no carrossel: cortado em faixa, ele parte as fileiras e leva várias deixas para uma peça que já tem a linha de passagem.
+- Sem sobreposição: nada fica atrás de texto. A faixa de padrão do carrossel é desenhada por código, com fileiras inteiras (nunca cortadas na vertical).
+- **Exceção deliberada ao manual:** na faixa do carrossel todo k tem a deixa laranja. O manual manda só algumas deixas, nunca duas vizinhas. Decisão do dono da marca: se mudar de ideia, é só trocar a cor da deixa por `#E2D6C3` nas posições desejadas em `padraoK()`.

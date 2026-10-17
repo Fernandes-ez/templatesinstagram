@@ -277,6 +277,35 @@ class Doc {
     this.pixel("Grafismos", nome ?? `Icone_${nomeIcone}`, (ctx) => ctx.drawImage(img, x, y, size, size));
   }
 
+  /** Faixa de padrão onde TODA haste é um k completo (haste em Rotunda + deixa em Ribalta). Fileiras inteiras, sem corte vertical.
+   *  As deixas giram de −4° a +5° e a linha de base oscila alguns pontos, numa sequência fixa (imperfeição controlada). */
+  padraoK({ x, y, w, linhas = 2, altura = 80, passoX = 76, passoY = 100, nome = "Padrao_k" }) {
+    const s = altura / B.simbolo.box.h;
+    this.pixel("Padrao", nome, (ctx) => {
+      for (let r = 0; r < linhas; r++) {
+        const base = y + r * passoY + (passoY - altura) / 2;
+        for (let c = -1; c * passoX < w + passoX; c++) {
+          const cx = x + c * passoX + (r % 2 ? passoX / 2 : 0);
+          if (cx + passoX < x || cx > x + w) continue;
+          const rot = (((c + 40) * 7 + r * 3) % 10 - 4) * (Math.PI / 180);
+          const dy = ((c + 40) * 5 + r * 11) % 7 - 3;
+          ctx.save();
+          ctx.translate(cx - B.simbolo.box.x * s, base + dy + altura);
+          ctx.scale(s, -s);
+          ctx.fillStyle = "#E2D6C3"; // haste em Rotunda, um tom abaixo da superfície
+          ctx.fill(HASTE_P);
+          ctx.translate(330, 260);
+          ctx.rotate(rot);
+          ctx.scale(0.94, 0.94);
+          ctx.translate(-330, -260);
+          ctx.fillStyle = K.ribalta;
+          ctx.fill(DEIXA_P);
+          ctx.restore();
+        }
+      }
+    });
+  }
+
   /** Padrão oficial (campo de hastes com algumas deixas), numa região. tom: "claro" | "escuro". */
   async padrao(tom, { x = 0, y = 0, w = this.W, h = this.H, largura = 1024, opacidade = 1 }) {
     const img = await svgParaImagem(lerSvg(B.padrao[tom]), largura);
@@ -566,6 +595,7 @@ async function carrosselContinuo() {
   const d = new Doc("carrossel_continuo_6480x1350", { largura: SW * N, altura: FEED.altura, margem: FEED.margem }, K.roteiro);
   const M = d.M;
   const yLinha = 1010;
+  d.padraoK({ x: 0, y: 1150, w: SW * N, linhas: 2 });
   const xLacuna = SW * 3 + 380; // a passagem acontece dentro da lâmina 4, sempre à vista
   const lp = d.linhaPassagem({ x: M, y: yLinha, largura: SW * N - 2 * M, retoFrac: (xLacuna - M) / (SW * N - 2 * M) });
 
