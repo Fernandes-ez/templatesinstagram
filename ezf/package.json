@@ -1,0 +1,10 @@
+{
+  "name": "ezf-instagram-templates",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Templates de posts do Instagram da ezf.tech (manual v0.4) em JPG",
+  "type": "commonjs",
+  "scripts": { "generate": "node generate-templates.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": { "@napi-rs/canvas": "^1.0.9", "@resvg/resvg-js": "^2.6.2" }
+}
