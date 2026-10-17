@@ -381,6 +381,7 @@ class Doc {
     fs.writeFileSync(path.join(OUT, "previews", `${this.nome}.png`), composta.toBuffer("image/png"));
     for (const a of this.avisos) console.warn(`  aviso ${this.nome}: ${a}`);
     console.log(`ok  ${this.nome}.psd`);
+    return composta;
   }
 }
 
@@ -723,6 +724,72 @@ const NOVIDADES = [
   },
 ];
 
+/** 12. Carrossel contínuo: uma arte única de 6480×1350 fatiada em 6 lâminas de 1080×1350.
+ *  O azulejo, o fio tracejado e as placas com ícone atravessam as emendas: quem arrasta vê a continuação. */
+async function carrosselContinuo() {
+  const N = 6;
+  const SW = FEED.largura;
+  const d = new Doc("carrossel_continuo_6480x1350", { largura: SW * N, altura: FEED.altura, margem: FEED.margem }, K.verdeBoteco);
+  const M = d.M;
+  const yFio = 1010;
+  await d.padrao("verde", { x: 0, y: 0, w: SW * N, h: FEED.altura });
+  // fio tracejado que corre por todas as lâminas
+  d.pixel("Grafismos", "Fio_tracejado", (ctx) => {
+    ctx.strokeStyle = K.cal;
+    ctx.globalAlpha = 0.55;
+    ctx.setLineDash([22, 18]);
+    ctx.lineWidth = 6;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(M, yFio);
+    ctx.lineTo(SW * 5 + 90, yFio);
+    ctx.stroke();
+  });
+  d.gesto({ cx: SW * 5 + 190, cy: yFio, largura: 150, cor: K.amareloOvo, rot: 8 });
+
+  // lâmina 1: capa
+  await d.logo(B.logo.principalNegativo, { x: M, y: 96, largura: 200 });
+  d.titulo("O pedido\nfaz o\ncaminho.", { x: M, y: 480, size: 150, cor: K.cal, sombra: K.amareloOvo, fundo: K.verdeBoteco });
+  d.texto("Texto", "Capa_apoio", "Do QR da mesa até a tela\nda cozinha.", { size: 34, cor: K.cal, x: M, y: 880 });
+  d.faixa("Arrasta pro lado", { x: M, y: 1196, altura: 64 });
+
+  // paradas: cada ícone fica em cima da emenda (metade em cada lâmina)
+  const paradas = [
+    ["mesa-qr", "01", "O cliente abre\no QR da mesa.", "Sem instalar nada. O cardápio\nabre no navegador do celular."],
+    ["comanda", "02", "O pedido chega\nanotado.", "Aparece no painel na hora,\ncom a mesa certa."],
+    ["cozinha", "03", "A cozinha\nvê na hora.", "Tela da cozinha e comanda\nimpressa, sem papel de recado."],
+    ["relogio", "04", "O cliente\nacompanha.", "Pedido recebido, em preparo,\npronto: ele vê em tempo real."],
+  ];
+  for (const [i, [icone, num, titulo, apoio]] of paradas.entries()) {
+    const seam = SW * (i + 1);
+    const tam = 220;
+    d.forma("Grafismos", `Parada${i + 1}_placa`, placaPath(seam - tam / 2, yFio - tam / 2, tam, tam), K.cal);
+    await d.icone(icone, { x: seam - 70, y: yFio - 70, size: 140, cor: K.verdeBoteco, nome: `Parada${i + 1}_icone` });
+    const x = seam + 150;
+    d.texto("Texto", `Parada${i + 1}_numero`, num, { font: "numero", size: 170, cor: K.amareloOvo, x, y: 440 });
+    d.titulo(titulo, { nome: `Parada${i + 1}_titulo`, x, y: 600, size: 84, cor: K.cal, sombra: K.amareloOvo, fundo: K.verdeBoteco });
+    d.texto("Texto", `Parada${i + 1}_apoio`, apoio, { size: 30, cor: K.cal, x, y: 800 });
+  }
+
+  // lâmina 6: fechamento
+  const x6 = SW * 5 + M;
+  d.titulo("A freguesia\né sua.", { x: x6, y: 400, size: 150, cor: K.cal, sombra: K.amareloOvo, fundo: K.verdeBoteco });
+  d.texto("Texto", "Final_apoio", "Cardápio, pedido na mesa e no WhatsApp,\nsem comissão por pedido.", { size: 34, cor: K.cal, x: x6, y: 730 });
+  d.cta("Link na bio", { x: x6, y: 1130, altura: 96 });
+  await d.logo(B.logo.principalNegativo, { x: SW * N - M, y: 1176, largura: 220, align: "right" });
+  d.grade();
+  for (let i = 1; i < N; i++) d.guias.push({ location: SW * i, direction: "vertical" });
+  const composta = d.salvar();
+  // fatias de 1080×1350 prontas para o Instagram
+  const dir = path.join(OUT, "carrossel_continuo");
+  fs.mkdirSync(dir, { recursive: true });
+  for (let i = 0; i < N; i++) {
+    const c = createCanvas(SW, FEED.altura);
+    c.getContext("2d").drawImage(composta, -i * SW, 0);
+    fs.writeFileSync(path.join(dir, `carrossel_continuo_${String(i + 1).padStart(2, "0")}.png`), c.toBuffer("image/png"));
+  }
+}
+
 /** 7. Story: comanda chegando (Nº 047, itens, total em preço de placa, carimbo). Zonas seguras de 250 px. */
 async function story() {
   const S = B.story;
@@ -803,6 +870,7 @@ async function story() {
   for (const dir of ["", "previews", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
   for (const gerar of [anuncio, dica, capa, miolo, final, antesDepois, story, telaCardapio, enquete, fotoTitulo]) await gerar();
   for (const n of NOVIDADES) await novidade(n.slug, n);
+  await carrosselContinuo();
 })().catch((e) => {
   console.error(e);
   process.exit(1);

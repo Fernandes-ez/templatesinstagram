@@ -1,6 +1,6 @@
 # Templates de Instagram da Tábua (direção "Letreiro")
 
-Gera 9 templates (13 peças) em `.psd` com camadas editáveis e um `.png` de prévia de cada um.
+Gera 10 templates (20 peças) em `.psd` com camadas editáveis e um `.png` de prévia de cada um.
 Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar.
 
 | Template | Peça(s) | O que é |
@@ -14,6 +14,7 @@ Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar
 | 7. Enquete | `feed_enquete_1080x1350` | Pergunta com duas respostas (A e B) para os comentários |
 | 8. Foto + título | `feed_foto_titulo_1080x1350` | Foto real do balcão em placa e frase curta (precisa de foto) |
 | 9. Novidade / Em breve | `feed_novidade_*` (retirada agendada, balcão, estoque) | Faixa, título, placa com 3 itens e carimbo "NOVO" ou "EM BREVE". Textos em `NOVIDADES` |
+| 10. Carrossel contínuo | `carrossel_continuo_6480x1350.psd` + 6 fatias em `output/carrossel_continuo/` | Uma arte única fatiada em 6 lâminas: o azulejo, o fio tracejado e as placas com ícone atravessam as emendas |
 
 O que o produto já entrega e o que pode (ou não) virar post está em [CONTEUDO.md](CONTEUDO.md).
 
@@ -34,3 +35,7 @@ Cores, fontes e caminhos ficam em `brand.config.js`; o texto de cada peça, em `
 - Gerar JPG direto (sem PSD) para o n8n: a lógica de desenho em canvas já existe e pode virar o serviço de render.
 - `feed_foto_titulo` só fica pronto com uma foto real (camada `FOTO_AQUI`). Prato do dia e depoimento foram removidos até haver foto e autorização de cliente.
 - A tela do cardápio usa o "Bar do Zé", restaurante fictício do próprio site, e está marcada "Cardápio de exemplo". Trocar por capturas reais quando houver.
+
+## Carrossel contínuo
+
+É uma arte só de 6480×1350 (6 × 1080). As guias do PSD marcam as emendas. As fatias `carrossel_continuo_01.png` a `_06.png` já saem prontas no tamanho do Instagram (1080×1350). Para trocar o texto de uma parada, edite o vetor `paradas` em `carrosselContinuo()` e rode `npm run generate`: a posição das placas nas emendas é recalculada. Se mudar o número de lâminas, ajuste `N`.
