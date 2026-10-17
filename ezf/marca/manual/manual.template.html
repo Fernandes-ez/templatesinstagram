@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ezf.tech · manual da marca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+:root{--tinta:#1B1026;--elev:#261835;--nevoa:#EEEAF3;--violeta:#8A12B4;--lilas:#B98BE0;--ambar:#F2B233;--nevoa-ap:#B9ABCB;--tinta-ap:#5C5070;--linha:#3A2A4E;
+--sans:"Geist","Helvetica Neue",Arial,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--g:clamp(20px,5vw,72px)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--tinta);color:var(--nevoa);line-height:1.55;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+.wrap{max-width:1180px;margin:0 auto;padding:0 var(--g)}
+section{padding:88px 0;border-top:1px solid var(--linha)}
+section.claro{background:var(--nevoa);color:var(--tinta);border-top:0}
+.num{font-family:var(--mono);font-size:13px;color:var(--lilas);letter-spacing:.04em}
+.claro .num{color:var(--violeta)}
+h1{font-size:clamp(40px,7vw,84px);line-height:1.02;letter-spacing:-.03em;font-weight:600}
+h2{font-size:clamp(30px,4.4vw,52px);line-height:1.08;letter-spacing:-.025em;font-weight:600;margin:10px 0 18px}
+h3{font-size:20px;font-weight:600;margin:0 0 8px;letter-spacing:-.01em}
+p{max-width:64ch;color:var(--nevoa-ap);margin-bottom:14px}
+.claro p{color:var(--tinta-ap)}
+.destaque{color:var(--ambar)} .claro .destaque{color:var(--violeta)}
+.mono{font-family:var(--mono)}
+.aviso{font-family:var(--mono);font-size:13px;border:1px solid var(--linha);padding:14px 16px;color:var(--nevoa-ap);max-width:78ch;margin:26px 0}
+.claro .aviso{border-color:#cfc6dc;color:var(--tinta-ap)}
+.grid{display:grid;gap:18px}.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}.g3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.g4{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.card{background:var(--elev);border:1px solid var(--linha);border-radius:12px;padding:22px}
+.claro .card{background:#fff;border-color:#d9d0e6}
+.logo-box{border-radius:12px;display:flex;align-items:center;justify-content:center;min-height:170px;padding:26px}
+.logo-box img{width:min(100%,300px)}
+.lbl{font-family:var(--mono);font-size:12px;color:var(--nevoa-ap);margin-top:10px}
+.claro .lbl{color:var(--tinta-ap)}
+.sw{border-radius:12px;padding:18px;min-height:170px;display:flex;flex-direction:column;justify-content:flex-end;border:1px solid rgba(255,255,255,.08)}
+.sw b{font-size:20px;font-weight:600}.sw span{font-family:var(--mono);font-size:12px;opacity:.85}.sw i{font-style:normal;font-size:13px;margin-top:6px;opacity:.9}
+table{border-collapse:collapse;width:100%;font-size:14px;margin-top:10px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--linha)}
+.claro th,.claro td{border-color:#d9d0e6}
+th{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--nevoa-ap)}.claro th{color:var(--tinta-ap)}
+.ok{color:#7be0a3;font-family:var(--mono)}.no{color:#ff8b8b;font-family:var(--mono)}.claro .ok{color:#127a3d}.claro .no{color:#b3261e}
+.chip{display:inline-block;padding:4px 10px;border-radius:99px;font-family:var(--mono);font-size:12px;margin-right:6px}
+.post{aspect-ratio:4/5;border-radius:8px;padding:7% 8%;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
+.post .et{font-family:var(--mono);font-size:clamp(9px,1.1vw,13px);opacity:.9}
+.post .t{font-weight:600;letter-spacing:-.03em;line-height:1.02;font-size:clamp(22px,3.3vw,40px)}
+.post .rod{font-family:var(--mono);font-size:clamp(9px,1.1vw,13px);display:flex;justify-content:space-between;align-items:end}
+.dont{border:1px dashed #ff8b8b66;border-radius:12px;padding:18px}
+.fio svg{width:100%;height:auto}
+.cover{padding:96px 0 72px;border-top:0}
+.cover .logo{width:min(420px,70%);margin-bottom:48px}
+.cap{font-family:var(--mono);font-size:12px;color:var(--nevoa-ap);margin-top:8px}.claro .cap{color:var(--tinta-ap)}
+ul.l{list-style:none;max-width:64ch}ul.l li{padding:9px 0 9px 22px;border-bottom:1px solid var(--linha);position:relative;color:var(--nevoa-ap)}
+.claro ul.l li{border-color:#d9d0e6;color:var(--tinta-ap)}
+ul.l li:before{content:"{";position:absolute;left:0;color:var(--lilas);font-family:var(--mono)}
+.claro ul.l li:before{color:var(--violeta)}
+</style>
+</head>
+<body>
+
+<header class="cover wrap">
+  <img class="logo" src="{{logo:ezftech-cor-sobre-tinta}}" alt="ezf.tech">
+  <div class="num">manual da marca · proposta v0.1 · outubro de 2026</div>
+  <h1 style="margin-top:14px">Quem conversa com você<br>é quem <span class="destaque">{escreve o código}</span>.</h1>
+  <div class="aviso">Este manual não existia. Foi montado a partir de três coisas reais: os 5 logos enviados, as cores e o texto do site ezf-tech.com, e o conceito "Entre chaves" do arquivo antigo de templates. Tudo marcado <b>(proposta)</b> é decisão sugerida que ainda precisa da sua aprovação. O que veio direto dos logos ou do site está marcado <b>(existente)</b>.</div>
+</header>
+
+<section><div class="wrap">
+  <div class="num">01 · Estratégia</div>
+  <h2>Um desenvolvedor que atende pessoalmente</h2>
+  <p>A ezf.tech faz <b>sites, atendimento automático no WhatsApp e sistemas</b> para empresas locais: academias, clínicas, restaurantes, comércio. Quem desenha, programa e mantém é uma pessoa só, Enzo Fernandes, de São Paulo. O cliente fala direto com ele, do orçamento à entrega. <i>(existente: texto do site)</i></p>
+  <div class="grid g2" style="margin-top:28px">
+    <div class="card"><h3>Posicionamento</h3><p style="margin:0">Para empresas e profissionais locais que querem organizar atendimento, vendas e operação, a ezf.tech faz o site, a automação ou o sistema sob medida, em vez de encaixar a empresa num sistema pronto. <i>(proposta, a partir do texto do site)</i></p></div>
+    <div class="card"><h3>Personalidade</h3><p style="margin:0">Pessoal, direto e organizado. Fala em primeira pessoa, mostra o processo, evita jargão de agência e promessa de "explodir vendas". Transforma improviso em processo. <i>(proposta)</i></p></div>
+  </div>
+  <h3 style="margin-top:36px">O que a marca é e o que não é</h3>
+  <div class="grid g2">
+    <div><ul class="l"><li>Um desenvolvedor, não uma agência</li><li>Sob medida, não pacote pronto</li><li>Atendimento direto, sem intermediário</li><li>Produtos próprios como prova: Puka e Tábua</li></ul></div>
+    <div><ul class="l"><li>Não é "solução disruptiva"</li><li>Não promete resultado de vendas</li><li>Não é terceirizado nem revendedor</li><li>Não usa estética genérica de tecnologia (foguete, neon, robô)</li></ul></div>
+  </div>
+  <h3 style="margin-top:36px">Frases da marca</h3>
+  <p class="mono" style="color:var(--nevoa)">Nenhum cliente esperando resposta.<br>Sua operação fora da planilha.<br>Sua empresa encontrada fora do Instagram.<br>Na ezf.tech, quem conversa com você é quem escreve o código.</p>
+  <p class="cap">(existente: nos textos do site e nos serviços)</p>
+</div></section>
+
+<section class="claro"><div class="wrap">
+  <div class="num">02 · Logo</div>
+  <h2>O nome entre chaves</h2>
+  <p>O logo é a palavra <b>ezf.tech</b> escrita em sans geométrica bold, entre duas chaves <b>{ }</b> mais altas que as letras. A palavra "tech" leva a cor da marca. As chaves dizem o que a empresa faz: código. <i>(existente: arquivos enviados)</i></p>
+  <div class="grid g2" style="margin-top:24px">
+    <div><div class="logo-box" style="background:#F3F0FF;border:1px solid #d9d0e6"><img src="{{logo:ezftech-cor-sobre-nevoa}}" alt=""></div><div class="lbl">Cor · sobre Névoa ou fundo claro. A versão principal.</div></div>
+    <div><div class="logo-box" style="background:#1B1026"><img src="{{logo:ezftech-cor-sobre-tinta}}" alt=""></div><div class="lbl">Cor · sobre Tinta. Use a partir de 200 px (veja o aviso abaixo).</div></div>
+    <div><div class="logo-box" style="background:#EEEAF3;border:1px solid #d9d0e6"><img src="{{logo:ezftech-mono-tinta}}" alt=""></div><div class="lbl">Mono Tinta · uma cor, sobre Névoa ou foto clara.</div></div>
+    <div><div class="logo-box" style="background:#1B1026"><img src="{{logo:ezftech-mono-nevoa}}" alt=""></div><div class="lbl">Mono Névoa · sobre Tinta, Violeta ou foto escura.</div></div>
+  </div>
+  <div class="grid g2" style="margin-top:18px">
+    <div><div class="logo-box" style="background:#F3F0FF;border:1px solid #d9d0e6;min-height:260px"><img src="{{logo:ezftech-perfil}}" alt="" style="width:220px;border-radius:50%"></div><div class="lbl">Foto de perfil · versão quadrada centralizada. No Instagram o corte é circular: o logo cabe sem encostar na borda.</div></div>
+    <div class="card"><h3>Regras (proposta)</h3>
+      <ul class="l"><li>Espaço de proteção: metade da altura das chaves em todos os lados.</li><li>Tamanho mínimo: 120 px de largura na tela, 30 mm impresso.</li><li>Sobre Violeta, use sempre o mono Névoa.</li><li>Nunca redigite o nome: use sempre o arquivo.</li></ul></div>
+  </div>
+  <div class="aviso">Medição: o "tech" em Violeta sobre Tinta tem contraste de apenas <b>2,46:1</b>. Em tamanho grande o logo funciona, mas em tamanho pequeno a palavra some. Por isso a regra: <b>logo em cor sobre Tinta só a partir de 200 px de largura; abaixo disso, mono Névoa.</b></div>
+  <h3 style="margin-top:30px">Usos incorretos</h3>
+  <div class="grid g4">
+    <div class="dont"><b class="no">✕</b> Trocar as cores (lilás no "tech", violeta nas chaves).</div>
+    <div class="dont"><b class="no">✕</b> Tirar as chaves ou usar só o texto.</div>
+    <div class="dont"><b class="no">✕</b> Esticar, girar ou colocar sombra e brilho.</div>
+    <div class="dont"><b class="no">✕</b> Logo em cor sobre foto poluída ou sobre Violeta.</div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="num">03 · Cores</div>
+  <h2>Escuro de código, claro de papel, um violeta</h2>
+  <p>As quatro cores do logo e do site, mais o Âmbar de ação do site. Valores medidos nos arquivos enviados. <i>(existente)</i></p>
+  <div class="grid g4" style="margin-top:24px">
+    <div class="sw" style="background:#1B1026"><b>Tinta</b><span>#1B1026</span><i>Fundo escuro, texto sobre claro</i></div>
+    <div class="sw" style="background:#EEEAF3;color:#1B1026"><b>Névoa</b><span>#EEEAF3</span><i>Fundo claro, texto sobre escuro</i></div>
+    <div class="sw" style="background:#8A12B4"><b>Violeta</b><span>#8A12B4</span><i>A cor da marca: "tech", blocos de destaque</i></div>
+    <div class="sw" style="background:#B98BE0;color:#1B1026"><b>Lilás</b><span>#B98BE0</span><i>Chaves, linhas, etiquetas. Só sobre Tinta</i></div>
+    <div class="sw" style="background:#F2B233;color:#1B1026"><b>Âmbar</b><span>#F2B233</span><i>Ação e acento: CTA, nó do fio</i></div>
+    <div class="sw" style="background:#261835"><b>Tinta elevada</b><span>#261835</span><i>Cartões e superfícies sobre Tinta</i></div>
+    <div class="sw" style="background:#B9ABCB;color:#1B1026"><b>Névoa apagada</b><span>#B9ABCB</span><i>Texto secundário sobre Tinta</i></div>
+    <div class="sw" style="background:#5C5070"><b>Tinta apagada</b><span>#5C5070</span><i>Texto secundário sobre Névoa</i></div>
+  </div>
+  <h3 style="margin-top:36px">Proporção de uso (proposta)</h3>
+  <p>Tinta ou Névoa de fundo em ~65% da peça, Violeta ~15%, Lilás e Âmbar juntos no máximo ~10%. O Âmbar é pouco e certeiro: um por peça.</p>
+  <h3 style="margin-top:28px">Combinações medidas (WCAG 2.1)</h3>
+  <table>
+    <tr><th>Cor</th><th>sobre</th><th>Contraste</th><th>Uso</th></tr>
+    <tr><td>Névoa</td><td>Tinta</td><td class="ok">15,41 · AAA</td><td>Texto em peça escura</td></tr>
+    <tr><td>Tinta</td><td>Névoa</td><td class="ok">15,41 · AAA</td><td>Texto em peça clara</td></tr>
+    <tr><td>Âmbar</td><td>Tinta</td><td class="ok">9,74 · AAA</td><td>Destaque e CTA no escuro</td></tr>
+    <tr><td>Névoa apagada</td><td>Tinta</td><td class="ok">8,49 · AAA</td><td>Texto secundário no escuro</td></tr>
+    <tr><td>Lilás</td><td>Tinta</td><td class="ok">6,82 · AA</td><td>Chaves, linhas e etiquetas no escuro</td></tr>
+    <tr><td>Névoa</td><td>Violeta</td><td class="ok">6,26 · AA</td><td>Texto sobre bloco Violeta</td></tr>
+    <tr><td>Violeta</td><td>Névoa</td><td class="ok">6,26 · AA</td><td>Palavra de destaque no claro</td></tr>
+    <tr><td>Tinta apagada</td><td>Névoa</td><td class="ok">6,24 · AA</td><td>Texto secundário no claro</td></tr>
+    <tr><td>Âmbar</td><td>Violeta</td><td class="ok">3,96 · AA grande</td><td>Só título grande (24 px+)</td></tr>
+    <tr><td>Violeta</td><td>Tinta</td><td class="no">2,46 · reprova</td><td>Nunca para texto; logo só ≥ 200 px</td></tr>
+    <tr><td>Lilás</td><td>Névoa</td><td class="no">2,26 · reprova</td><td>Nunca sobre fundo claro</td></tr>
+    <tr><td>Âmbar</td><td>Névoa</td><td class="no">1,58 · reprova</td><td>Nunca sobre fundo claro</td></tr>
+  </table>
+</div></section>
+
+<section class="claro"><div class="wrap">
+  <div class="num">04 · Tipografia</div>
+  <h2>A mesma fonte do site</h2>
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card"><div style="font-size:64px;font-weight:600;letter-spacing:-.03em;line-height:1">Aa</div><h3 style="margin-top:14px">Geist</h3><p style="margin:0">Títulos em peso 600 com tracking apertado (−3%). Texto em 400, destaques em 500. É a fonte do site. <i>(existente: site; uso nos posts é proposta)</i></p></div>
+    <div class="card"><div class="mono" style="font-size:64px;font-weight:500;line-height:1">{ }</div><h3 style="margin-top:14px">Geist Mono</h3><p style="margin:0">Etiquetas, comentários <span class="mono">// assim</span>, números e nomes de arquivo. Sempre pequena, nunca em parágrafo. <i>(existente: site)</i></p></div>
+  </div>
+  <div class="aviso">O desenho das letras do logo é de uma sans geométrica própria, <b>diferente da Geist</b>. Por isso o logo nunca é redigitado: vale só o arquivo. Não consegui identificar a fonte original do logo; se você souber qual é, ela pode virar a fonte de títulos de campanha. Decisão pendente: o arquivo antigo de templates usava Unbounded; este manual propõe <b>aposentá-la</b> para os posts seguirem o site.</div>
+  <h3>Escala nos posts de 1080×1350 (proposta)</h3>
+  <table>
+    <tr><th>Papel</th><th>Fonte e peso</th><th>Tamanho</th></tr>
+    <tr><td>Título</td><td>Geist 600, tracking −3%</td><td>96 a 120 px</td></tr>
+    <tr><td>Palavra entre chaves</td><td>Geist Mono 500 só nas chaves; a palavra em Geist 600</td><td>igual ao título</td></tr>
+    <tr><td>Apoio</td><td>Geist 400</td><td>34 a 38 px</td></tr>
+    <tr><td>Etiqueta</td><td>Geist Mono 400, minúsculas</td><td>26 a 30 px</td></tr>
+    <tr><td>Botão e CTA</td><td>Geist 600</td><td>36 px</td></tr>
+  </table>
+</div></section>
+
+<section><div class="wrap">
+  <div class="num">05 · Sistema gráfico</div>
+  <h2>Entre chaves</h2>
+  <p>A ideia central é a do logo: <b>improviso vira processo</b>. Dois elementos montam qualquer composição, sem precisar inventar enfeite. <i>(proposta, a partir do conceito "Entre chaves" do arquivo antigo)</i></p>
+  <div class="grid g2" style="margin-top:26px">
+    <div class="card"><svg viewBox="0 0 520 180" style="width:100%"><rect width="520" height="180" rx="8" fill="#1B1026"/><text x="26" y="112" font-family="Geist,Arial" font-weight="600" font-size="58" fill="#EEEAF3" letter-spacing="-2">Sua operação</text><text x="26" y="160" font-family="Geist,Arial" font-weight="600" font-size="44" fill="#EEEAF3" letter-spacing="-1.5">fora da <tspan fill="#F2B233">{planilha}</tspan></text></svg>
+      <h3 style="margin-top:16px">Chaves</h3><p style="margin:0">Uma palavra-chave por título vai entre chaves, em Âmbar sobre Tinta ou Violeta sobre Névoa. Chaves também funcionam como moldura: grandes, em Lilás, sangrando da borda.</p></div>
+    <div class="card fio"><svg viewBox="0 0 520 180"><rect width="520" height="180" rx="8" fill="#1B1026"/><path d="M30 120C60 40 110 170 150 90S210 60 190 120 120 70 240 100 330 110 360 90" fill="none" stroke="#B98BE0" stroke-width="4" stroke-linecap="round"/><path d="M360 90H478" fill="none" stroke="#F2B233" stroke-width="4" stroke-linecap="round"/><circle cx="486" cy="90" r="9" fill="#F2B233"/></svg>
+      <h3 style="margin-top:16px">Fio</h3><p style="margin:0">Começa embaraçado (o improviso) e termina reto, com um nó em Âmbar (o processo). Em Lilás sobre Tinta, em Violeta sobre Névoa. No máximo um por peça; no carrossel ele atravessa as lâminas.</p></div>
+  </div>
+  <h3 style="margin-top:34px">Regras (proposta)</h3>
+  <ul class="l"><li>Uma palavra entre chaves por peça, nunca uma frase inteira.</li><li>Um fio por peça, sempre terminando reto.</li><li>Etiquetas em mono e minúscula, como comentário de código: <span class="mono">// sistemas sob medida</span>.</li><li>Nada de terminal falso, linhas de código inventadas ou "[INFO] [SUCCESS]": parece cenário, não prova.</li><li>Cantos de cartão e botão com raio de 12 e 8 px, como no site.</li></ul>
+</div></section>
+
+<section class="claro"><div class="wrap">
+  <div class="num">06 · Imagem</div>
+  <h2>Prova, não cenário</h2>
+  <p>A ezf.tech não vende uma estética de tecnologia, vende trabalho feito. A imagem mostra o trabalho real. <i>(proposta)</i></p>
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card"><h3 class="ok">Assim sim</h3><ul class="l"><li>Captura de tela de um site ou sistema real entregue (Aqua Fit, Puka, Tábua)</li><li>Notebook ou celular numa mesa de negócio local, luz natural</li><li>O próprio Enzo trabalhando, com autorização dele</li><li>Antes e depois de uma tela de cliente, com autorização</li></ul></div>
+    <div class="card"><h3 class="no">Assim não</h3><ul class="l"><li>Aperto de mão e equipe sorrindo de banco de imagem</li><li>Foguete, gráfico subindo, cifrão</li><li>Robô, cérebro, circuito, hacker de capuz</li><li>Neon roxo genérico de tecnologia</li></ul></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="num">07 · Tom de voz</div>
+  <h2>Primeira pessoa, sem enfeite</h2>
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card"><h3>Como fala</h3><ul class="l"><li>"Eu desenho, programo e mantenho." Primeira pessoa, próximo.</li><li>Direto e informal, sem jargão de agência.</li><li>Mostra processo: o improviso vira processo.</li><li>Preço sempre "a partir de", sem letra miúda.</li></ul></div>
+    <div class="card"><h3>Assim sim / assim não</h3><p style="margin:0 0 10px"><span class="ok">✓</span> Nenhum cliente esperando resposta.</p><p style="margin:0 0 10px"><span class="no">✕</span> Alavanque sua presença digital com soluções disruptivas!</p><p style="margin:0 0 10px"><span class="ok">✓</span> Na ezf.tech, quem conversa com você é quem escreve o código.</p><p style="margin:0"><span class="no">✕</span> Somos a maior agência de marketing digital do Brasil.</p></div>
+  </div>
+</div></section>
+
+<section class="claro"><div class="wrap">
+  <div class="num">08 · Aplicações</div>
+  <h2>Como fica no Instagram</h2>
+  <p>Três exemplos de posts 4:5 no sistema. São esboços de composição, não as peças finais. <i>(proposta)</i></p>
+  <div class="grid g3" style="margin-top:22px">
+    <div><div class="post" style="background:#1B1026;color:#EEEAF3"><div class="et" style="color:#B98BE0">// sistemas sob medida</div><div class="t">Sua operação fora da <span style="color:#F2B233">{planilha}</span>.</div><div class="rod"><span style="color:#B9ABCB">ezf-tech.com</span><img src="{{logo:ezftech-mono-nevoa}}" style="height:20px;width:auto" alt=""></div></div><div class="cap">Escuro, palavra entre chaves em Âmbar</div></div>
+    <div><div class="post" style="background:#EEEAF3;color:#1B1026"><div class="et" style="color:#8A12B4">// atendimento no whatsapp</div><div class="t">Nenhum cliente esperando <span style="color:#8A12B4">{resposta}</span>.</div><div class="rod"><span style="color:#5C5070">ezf-tech.com</span><img src="{{logo:ezftech-cor-sobre-nevoa}}" style="height:20px;width:auto" alt=""></div></div><div class="cap">Claro, palavra entre chaves em Violeta</div></div>
+    <div><div class="post" style="background:#8A12B4;color:#EEEAF3"><div class="et">// sites</div><div class="t">Sua empresa encontrada fora do <span style="color:#F2B233">{Instagram}</span>.</div><div class="rod"><span>a partir de R$ 790</span><img src="{{logo:ezftech-mono-nevoa}}" style="height:20px;width:auto" alt=""></div></div><div class="cap">Violeta, logo mono Névoa. O preço "a partir de" vem do site e pode mudar.</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="num">09 · Arquivos</div>
+  <h2>O que vem no pacote</h2>
+  <p class="mono" style="color:var(--nevoa)">ezf/marca/<br>&nbsp;&nbsp;logo/ezftech-cor-sobre-nevoa.png<br>&nbsp;&nbsp;logo/ezftech-cor-sobre-tinta.png<br>&nbsp;&nbsp;logo/ezftech-mono-tinta.png<br>&nbsp;&nbsp;logo/ezftech-mono-nevoa.png<br>&nbsp;&nbsp;logo/ezftech-perfil.png<br>&nbsp;&nbsp;tokens.css<br>&nbsp;&nbsp;manual/ezf-manual.html</p>
+  <div class="aviso"><b>Falta para o pacote ficar completo:</b> os logos em <b>SVG</b> (hoje só existem em PNG de 503×118, o que limita ampliação e impressão), uma versão <b>horizontal com descritor</b> ("sites · automação · sistemas") e a identificação da fonte do logo. Se você tiver o arquivo vetorial original, me mande.</div>
+</div></section>
+
+</body></html>

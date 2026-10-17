@@ -1,0 +1,13 @@
+/* ezf.tech: tokens da marca (proposta v0.1, a partir dos logos e do site) */
+:root {
+  --ezf-tinta: #1B1026;       /* fundo escuro, texto sobre claro */
+  --ezf-tinta-elevada: #261835; /* superfície sobre Tinta */
+  --ezf-nevoa: #EEEAF3;       /* fundo claro, texto sobre escuro */
+  --ezf-violeta: #8A12B4;     /* a cor da marca: "tech", blocos de destaque */
+  --ezf-lilas: #B98BE0;       /* chaves, linhas e etiquetas, só sobre Tinta */
+  --ezf-ambar: #F2B233;       /* ação e acento: CTA, nó do fio */
+  --ezf-nevoa-apagada: #B9ABCB; /* texto secundário sobre Tinta */
+  --ezf-tinta-apagada: #5C5070; /* texto secundário sobre Névoa */
+  --ezf-display: "Geist", "Helvetica Neue", Arial, sans-serif;
+  --ezf-mono: "Geist Mono", ui-monospace, monospace;
+}
