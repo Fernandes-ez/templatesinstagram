@@ -41,7 +41,7 @@ th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--linha)}
 th{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--nevoa-ap)}.claro th{color:var(--tinta-ap)}
 .ok{color:#7be0a3;font-family:var(--mono)}.no{color:#ff8b8b;font-family:var(--mono)}.claro .ok{color:#127a3d}.claro .no{color:#b3261e}
 .chip{display:inline-block;padding:4px 10px;border-radius:99px;font-family:var(--mono);font-size:12px;margin-right:6px}
-.post{aspect-ratio:4/5;border-radius:8px;padding:7% 8%;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
+.post{container-type:inline-size;aspect-ratio:4/5;border-radius:8px;padding:7% 8%;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
 .post .et{font-family:var(--mono);font-size:clamp(9px,1.1vw,13px);opacity:.9}
 .post .t{font-weight:600;letter-spacing:-.03em;line-height:1.02;font-size:clamp(22px,3.3vw,40px)}
 .post .rod{font-family:var(--mono);font-size:clamp(9px,1.1vw,13px);display:flex;justify-content:space-between;align-items:end}
@@ -60,9 +60,9 @@ ul.l li:before{content:"{";position:absolute;left:0;color:var(--lilas);font-fami
 
 <header class="cover wrap">
   <img class="logo" src="{{logo:ezftech-cor-sobre-tinta}}" alt="ezf.tech">
-  <div class="num">manual da marca · proposta v0.1 · outubro de 2026</div>
+  <div class="num">manual da marca · proposta v0.2 · outubro de 2026</div>
   <h1 style="margin-top:14px">Quem conversa com você<br>é quem <span class="destaque">{escreve o código}</span>.</h1>
-  <div class="aviso">Este manual não existia. Foi montado a partir de três coisas reais: os 5 logos enviados, as cores e o texto do site ezf-tech.com, e o conceito "Entre chaves" do arquivo antigo de templates. Tudo marcado <b>(proposta)</b> é decisão sugerida que ainda precisa da sua aprovação. O que veio direto dos logos ou do site está marcado <b>(existente)</b>.</div>
+  <div class="aviso">Este manual não existia. Foi montado a partir de três coisas reais: os 5 logos enviados, as cores e o texto do site ezf-tech.com, e o conceito "Entre chaves" do arquivo antigo de templates. Tudo marcado <b>(proposta)</b> é decisão sugerida que ainda precisa da sua aprovação. O que veio direto dos logos ou do site está marcado <b>(existente)</b>. <b>v0.2:</b> a seção de aplicações foi refeita (a v0.1 mostrava três posts iguais com cores diferentes, justamente o que a marca quer evitar) e entrou a seção "Contra o genérico".</div>
 </header>
 
 <section><div class="wrap">
@@ -172,7 +172,17 @@ ul.l li:before{content:"{";position:absolute;left:0;color:var(--lilas);font-fami
       <h3 style="margin-top:16px">Fio</h3><p style="margin:0">Começa embaraçado (o improviso) e termina reto, com um nó em Âmbar (o processo). Em Lilás sobre Tinta, em Violeta sobre Névoa. No máximo um por peça; no carrossel ele atravessa as lâminas.</p></div>
   </div>
   <h3 style="margin-top:34px">Regras (proposta)</h3>
-  <ul class="l"><li>Uma palavra entre chaves por peça, nunca uma frase inteira.</li><li>Um fio por peça, sempre terminando reto.</li><li>Etiquetas em mono e minúscula, como comentário de código: <span class="mono">// sistemas sob medida</span>.</li><li>Nada de terminal falso, linhas de código inventadas ou "[INFO] [SUCCESS]": parece cenário, não prova.</li><li>Cantos de cartão e botão com raio de 12 e 8 px, como no site.</li></ul>
+  <ul class="l"><li>Uma palavra entre chaves por peça, nunca uma frase inteira. E nem toda peça usa isso: veja "Contra o genérico".</li><li>Um fio por peça, sempre terminando reto.</li><li>Etiquetas em mono e minúscula, como comentário de código: <span class="mono">// sistemas sob medida</span>.</li><li>Nada de terminal falso ou log inventado ("[INFO] [SUCCESS]"): parece cenário. Código só aparece quando <b>cada linha é informação verdadeira</b>, como o objeto de proposta da seção 08.</li><li>Cantos de cartão e botão com raio de 12 e 8 px, como no site.</li></ul>
+  <h3 style="margin-top:38px">Contra o genérico (proposta)</h3>
+  <p>Três posts com a mesma estrutura e cores diferentes não são três posts: são um. Estas regras existem para o perfil não parecer gerado em série.</p>
+  <ul class="l">
+    <li><b>Um recurso por peça:</b> palavra entre chaves <i>ou</i> objeto entre chaves <i>ou</i> fio. Nunca os três.</li>
+    <li><b>Pelo menos metade das peças com material real:</b> captura de trabalho entregue, foto, tela. Peça só de texto é exceção, não regra.</li>
+    <li><b>As chaves agrupam conteúdo verdadeiro:</b> prazo, serviço, passos. Grandes, cortadas na borda, como estrutura.</li>
+    <li><b>Nenhuma composição repete</b> em menos de 3 semanas no calendário.</li>
+    <li><b>O rosto do Enzo</b> aparece de vez em quando (cerca de 1 post em 6): é a prova mais forte de que "quem conversa com você é quem escreve o código".</li>
+    <li><b>Quadro com respiro, não vazio:</b> quando sobra espaço, o conteúdo cresce; não se enche com enfeite.</li>
+  </ul>
 </div></section>
 
 <section class="claro"><div class="wrap">
@@ -180,7 +190,7 @@ ul.l li:before{content:"{";position:absolute;left:0;color:var(--lilas);font-fami
   <h2>Prova, não cenário</h2>
   <p>A ezf.tech não vende uma estética de tecnologia, vende trabalho feito. A imagem mostra o trabalho real. <i>(proposta)</i></p>
   <div class="grid g2" style="margin-top:20px">
-    <div class="card"><h3 class="ok">Assim sim</h3><ul class="l"><li>Captura de tela de um site ou sistema real entregue (Aqua Fit, Puka, Tábua)</li><li>Notebook ou celular numa mesa de negócio local, luz natural</li><li>O próprio Enzo trabalhando, com autorização dele</li><li>Antes e depois de uma tela de cliente, com autorização</li></ul></div>
+    <div class="card"><h3 class="ok">Assim sim</h3><ul class="l"><li>Captura de tela de um site ou sistema real entregue (Aqua Fit, Puka, Tábua)</li><li>Notebook ou celular numa mesa de negócio local, luz natural</li><li>O rosto do Enzo, em foto boa, de vez em quando</li><li>Antes e depois de uma tela de cliente, com autorização</li></ul><p style="margin:14px 0 0;font-size:14px">Hoje a única foto do Enzo é a do site, com 460 px: serve de esboço, mas para post precisa de uma versão com pelo menos 1080 px.</p></div>
     <div class="card"><h3 class="no">Assim não</h3><ul class="l"><li>Aperto de mão e equipe sorrindo de banco de imagem</li><li>Foguete, gráfico subindo, cifrão</li><li>Robô, cérebro, circuito, hacker de capuz</li><li>Neon roxo genérico de tecnologia</li></ul></div>
   </div>
 </div></section>
@@ -197,12 +207,52 @@ ul.l li:before{content:"{";position:absolute;left:0;color:var(--lilas);font-fami
 <section class="claro"><div class="wrap">
   <div class="num">08 · Aplicações</div>
   <h2>Como fica no Instagram</h2>
-  <p>Três exemplos de posts 4:5 no sistema. São esboços de composição, não as peças finais. <i>(proposta)</i></p>
+  <p>Quatro composições <b>diferentes entre si</b>, cada uma com material real ou informação verdadeira. São esboços de direção, não as peças finais. <i>(proposta)</i></p>
   <div class="grid g3" style="margin-top:22px">
-    <div><div class="post" style="background:#1B1026;color:#EEEAF3"><div class="et" style="color:#B98BE0">// sistemas sob medida</div><div class="t">Sua operação fora da <span style="color:#F2B233">{planilha}</span>.</div><div class="rod"><span style="color:#B9ABCB">ezf-tech.com</span><img src="{{logo:ezftech-mono-nevoa}}" style="height:20px;width:auto" alt=""></div></div><div class="cap">Escuro, palavra entre chaves em Âmbar</div></div>
-    <div><div class="post" style="background:#EEEAF3;color:#1B1026"><div class="et" style="color:#8A12B4">// atendimento no whatsapp</div><div class="t">Nenhum cliente esperando <span style="color:#8A12B4">{resposta}</span>.</div><div class="rod"><span style="color:#5C5070">ezf-tech.com</span><img src="{{logo:ezftech-cor-sobre-nevoa}}" style="height:20px;width:auto" alt=""></div></div><div class="cap">Claro, palavra entre chaves em Violeta</div></div>
-    <div><div class="post" style="background:#8A12B4;color:#EEEAF3"><div class="et">// sites</div><div class="t">Sua empresa encontrada fora do <span style="color:#F2B233">{Instagram}</span>.</div><div class="rod"><span>a partir de R$ 790</span><img src="{{logo:ezftech-mono-nevoa}}" style="height:20px;width:auto" alt=""></div></div><div class="cap">Violeta, logo mono Névoa. O preço "a partir de" vem do site e pode mudar.</div></div>
+
+    <div><div class="post" style="background:#1B1026;color:#EEEAF3;padding:0;justify-content:flex-start">
+      <svg viewBox="0 0 100 400" preserveAspectRatio="none" style="position:absolute;left:-5%;top:10%;height:80%;width:25%"><path d="M88 4C46 4 50 36 50 76v84c0 28-16 40-44 40 28 0 44 12 44 40v84c0 40-4 72 38 72" fill="none" stroke="#B98BE0" stroke-width="9" stroke-linecap="round"/></svg>
+      <svg viewBox="0 0 100 400" preserveAspectRatio="none" style="position:absolute;right:-5%;top:10%;height:80%;width:25%;transform:scaleX(-1)"><path d="M88 4C46 4 50 36 50 76v84c0 28-16 40-44 40 28 0 44 12 44 40v84c0 40-4 72 38 72" fill="none" stroke="#B98BE0" stroke-width="9" stroke-linecap="round"/></svg>
+      <div class="et" style="position:absolute;left:8%;top:5%;color:#B9ABCB;font-size:3.6cqw">// proposta de site</div>
+      <div style="position:absolute;left:25%;top:33%;right:22%;font-family:var(--mono);font-size:4.1cqw;line-height:2.1;white-space:nowrap">
+        <div><span style="color:#B98BE0">serviço</span>:   "site"</div>
+        <div><span style="color:#B98BE0">prazo</span>:     "~4 semanas"</div>
+        <div><span style="color:#B98BE0">protótipo</span>: <span style="color:#F2B233">"grátis"</span></div>
+        <div><span style="color:#B98BE0">domínio</span>:   "no seu nome"</div>
+      </div>
+      <div class="rod" style="position:absolute;left:8%;right:8%;bottom:5%"><span style="color:#B9ABCB">ezf-tech.com</span><img src="{{logo:ezftech-mono-nevoa}}" style="height:20px;width:auto" alt=""></div></div>
+      <div class="cap">A chave como estrutura: agrupa informação verdadeira do site (prazo, protótipo, domínio), em vez de decorar uma frase.</div></div>
+
+    <div><div class="post" style="background:#EEEAF3;color:#1B1026;padding:7% 7% 6%;gap:4%;justify-content:flex-start">
+      <div class="et" style="color:#8A12B4;font-size:3.6cqw">// projeto · aqua fit club</div>
+      <img src="{{img:aquafit-desktop}}" style="width:100%;border-radius:8px;box-shadow:0 10px 30px -12px rgba(27,16,38,.5)" alt="">
+      <div class="t" style="font-size:7.4cqw;margin-top:2%">Site da academia<br>do bairro, no ar.</div>
+      <div class="rod" style="margin-top:auto"><span style="color:#5C5070">Vila Nhocuné, São Paulo</span><img src="{{logo:ezftech-cor-sobre-nevoa}}" style="height:20px;width:auto" alt=""></div></div>
+      <div class="cap">Trabalho entregue, em tamanho grande, sem mockup flutuando. Captura real do site (use só com autorização do cliente).</div></div>
+
+    <div><div class="post" style="background:#8A12B4;color:#EEEAF3;padding:7%;gap:5%;justify-content:flex-start">
+      <div class="et" style="font-size:3.6cqw">// enzo · são paulo</div>
+      <img src="{{img:enzo}}" style="width:100%;aspect-ratio:3/2;object-fit:cover;object-position:50% 28%;border-radius:8px" alt="">
+      <div class="t" style="font-size:7cqw">Quem conversa com você é quem escreve o código.</div>
+      <div class="rod" style="margin-top:auto"><span>ezf-tech.com</span><img src="{{logo:ezftech-mono-nevoa}}" style="height:20px;width:auto" alt=""></div></div>
+      <div class="cap">O rosto, com poucas palavras. A foto de hoje é a do site (460 px, esboço): trocar por uma boa.</div></div>
   </div>
+
+  <h3 style="margin-top:44px">Carrossel contínuo: o fio</h3>
+  <p>O fio começa embaraçado na capa e termina reto, com o nó em Âmbar, na última lâmina. Quem arrasta vê o improviso virar processo. Os passos são os do site: conversa, proposta, desenvolvimento, entrega e manutenção. <i>(proposta)</i></p>
+  <svg viewBox="0 0 1660 520" style="width:100%;height:auto;margin-top:14px;border-radius:12px">
+    <rect width="1660" height="520" fill="#1B1026"/>
+    <g stroke="#3A2A4E" stroke-width="3"><line x1="415" y1="0" x2="415" y2="520"/><line x1="830" y1="0" x2="830" y2="520"/><line x1="1245" y1="0" x2="1245" y2="520"/></g>
+    <path d="M40 330C90 150 200 470 250 270S340 190 300 340 200 210 400 300 470 330 560 305C700 300 900 308 1590 308" fill="none" stroke="#B98BE0" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="1596" cy="308" r="15" fill="#F2B233"/>
+    <g font-family="Geist,Arial" fill="#EEEAF3">
+      <text x="40" y="96" font-size="44" font-weight="600" letter-spacing="-1.5">Do improviso</text><text x="40" y="146" font-size="44" font-weight="600" letter-spacing="-1.5">ao processo.</text>
+      <text x="455" y="96" font-size="15" font-family="Geist Mono,monospace" fill="#B98BE0">01</text><text x="455" y="140" font-size="34" font-weight="600">Conversa</text><text x="455" y="178" font-size="17" fill="#B9ABCB">Você conta como a empresa</text><text x="455" y="202" font-size="17" fill="#B9ABCB">funciona hoje.</text>
+      <text x="870" y="96" font-size="15" font-family="Geist Mono,monospace" fill="#B98BE0">02</text><text x="870" y="140" font-size="34" font-weight="600">Proposta</text><text x="870" y="178" font-size="17" fill="#B9ABCB">Escopo e preço fechados.</text><text x="870" y="202" font-size="17" fill="#B9ABCB">Protótipo grátis no site.</text>
+      <text x="1285" y="96" font-size="15" font-family="Geist Mono,monospace" fill="#B98BE0">03</text><text x="1285" y="140" font-size="34" font-weight="600">Entrega</text><text x="1285" y="178" font-size="17" fill="#B9ABCB">Treinamento, hospedagem,</text><text x="1285" y="202" font-size="17" fill="#B9ABCB">ajustes e suporte.</text>
+    </g>
+  </svg>
+  <div class="cap">Quatro lâminas 4:5 lado a lado; as linhas verticais são as emendas. O fio atravessa todas elas.</div>
 </div></section>
 
 <section><div class="wrap">
