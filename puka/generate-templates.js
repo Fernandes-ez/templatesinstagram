@@ -567,7 +567,6 @@ async function carrosselContinuo() {
   const M = d.M;
   const yLinha = 1010;
   const xLacuna = SW * 3 + 380; // a passagem acontece dentro da lâmina 4, sempre à vista
-  await d.padrao("claro", { x: 0, y: 1130, w: SW * N, h: FEED.altura - 1130, opacidade: 0.8 });
   const lp = d.linhaPassagem({ x: M, y: yLinha, largura: SW * N - 2 * M, retoFrac: (xLacuna - M) / (SW * N - 2 * M) });
 
   // lâmina 1: capa
