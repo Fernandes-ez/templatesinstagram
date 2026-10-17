@@ -1,0 +1,26 @@
+{
+  "displayLight": {
+    "file": "Unbounded-Light.ttf",
+    "ps": "Unbounded-Light"
+  },
+  "display": {
+    "file": "Unbounded-Regular.ttf",
+    "ps": "Unbounded-Regular"
+  },
+  "displayMedium": {
+    "file": "Unbounded-Medium.ttf",
+    "ps": "Unbounded-Medium"
+  },
+  "body": {
+    "file": "InstrumentSans-Regular.ttf",
+    "ps": "InstrumentSans-Regular"
+  },
+  "bodySemi": {
+    "file": "InstrumentSans-SemiBold.ttf",
+    "ps": "InstrumentSans-SemiBold"
+  },
+  "mono": {
+    "file": "JetBrainsMono-Regular.ttf",
+    "ps": "JetBrainsMono-Regular"
+  }
+}

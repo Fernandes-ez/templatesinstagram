@@ -1,0 +1,14 @@
+{
+  "name": "ezf-templates",
+  "private": true,
+  "type": "module",
+  "description": "Gera templates de Instagram em PSD com a identidade ezf.tech",
+  "scripts": {
+    "fonts": "py prepare-fonts.py",
+    "build": "node generate-templates.js"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.9",
+    "ag-psd": "^31.0.2"
+  }
+}
