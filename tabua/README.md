@@ -1,6 +1,6 @@
 # Templates de Instagram da Tábua (direção "Letreiro")
 
-Gera 5 templates (7 peças) em `.psd` com camadas editáveis e um `.png` de prévia de cada um.
+Gera 8 templates (10 peças) em `.psd` com camadas editáveis e um `.png` de prévia de cada um.
 Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar.
 
 | Template | Peça(s) | O que é |
@@ -10,6 +10,9 @@ Nenhuma peça mostra preço ou plano da Tábua: a precificação ainda vai mudar
 | 3. Carrossel | `carrossel_capa`, `carrossel_miolo`, `carrossel_final` | Gancho, 3 itens com ícones, tagline + CTA |
 | 4. Dica de balcão | `feed_dica_1080x1350` | Número grande, ícone próprio e texto curto |
 | 5. Anúncio | `feed_anuncio_1080x1350` | Faixa, título com letreiro, card "10 min" e CTA |
+| 6. Tela do produto | `feed_tela_cardapio_1080x1350` | Cardápio de exemplo (restaurante fictício) em placa |
+| 7. Enquete | `feed_enquete_1080x1350` | Pergunta com duas respostas (A e B) para os comentários |
+| 8. Foto + título | `feed_foto_titulo_1080x1350` | Foto real do balcão em placa e frase curta (precisa de foto) |
 
 ## Rodar
 
@@ -26,4 +29,5 @@ Cores, fontes e caminhos ficam em `brand.config.js`; o texto de cada peça, em `
 
 - Os textos "27%" e "cem reais" são **exemplo declarado** na própria peça. Se for afirmar a taxa de um marketplace, precisa de fonte.
 - Gerar JPG direto (sem PSD) para o n8n: a lógica de desenho em canvas já existe e pode virar o serviço de render.
-- Dois templates que dependem de foto real (prato do dia e depoimento) foram removidos até haver foto e autorização.
+- `feed_foto_titulo` só fica pronto com uma foto real (camada `FOTO_AQUI`). Prato do dia e depoimento foram removidos até haver foto e autorização de cliente.
+- A tela do cardápio usa o "Bar do Zé", restaurante fictício do próprio site, e está marcada "Cardápio de exemplo". Trocar por capturas reais quando houver.

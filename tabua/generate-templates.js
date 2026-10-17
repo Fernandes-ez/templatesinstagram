@@ -566,6 +566,85 @@ async function pratoDoDia() {
   d.salvar();
 }
 
+/** 8. Tela do produto: cardápio de exemplo (restaurante fictício) dentro de uma placa. Fundo Verde. */
+async function telaCardapio() {
+  const d = new Doc("feed_tela_cardapio_1080x1350", FEED, K.verdeBoteco);
+  const M = d.M;
+  await d.padrao("verde", { y: 0, h: 1350 });
+  d.faixa("Cardápio de exemplo", { x: M, y: 96 });
+  const t = d.titulo("Cardápio com a\ncara da casa.", { x: M, y: 330, size: 108, cor: K.cal, sombra: K.amareloOvo, fundo: K.verdeBoteco });
+  const c = { x: M, y: t.base + 90, w: FEED.largura - 2 * M, h: 640 };
+  d.forma("Grafismos", "Cardapio_placa", placaPath(c.x, c.y, c.w, c.h), K.cal);
+  const px = c.x + 56;
+  const pr = c.x + c.w - 56;
+  d.texto("Texto", "Cardapio_nome", "Bar do Zé", { font: "display", size: 64, cor: K.tinta, x: px, y: c.y + 110 });
+  d.texto("Texto", "Cardapio_status", "Aberto agora · fecha às 23h", { font: "corpoBold", size: 26, cor: K.verdeBoteco, x: px, y: c.y + 160 });
+  const itens = [
+    ["X-Salada da casa", "Pão de brioche, blend 150 g, queijo prato", 2990],
+    ["Porção de mandioca", "Com manteiga de garrafa", 2400],
+    ["Caldo de feijão", "Copo 300 ml, torresmo e cebolinha", 1450],
+  ];
+  let y = c.y + 250;
+  for (const [i, [nome, detalhe, valor]] of itens.entries()) {
+    d.texto("Texto", `Cardapio_item${i + 1}`, nome, { font: "subtitulo", size: 38, cor: K.tinta, x: px, y });
+    d.texto("Texto", `Cardapio_item${i + 1}_detalhe`, detalhe, { size: 26, cor: K.tinta, x: px, y: y + 44 });
+    d.preco(valor, { x: pr, y: y + 36, size: 64, cor: K.verdeBoteco, align: "right", prefixo: `Cardapio_preco${i + 1}` });
+    if (i < itens.length - 1) {
+      d.pixel("Grafismos", `Cardapio_linha${i + 1}`, (ctx) => {
+        ctx.strokeStyle = K.tinta;
+        ctx.globalAlpha = 0.35;
+        ctx.setLineDash([8, 8]);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(px, y + 82);
+        ctx.lineTo(pr, y + 82);
+        ctx.stroke();
+      });
+    }
+    y += 130;
+  }
+  await d.logo(B.logo.principalNegativo, { x: M, y: 1176, largura: 220 });
+  d.texto("Texto", "Rodape_@tabua", "@tabua.app", { font: "corpoBold", size: 26, cor: K.cal, x: FEED.largura - M, y: 1240, align: "right" });
+  d.grade();
+  d.salvar();
+}
+
+/** 9. Enquete: pergunta com duas respostas em placas (A e B). Fundo Cal. */
+async function enquete() {
+  const d = new Doc("feed_enquete_1080x1350", FEED, K.cal);
+  const M = d.M;
+  d.faixa("Pergunta do balcão", { x: M, y: 96 });
+  const t = d.titulo("Quem pede mais\nno seu restaurante?", { x: M, y: 330, size: 84, cor: K.verdeBoteco, sombra: K.tinta });
+  const w = 440;
+  const y0 = t.base + 110;
+  const opcoes = [
+    { x: M, bg: K.verdeBoteco, letra: K.amareloOvo, texto: K.cal, l: "A", rotulo: "Pedido na mesa\npelo QR", icone: "mesa-qr" },
+    { x: FEED.largura - M - w, bg: K.amareloOvo, letra: K.verdeBoteco, texto: K.tinta, l: "B", rotulo: "Pedido\nno WhatsApp", icone: "conversa" },
+  ];
+  for (const o of opcoes) {
+    d.forma("Grafismos", `Opcao_${o.l}_placa`, placaPath(o.x, y0, w, 400), o.bg);
+    d.texto("Texto", `Opcao_${o.l}_letra`, o.l, { font: "numero", size: 170, cor: o.letra, x: o.x + 48, y: y0 + 200 });
+    await d.icone(o.icone, { x: o.x + w - 48 - 80, y: y0 + 48, size: 80, cor: o.texto, nome: `Opcao_${o.l}_icone` });
+    d.texto("Texto", `Opcao_${o.l}_rotulo`, o.rotulo, { font: "subtitulo", size: 42, leading: 48, cor: o.texto, x: o.x + 48, y: y0 + 290 });
+  }
+  d.texto("Texto", "Chamada", "Responde nos comentários: A ou B?", { font: "corpoBold", size: 36, cor: K.tinta, x: M, y: y0 + 500 });
+  await d.logo(B.logo.principalCor, { x: FEED.largura - M, y: 1178, largura: 220, align: "right" });
+  d.grade();
+  d.salvar();
+}
+
+/** 10. Foto + título: foto real do balcão em placa e frase curta com letreiro. Fundo Cal. */
+async function fotoTitulo() {
+  const d = new Doc("feed_foto_titulo_1080x1350", FEED, K.cal);
+  const M = d.M;
+  const foto = d.foto({ x: M, y: 80, w: FEED.largura - 2 * M, h: 700, legenda: "FOTO DO BALCÃO" });
+  d.faixa("Do balcão", { x: M, y: foto.y1 + 36 });
+  d.titulo("Pedido\nanotado.", { x: M, y: foto.y1 + 250, size: 150, cor: K.verdeBoteco, sombra: K.tinta });
+  await d.logo(B.logo.principalCor, { x: FEED.largura - M, y: 1190, largura: 200, align: "right" });
+  d.grade();
+  d.salvar();
+}
+
 /** 7. Story: comanda chegando (Nº 047, itens, total em preço de placa, carimbo). Zonas seguras de 250 px. */
 async function story() {
   const S = B.story;
@@ -644,7 +723,7 @@ async function story() {
 // ── 6. Gera tudo ──────────────────────────────────────────────────────────────
 (async () => {
   for (const dir of ["", "previews", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
-  for (const gerar of [anuncio, dica, capa, miolo, final, antesDepois, story]) await gerar();
+  for (const gerar of [anuncio, dica, capa, miolo, final, antesDepois, story, telaCardapio, enquete, fotoTitulo]) await gerar();
 })().catch((e) => {
   console.error(e);
   process.exit(1);
