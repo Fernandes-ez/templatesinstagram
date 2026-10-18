@@ -1,0 +1,17 @@
+# systemd: sudo cp ezf-render.service /etc/systemd/system/ && sudo systemctl enable --now ezf-render
+[Unit]
+Description=ezf-render (JPG de Instagram para o n8n)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/templatesinstagram/render
+ExecStart=/usr/bin/node server.js
+Environment=PORT=3100
+Environment=HOST=127.0.0.1
+Environment=PUBLIC_URL=https://render.SEU-DOMINIO.com.br
+EnvironmentFile=/etc/ezf-render.env
+Restart=always
+User=www-data
+
+[Install]
+WantedBy=multi-user.target

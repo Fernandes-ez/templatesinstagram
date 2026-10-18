@@ -1,0 +1,34 @@
+{
+  "nota": "Cole o nó abaixo no n8n (Ctrl+V no canvas). Ele chama o serviço na própria VM e devolve as URLs dos JPG. Crie a credencial 'Header Auth' com Name=Authorization e Value=Bearer SEU_RENDER_TOKEN.",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3100/render",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ marca: 'ezf', modelo: $json.modelo, textos: $json.textos }) }}",
+        "options": { "timeout": 60000 }
+      },
+      "name": "Renderizar post (ezf-render)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [0, 0],
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "connections": {},
+  "exemplo_de_entrada": {
+    "modelo": "miolo_carrossel",
+    "textos": { "icone": "lupa", "titulo": "Ninguém acha você no Google.", "apoio": "Quem procura perto acha o concorrente." }
+  },
+  "exemplo_de_saida": {
+    "marca": "ezf",
+    "modelo": "miolo_carrossel",
+    "arquivos": [{ "ordem": 1, "arquivo": "3f2a....jpg", "url": "https://render.SEU-DOMINIO.com.br/files/3f2a....jpg" }],
+    "avisos": [],
+    "ms": 180
+  }
+}

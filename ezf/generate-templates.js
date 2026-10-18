@@ -9,7 +9,8 @@ const B = require("./brand.config.js");
 
 const K = B.cores;
 const OUT = path.join(__dirname, "output");
-for (const d of ["jpg", "previews", "carrossel_escopo"]) fs.mkdirSync(path.join(OUT, d), { recursive: true });
+const GRAVAR = require.main === module; // rodando direto grava em output/; importado (serviço de render) só devolve os buffers
+if (GRAVAR) for (const d of ["jpg", "previews", "carrossel_escopo"]) fs.mkdirSync(path.join(OUT, d), { recursive: true });
 
 const ICONES = ["celular", "relogio", "loja", "pin", "mensagem", "janela", "calendario", "lupa", "cadeado", "grafico", "preco", "sistema"];
 const exigidos = [...Object.values(B.fontes), ...Object.values(B.logo), ...ICONES.flatMap((i) => ["sobre-tinta", "sobre-nevoa"].map((t) => path.join(B.icones, t, `${i}.svg`)))];
@@ -83,6 +84,7 @@ class Doc {
     this.canvas = createCanvas(W, H);
     this.ctx = this.canvas.getContext("2d");
     this.avisos = [];
+    this.limiteBase = H - margem - 100; // texto abaixo disso invade o rodapé (o rodapé tem nome "rodape" e fica de fora)
     this.ctx.fillStyle = fundo;
     this.ctx.fillRect(0, 0, W, H);
   }
@@ -111,7 +113,9 @@ class Doc {
       });
     });
     if (xmin < this.M - 1 || xmax > this.W - this.M + 1) this.avisos.push(`${nome}: "${str.slice(0, 40)}" sai da margem (${Math.round(xmin)}–${Math.round(xmax)})`);
-    return { x0: xmin, x1: xmax, topo: y0 - size * 0.72, base: y0 + (linhas.length - 1) * lead, linhas: linhas.length };
+    const base = y0 + (linhas.length - 1) * lead;
+    if (nome !== "rodape" && nome !== "etiqueta" && base > this.limiteBase) this.avisos.push(`${nome}: "${str.slice(0, 40)}" invade o rodapé (texto longo demais)`);
+    return { x0: xmin, x1: xmax, topo: y0 - size * 0.72, base, linhas: linhas.length };
   }
 
   titulo(str, o) {
@@ -251,10 +255,14 @@ class Doc {
     return { x0: x, x1: x + w, y0: y, y1: y + h };
   }
 
+  jpg(qualidade = 92) {
+    return this.canvas.toBuffer("image/jpeg", qualidade);
+  }
+
   salvar() {
-    const png = this.canvas.toBuffer("image/png");
-    fs.writeFileSync(path.join(OUT, "previews", `${this.nome}.png`), png);
-    if (this.W === B.feed.largura) fs.writeFileSync(path.join(OUT, "jpg", `${this.nome}.jpg`), this.canvas.toBuffer("image/jpeg", 92));
+    if (!GRAVAR) return this;
+    fs.writeFileSync(path.join(OUT, "previews", `${this.nome}.png`), this.canvas.toBuffer("image/png"));
+    if (this.W === B.feed.largura) fs.writeFileSync(path.join(OUT, "jpg", `${this.nome}.jpg`), this.jpg());
     for (const a of this.avisos) console.warn(`  ! ${this.nome}: ${a}`);
     return this;
   }
@@ -380,6 +388,7 @@ async function antesDepois({ etiqueta = "// antes / depois", titulo = "Do WhatsA
 async function storyPergunta({ etiqueta = "// pergunta de cliente", pergunta = "Quanto custa um site?", titulo = "A resposta {honesta} está no feed.", chamada = "novo post" } = {}) {
   const S = B.story;
   const d = new Doc("story_pergunta", S.largura, S.altura, K.tinta, S.margem);
+  d.limiteBase = S.altura - S.zonaSegura - 140;
   d.campoChaves({ h: 700, alpha: 0.3 });
   d.etiqueta(etiqueta, { cor: K.lilas, x: S.margem, y: 360 });
   const m = d.mensagem({ x: S.margem, y: 430, w: 820, rotulo: "cliente · whatsapp", corpo: pergunta, size: 84 });
@@ -391,8 +400,15 @@ async function storyPergunta({ etiqueta = "// pergunta de cliente", pergunta = "
 
 // ── 10 · Carrossel em escopo: o carrossel inteiro é { ... } ───────────────────
 const LAMINAS = 5;
-async function carrosselEscopo() {
+const SINAIS_PADRAO = [
+  { icone: "celular", titulo: "Demora para abrir no celular.", apoio: "Passou de 3 segundos, o cliente fecha." },
+  { icone: "pin", titulo: "Ninguém acha o contato.", apoio: "Telefone e WhatsApp tem que estar na primeira tela." },
+  { icone: "lupa", titulo: "Não aparece no Google da cidade.", apoio: "Sem isso, quem procura perto de você acha o concorrente." },
+];
+/** Devolve { doc, fatias: [Buffer JPG 1080×1350 × 5] }. As lâminas 2 a 4 são os `sinais`. */
+async function carrosselEscopo({ capa = "{3} sinais de que o seu site perde cliente.", sinais = SINAIS_PADRAO, final = {} } = {}) {
   const N = LAMINAS;
+  const fim = { titulo: "Reconheceu algum?", apoio: "Me chama no WhatsApp e eu te mostro o que arrumar primeiro.", botao: "Me chama no WhatsApp", ...final };
   const W = FEED.largura * N;
   const d = new Doc("carrossel_escopo_5400x1350", W, FEED.altura, K.tinta, M);
   const H = FEED.altura;
@@ -403,40 +419,37 @@ async function carrosselEscopo() {
   d.chave({ x: W - 34 - 94 * e, y: (H - grande) / 2, h: grande, dir: -1, cor: K.violeta, sw: 8 });
   d.fio({ x0: 340, x1: W - 340, y: 92, cor: K.lilas, no: W - 340 });
   const x0 = 340; // começo do texto na 1ª lâmina (dentro do escopo)
-  // 1 · capa
-  d.etiqueta("// guia rápido · 1/5", { cor: K.lilas, x: x0, y: 190 });
-  d.titulo("{3} sinais de que o seu site perde cliente.", { size: 92, cor: K.nevoa, x: x0, y: 700, w: 660, nome: "capa" });
+  d.etiqueta(`// guia rápido · 1/${N}`, { cor: K.lilas, x: x0, y: 190 });
+  d.titulo(capa, { size: 92, cor: K.nevoa, x: x0, y: 700, w: 660, nome: "capa" });
   d.etiqueta("arrasta →", { cor: K.nevoaApagada, x: x0, y: H - 110 });
-  const itens = [
-    ["celular", "// sinal 1 · 2/5", "Demora para abrir no celular.", "Passou de 3 segundos, o cliente fecha."],
-    ["pin", "// sinal 2 · 3/5", "Ninguém acha o contato.", "Telefone e WhatsApp tem que estar na primeira tela."],
-    ["lupa", "// sinal 3 · 4/5", "Não aparece no Google da cidade.", "Sem isso, quem procura perto de você acha o concorrente."],
-  ];
-  for (const [i, [ic, et, ti, ap]] of itens.entries()) {
+  for (const [i, s] of sinais.entries()) {
     const x = SW * (i + 1) + M;
-    d.etiqueta(et, { cor: K.lilas, x, y: 190 });
-    await d.icone("sobre-tinta", ic, { x: x - 8, y: 300, size: 200 });
-    const t = d.titulo(ti, { size: 92, cor: K.nevoa, x, y: 640, w: 880, nome: `sinal${i + 1}` });
-    d.apoio(ap, { cor: K.nevoaApagada, x, y: t.base + 90, w: 800 });
+    d.etiqueta(`// sinal ${i + 1} · ${i + 2}/${N}`, { cor: K.lilas, x, y: 190 });
+    await d.icone("sobre-tinta", s.icone, { x: x - 8, y: 300, size: 200 });
+    const t = d.titulo(s.titulo, { size: 92, cor: K.nevoa, x, y: 640, w: 880, nome: `sinal${i + 1}` });
+    d.apoio(s.apoio, { cor: K.nevoaApagada, x, y: t.base + 90, w: 800 });
   }
-  // 5 · ação
-  const xf = SW * 4 + M;
-  // (a chave de fechamento ocupa a borda direita da última lâmina)
-  d.etiqueta("// 5/5", { cor: K.lilas, x: xf, y: 190 });
-  const tf = d.titulo("Reconheceu algum?", { size: 100, cor: K.nevoa, x: xf, y: 640, w: 700 });
-  const af = d.apoio("Me chama no WhatsApp e eu te mostro o que arrumar primeiro.", { cor: K.nevoaApagada, x: xf, y: tf.base + 90, w: 640 });
-  d.botao("Me chama no WhatsApp", { x: xf, y: af.base + 70 });
+  const xf = SW * (N - 1) + M;
+  d.etiqueta(`// ${N}/${N}`, { cor: K.lilas, x: xf, y: 190 });
+  const tf = d.titulo(fim.titulo, { size: 100, cor: K.nevoa, x: xf, y: 640, w: 700 });
+  const af = d.apoio(fim.apoio, { cor: K.nevoaApagada, x: xf, y: tf.base + 90, w: 640 });
+  d.botao(fim.botao, { x: xf, y: af.base + 70 });
   await d.logo("tinta", { x: xf, y: H - M - 61, largura: 260 });
   d.salvar();
-  // fatias
+  const fatias = [];
   for (let i = 0; i < N; i++) {
     const c = createCanvas(SW, H);
     c.getContext("2d").drawImage(d.canvas, i * SW, 0, SW, H, 0, 0, SW, H);
-    fs.writeFileSync(path.join(OUT, "carrossel_escopo", `carrossel_escopo_${String(i + 1).padStart(2, "0")}.jpg`), c.toBuffer("image/jpeg", 92));
+    const buf = c.toBuffer("image/jpeg", 92);
+    fatias.push(buf);
+    if (GRAVAR) fs.writeFileSync(path.join(OUT, "carrossel_escopo", `carrossel_escopo_${String(i + 1).padStart(2, "0")}.jpg`), buf);
   }
+  return { doc: d, fatias };
 }
 
-(async () => {
+module.exports = { ICONES, capaCarrossel, miolo, finalCarrossel, listaRecebe, numero, perguntaCliente, trabalhoEntregue, antesDepois, storyPergunta, carrosselEscopo };
+
+if (GRAVAR) (async () => {
   await capaCarrossel();
   await miolo();
   await finalCarrossel();
