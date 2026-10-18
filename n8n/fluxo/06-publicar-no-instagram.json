@@ -170,7 +170,7 @@
         "hostUrl": "graph.facebook.com",
         "httpRequestMethod": "GET",
         "graphApiVersion": "v25.0",
-        "node": "={{ $('Criar contêiner de mídia').item.json.id }}",
+        "node": "={{ $('Contêiner a publicar').first().json.container_id }}",
         "edge": "",
         "options": {
           "fields": {
@@ -280,7 +280,7 @@
             "parameter": [
               {
                 "name": "creation_id",
-                "value": "={{ $('Criar contêiner de mídia').item.json.id }}"
+                "value": "={{ $('Contêiner a publicar').first().json.container_id }}"
               }
             ]
           }
@@ -434,7 +434,7 @@
     },
     {
       "parameters": {
-        "content": "## 06 · Publicar no Instagram (15 em 15 min)\n**O que faz:** olha a fila, pega o próximo post cuja hora chegou, cria o contêiner de mídia no Instagram, espera processar e publica. Atualiza o status (`publicado` ou `erro`) e avisa no Telegram.\n**Entra:** relógio (15 min) + linhas `agendado` da tabela `instagram_posts`.\n**Sai:** post publicado e aviso.\n\n**Atenção:** troque o chat do Telegram em **Avisar resultado**.",
+        "content": "## 06 · Publicar no Instagram (15 em 15 min)\n**O que faz:** olha a fila, pega o próximo post cuja hora chegou, cria o contêiner de mídia no Instagram (imagem, Reels ou **carrossel**: um contêiner por lâmina e um para o carrossel), espera processar e publica. Atualiza o status (`publicado` ou `erro`) e avisa no Telegram.\n**Entra:** relógio (15 min) + linhas `agendado` da tabela `instagram_posts`.\n**Sai:** post publicado e aviso.\n\n**Atenção:** troque o chat do Telegram em **Avisar resultado**.",
         "height": 340,
         "width": 1100,
         "color": 4
@@ -446,6 +446,161 @@
       "position": [
         -60,
         -420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cd0f9bb7-9979-43c4-bb5c-f19b5a85cb88",
+              "leftValue": "={{ $('Próximo post na hora').first().json.tipo === 'carrossel' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "3815e49b-6d35-48a0-bfc3-305cabe5ca6d",
+      "name": "É carrossel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        2800
+      ],
+      "notes": "Imagem única e Reels seguem por cima (como antes). Carrossel desce para criar os contêineres das lâminas.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Uma linha por lâmina, na ordem em que o post foi aprovado.\nconst p = $('Próximo post na hora').first().json;\nconst urls = JSON.parse(p.midia_urls || '[]');\nif (urls.length < 2 || urls.length > 10) throw new Error('Carrossel precisa de 2 a 10 imagens; a fila tem ' + urls.length + '.');\nreturn urls.map((u, i) => ({ json: { ig_user_id: p.ig_user_id, image_url: u, ordem: i + 1 } }));\n"
+      },
+      "id": "ed75eede-e633-435e-a3e9-405ebddb7a24",
+      "name": "Separar lâminas do post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        2960
+      ]
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $json.ig_user_id }}",
+        "edge": "media",
+        "options": {
+          "queryParametersJson": "={{ JSON.stringify({ image_url: $json.image_url, is_carousel_item: 'true' }) }}"
+        }
+      },
+      "id": "bc4895f1-b3e1-4b4e-a818-016faa27529a",
+      "name": "Criar contêiner da lâmina",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        2960
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "notes": "Um contêiner por lâmina (is_carousel_item). Roda uma vez por lâmina.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// IDs dos contêineres das lâminas, na ordem, separados por vírgula (formato que a Meta pede em \"children\").\nconst ids = $input.all().map((i) => i.json.id).filter(Boolean);\nconst esperado = JSON.parse($('Próximo post na hora').first().json.midia_urls || '[]').length;\nif (ids.length !== esperado) throw new Error('Só ' + ids.length + ' de ' + esperado + ' lâminas viraram contêiner.');\nreturn [{ json: { children: ids.join(',') } }];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "89bf785e-59c7-4908-9d42-4a74c3ea773d",
+      "name": "Juntar contêineres",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        2960
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      },
+      "id": "9a75bd55-6b09-4c05-910b-d519240cb13e",
+      "name": "Aguardar lâminas",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        2960
+      ],
+      "notes": "Dá tempo da Meta processar as imagens antes de montar o carrossel.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $('Próximo post na hora').first().json.ig_user_id }}",
+        "edge": "media",
+        "options": {
+          "queryParametersJson": "={{ JSON.stringify({ media_type: 'CAROUSEL', children: $('Juntar contêineres').first().json.children, caption: $('Próximo post na hora').first().json.legenda }) }}"
+        }
+      },
+      "id": "6489231d-0c9d-4aa2-8246-5c66acf5f63b",
+      "name": "Criar contêiner do carrossel",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        2960
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "notes": "Contêiner do carrossel, com a legenda. Daqui segue o mesmo caminho: esperar, checar status, publicar.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Um só ponto para os dois caminhos (imagem/Reels e carrossel): o ID do contêiner que será checado e publicado.\nconst veioCarrossel = $('Criar contêiner do carrossel').isExecuted;\nconst id = veioCarrossel ? $('Criar contêiner do carrossel').first().json.id : $('Criar contêiner de mídia').first().json.id;\nreturn [{ json: { container_id: id } }];\n"
+      },
+      "id": "86f0fc53-71cf-42f8-8f4c-66d1e7719536",
+      "name": "Contêiner a publicar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        2600
       ]
     }
   ],
@@ -487,7 +642,7 @@
       "main": [
         [
           {
-            "node": "Criar contêiner de mídia",
+            "node": "É carrossel?",
             "type": "main",
             "index": 0
           }
@@ -498,7 +653,7 @@
       "main": [
         [
           {
-            "node": "Aguardar processamento",
+            "node": "Contêiner a publicar",
             "type": "main",
             "index": 0
           }
@@ -622,6 +777,104 @@
         [
           {
             "node": "Avisar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É carrossel?": {
+      "main": [
+        [
+          {
+            "node": "Separar lâminas do post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Criar contêiner de mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar lâminas do post": {
+      "main": [
+        [
+          {
+            "node": "Criar contêiner da lâmina",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar contêiner da lâmina": {
+      "main": [
+        [
+          {
+            "node": "Juntar contêineres",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Juntar contêineres": {
+      "main": [
+        [
+          {
+            "node": "Aguardar lâminas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar lâminas": {
+      "main": [
+        [
+          {
+            "node": "Criar contêiner do carrossel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar contêiner do carrossel": {
+      "main": [
+        [
+          {
+            "node": "Contêiner a publicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contêiner a publicar": {
+      "main": [
+        [
+          {
+            "node": "Aguardar processamento",
             "type": "main",
             "index": 0
           }

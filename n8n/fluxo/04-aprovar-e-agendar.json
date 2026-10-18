@@ -249,7 +249,7 @@
         "binaryData": false,
         "file": "={{ $('Preparar prévia').item.json.midia_url }}",
         "additionalFields": {
-          "caption": "=Prévia · {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.modelo }}"
+          "caption": "=Prévia · {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.modelo }}{{ $('Preparar prévia').item.json.tipo === 'carrossel' ? ' · capa do carrossel (as outras lâminas estão na mensagem abaixo)' : '' }}"
         }
       },
       "id": "b8a42cda-8516-42da-9567-642520871ab1",
@@ -271,7 +271,7 @@
       "parameters": {
         "operation": "sendAndWait",
         "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
-        "message": "=📝 {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.tipo === 'reel' ? 'Reels (' + $('Preparar prévia').item.json.motor + ')' : 'Feed (' + $('Preparar prévia').item.json.modelo + ')' }} · {{ $('Preparar prévia').item.json.pilar }}\nTema: {{ $('Preparar prévia').item.json.tema }}\nRevisão automática: {{ $('Preparar prévia').item.json.nota_revisao }}/10{{ $('Preparar prévia').item.json.reescrito ? ' (reescrito após 1ª revisão)' : '' }}\n{{ $('Ler revisão visual').isExecuted ? $('Ler revisão visual').item.json.visual_nota : '' }}{{ $('Preparar prévia').item.json.veo_falhou ? '⚠️ O Veo falhou; o Reels saiu na versão animada.' : '' }}\nPublicação prevista: {{ $('Preparar prévia').item.json.marca.data_postagem }}\n\nLEGENDA\n{{ $('Preparar prévia').item.json.legenda }}\n\nFONTES\n{{ $('Preparar prévia').item.json.fontes_usadas || '(peça atemporal, sem fontes externas)' }}\n\nObservações da revisão: {{ $('Preparar prévia').item.json.observacoes_revisao || 'nenhuma' }}",
+        "message": "=📝 {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.tipo === 'reel' ? 'Reels (' + $('Preparar prévia').item.json.motor + ')' : ($('Preparar prévia').item.json.tipo === 'carrossel' ? 'Carrossel (' + $('Preparar prévia').item.json.modelo + ', ' + $('Preparar prévia').item.json.midia_urls.length + ' lâminas)' : 'Feed (' + $('Preparar prévia').item.json.modelo + ')') }} · {{ $('Preparar prévia').item.json.pilar }}\nTema: {{ $('Preparar prévia').item.json.tema }}\nRevisão automática: {{ $('Preparar prévia').item.json.nota_revisao }}/10{{ $('Preparar prévia').item.json.reescrito ? ' (reescrito após 1ª revisão)' : '' }}\n{{ $('Ler revisão visual').isExecuted ? $('Ler revisão visual').item.json.visual_nota : '' }}{{ $('Preparar prévia').item.json.veo_falhou ? '⚠️ O Veo falhou; o Reels saiu na versão animada.' : '' }}\nPublicação prevista: {{ $('Preparar prévia').item.json.marca.data_postagem }}\n{{ $('Preparar prévia').item.json.tipo === 'carrossel' ? '\\nLÂMINAS\\n' + $('Preparar prévia').item.json.midia_urls.join('\\n') + '\\n' : '' }}\nLEGENDA\n{{ $('Preparar prévia').item.json.legenda }}\n\nFONTES\n{{ $('Preparar prévia').item.json.fontes_usadas || '(peça atemporal, sem fontes externas)' }}\n\nObservações da revisão: {{ $('Preparar prévia').item.json.observacoes_revisao || 'nenhuma' }}",
         "responseType": "approval",
         "approvalOptions": {
           "values": {
@@ -435,6 +435,12 @@
               "id": "1b91161f-c413-4ee7-a583-ea48f1cbed10",
               "name": "ig_user_id",
               "value": "={{ $json.marca.ig_user_id }}",
+              "type": "string"
+            },
+            {
+              "id": "38bce6c4-fb08-4672-b67d-05839fffc96b",
+              "name": "midia_urls",
+              "value": "={{ JSON.stringify($json.midia_urls || [$json.midia_url]) }}",
               "type": "string"
             }
           ]

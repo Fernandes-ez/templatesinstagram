@@ -100,6 +100,30 @@
               },
               "renameOutput": true,
               "outputKey": "reel-veo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "71395d96-9cbf-4b93-90bf-c875140c9690",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "carrossel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "carrossel"
             }
           ]
         },
@@ -472,7 +496,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Junta a peça com o que aconteceu aqui (o Veo foi gerado? o render do Veo deu certo?) para o workflow 04.\nconst p = $('Receber peça').first().json;\nreturn [{ json: { ...p, veo_gerado: $('Gerar vídeo (Veo)').isExecuted, veo_ok: $('Renderizar Reels (Veo)').isExecuted } }];\n"
+        "jsCode": "// Junta a peça com o que aconteceu aqui (o Veo foi gerado? o render do Veo deu certo? as lâminas do carrossel) para o workflow 04.\nconst p = $('Receber peça').first().json;\nconst car = $('Juntar lâminas').isExecuted ? $('Juntar lâminas').first().json : null;\nconst midia = car ? { midia_url: car.midia_url, midia_urls: car.midia_urls } : { midia_urls: [p.midia_url] };\nreturn [{ json: { ...p, ...midia, veo_gerado: $('Gerar vídeo (Veo)').isExecuted, veo_ok: $('Renderizar Reels (Veo)').isExecuted } }];\n"
       },
       "id": "48b71202-cc67-4b36-a259-1d6d1986f7ac",
       "name": "Fechar etapa de mídia",
@@ -544,7 +568,7 @@
     },
     {
       "parameters": {
-        "content": "## 03 · Produzir mídia\n**O que faz:** transforma a peça em arquivo: feed pelo **template da marca** (serviço de render), feed com **foto** (Nano Banana) ou **Reels** (animação ou Veo, o Veo só depois que você aprova o roteiro e dentro do teto do mês). O arquivo é hospedado (S3/R2).\n**Entra:** a **peça** (do 02).\n**Sai:** a peça + `veo_gerado` / `veo_ok` → **04 · Aprovar e agendar**. Roteiro do Veo recusado → **05**.",
+        "content": "## 03 · Produzir mídia\n**O que faz:** transforma a peça em arquivo: feed pelo **template da marca** (serviço de render), feed com **foto** (Nano Banana) **carrossel** (várias lâminas, cada uma hospedada) ou **Reels** (animação ou Veo, o Veo só depois que você aprova o roteiro e dentro do teto do mês). O arquivo é hospedado (S3/R2).\n**Entra:** a **peça** (do 02).\n**Sai:** a peça + `veo_gerado` / `veo_ok` → **04 · Aprovar e agendar**. Roteiro do Veo recusado → **05**.",
         "height": 330,
         "width": 1500,
         "color": 4
@@ -557,6 +581,123 @@
         -300,
         -560
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Receber peça').item.json.marca.geral.render_url }}/render",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Receber peça').item.json.dados_render_json }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "id": "3c53e40a-8cdc-470a-80c7-bd5e425eda7d",
+      "name": "Renderizar carrossel (template)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        2560
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "notes": "POST /render devolve JSON com a lista de lâminas (arquivos[].arquivo). Mesma credencial do render de imagem única.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Uma linha por lâmina, na ordem. O render devolve o nome do arquivo; baixamos pelo endereço interno do render.\nconst p = $('Receber peça').first().json;\nconst r = $input.first().json;\nconst arq = (r.arquivos || []).sort((a, b) => a.ordem - b.ordem);\nif (arq.length < 2 || arq.length > 10) throw new Error('O render devolveu ' + arq.length + ' lâminas; o Instagram aceita de 2 a 10.');\nreturn arq.map((a, i) => ({ json: { ordem: i + 1, url_interna: `${p.marca.geral.render_url}/files/${a.arquivo}`, nome: `${p.arquivo}-${String(i + 1).padStart(2, '0')}.jpg` } }));\n"
+      },
+      "id": "6f5fd5b2-37e3-494d-9c5b-bec4cb3b1756",
+      "name": "Separar lâminas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        2560
+      ],
+      "notes": "De 1 resposta do render para N itens (um por lâmina).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url_interna }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "f73a3ef0-4fc5-4506-9975-d6ab0da49a07",
+      "name": "Baixar lâmina",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1000,
+        2560
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "bucketName": "={{ $('Receber peça').item.json.marca.geral.bucket }}",
+        "fileName": "={{ $('Separar lâminas').item.json.nome }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "parentFolderKey": "={{ $('Receber peça').item.json.pasta }}"
+        },
+        "tagsUi": {}
+      },
+      "id": "b6d947af-75a9-4470-bc1f-0a8718c79c77",
+      "name": "Hospedar lâmina (S3/R2)",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1240,
+        2560
+      ],
+      "credentials": {
+        "s3": {
+          "id": "",
+          "name": "S3 / R2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Volta a 1 item só: as URLs públicas das lâminas, na ordem. A 1ª lâmina é a \"capa\" (midia_url).\nconst p = $('Receber peça').first().json;\nconst lam = $('Separar lâminas').all().map((i) => i.json).sort((a, b) => a.ordem - b.ordem);\nif ($input.all().length !== lam.length) throw new Error('Subiram ' + $input.all().length + ' de ' + lam.length + ' lâminas.');\nconst urls = lam.map((l) => `${p.marca.geral.url_publica_base}/${p.pasta}/${l.nome}`);\nreturn [{ json: { midia_url: urls[0], midia_urls: urls } }];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "8925293e-bb7e-428e-91b6-14ed7e79c52d",
+      "name": "Juntar lâminas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1480,
+        2560
+      ],
+      "notes": "De N itens para 1: lista de URLs das lâminas.",
+      "notesInFlow": true
     }
   ],
   "connections": {
@@ -586,6 +727,13 @@
         [
           {
             "node": "Aprovar roteiro do Veo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Renderizar carrossel (template)",
             "type": "main",
             "index": 0
           }
@@ -732,6 +880,61 @@
         [
           {
             "node": "Chamar 05 · Registrar reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar carrossel (template)": {
+      "main": [
+        [
+          {
+            "node": "Separar lâminas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar lâminas": {
+      "main": [
+        [
+          {
+            "node": "Baixar lâmina",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar lâmina": {
+      "main": [
+        [
+          {
+            "node": "Hospedar lâmina (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hospedar lâmina (S3/R2)": {
+      "main": [
+        [
+          {
+            "node": "Juntar lâminas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Juntar lâminas": {
+      "main": [
+        [
+          {
+            "node": "Fechar etapa de mídia",
             "type": "main",
             "index": 0
           }

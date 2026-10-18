@@ -45,12 +45,12 @@ Reprovação: quem reprova monta um registro com `marca, nome_marca, telegram_ch
 
 ## Primeira importação (nesta ordem)
 
-1. **Tabelas (Data Tables):** `instagram_posts` (marca, tipo, modelo, motor, pilar, tema, legenda, midia_url, fontes, status, ig_user_id, ig_media_id, erro, nota_revisao, agendado_para) e `instagram_referencias` (marca, semana, briefing, erros, urls_validas, posts_analisados).
+1. **Tabelas (Data Tables):** `instagram_posts` (marca, tipo, modelo, motor, pilar, tema, legenda, midia_url, **midia_urls**, fontes, status, ig_user_id, ig_media_id, erro, nota_revisao, agendado_para; `midia_urls` guarda a lista de lâminas do carrossel em JSON) e `instagram_referencias` (marca, semana, briefing, erros, urls_validas, posts_analisados).
 2. **Importe os workflows de trás para frente:** 07, 06, 05, 04, 03, 02, 01 (e o 00 quando quiser o radar). Assim cada "Chamar ..." já encontra o destino.
 3. **Ligue os "Chamar":** em cada nó **Chamar 0X · ...** (laranja, com nota) escolha o workflow de destino na lista. Estão com `PREENCHER_ID_...`.
    - 01 → chama o 02 · 02 → chama 03 e 05 · 03 → chama 04 e 05 · 04 → chama 05.
 4. **Configuração única:** no workflow **01**, nó **Marcas e regras**, troque os `PREENCHER` (chat do Telegram, bucket, URL pública, URL do render, IDs do Instagram). No **06**, troque o chat em **Avisar resultado**. No **07**, o chat do alerta.
-5. **Credenciais:** Gemini texto · Gemini imagem/vídeo · Perplexity (só no 02) · Telegram · S3/R2 · Header Auth do render (`Authorization: Bearer …`) · Meta Graph API.
+5. **Credenciais:** Gemini texto (também faz a busca na web do 02 e do 00) · Gemini imagem/vídeo · Telegram · S3/R2 · Header Auth do render (`Authorization: Bearer …`) · Meta Graph API.
 6. **Fuso:** cada workflow → Configurações → **America/Sao_Paulo**.
 7. **Error workflow:** em cada workflow de 01 a 06 → Configurações → **Error workflow** → *07 · Alerta de erro*.
 8. **Teste:** no 01, rode **Testar feed (todas as marcas)** e acompanhe a peça passando pelos workflows na lista de execuções. Ative o 06 por último.
@@ -65,10 +65,20 @@ Quando você cria um modelo novo no render, ele aparece para o redator sozinho, 
 
 A credencial do render é **Header Auth** com Name `Authorization` e Value `Bearer <RENDER_TOKEN>`.
 
+## Carrossel (de ponta a ponta)
+
+| Etapa | O que acontece |
+|---|---|
+| 01 | Cada marca tem `carrossel_dia` e `carrossel_a_cada_semanas` em **Marcas e regras**. Hoje: Puka quarta, Tábua e ezf quinta, toda semana, no lugar do feed daquele dia. Botão de teste: **Testar carrossel**. |
+| 02 | O catálogo vem filtrado por `formato=carrossel`; o redator escolhe um modelo de várias lâminas e escreve `textos`. |
+| 03 | A rota `carrossel` chama `POST /render`, baixa cada lâmina do render, hospeda uma a uma no S3/R2 e junta as URLs em `midia_urls`. |
+| 04 | A prévia no Telegram mostra a capa e lista todas as lâminas. Na fila, `midia_urls` guarda a lista. |
+| 06 | Cria um contêiner por lâmina (`is_carousel_item`), espera, cria o contêiner do carrossel (`media_type=CAROUSEL`, `children`, legenda) e segue o mesmo caminho de status e publicação. |
+
+O carrossel usa o mesmo horário de feed da marca. Para mudar a frequência, edite os dois campos acima. A Meta aceita de 2 a 10 imagens por carrossel; o fluxo recusa fora disso.
+
 ## O que ainda não está alinhado (próximo passo)
 
-- **Perplexity no 02:** o radar (00) já usa Gemini com busca no Google; o 02 ainda usa Perplexity.
-- **Carrossel:** o 06 publica imagem ou Reels; carrossel (vários JPG) ainda não está no publicador.
 - **Radar → redator:** o trecho que injeta o briefing do radar no prompt do redator está descrito em `fluxo/00-radar-semanal.md`, mas ainda não foi aplicado ao 02.
 
 ## Arquivos
