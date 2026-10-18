@@ -2,7 +2,7 @@
 
 Recebe `{marca, modelo, textos}` e devolve o JPG do post (ou as 5 fatias de um carrossel). Roda na mesma VM do n8n, sem custo de API.
 
-Marcas disponíveis hoje: **ezf**. Tábua e Puka ainda não: os geradores delas têm os textos fixos no código e precisam ser parametrizados do mesmo jeito que o da ezf.
+Marcas: **ezf** (10 modelos), **Tábua** (11) e **Puka** (10). Fora do serviço, de propósito, os modelos que exigem foto real (Puka `foto`; Tábua `depoimento`, `prato do dia` e `foto com título`). Veja `GET /modelos` para campos e limites de cada um.
 
 ## Rodar
 

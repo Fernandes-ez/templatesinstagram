@@ -11,7 +11,8 @@ const B = require("./brand.config.js");
 initializeCanvas((w, h) => createCanvas(w, h));
 
 const K = B.cores;
-const COM_PSD = process.argv.includes("--psd"); // o PSD é só para edição manual no Photoshop; o n8n usa os JPG
+const GRAVAR = require.main === module; // rodando direto grava em output/; importado (serviço de render) só devolve os buffers
+const COM_PSD = GRAVAR && process.argv.includes("--psd"); // o PSD é só para edição manual no Photoshop; o n8n usa os JPG
 const OUT = path.join(__dirname, "output");
 const ICONES = ["agenda", "conversa", "deixa", "equipe", "etapas", "historico", "lead", "ponto"];
 const GRUPOS = ["Fundo", "Padrao", "Grafismos", "Imagem (substituir)", "Texto", "Logo", "Guias"];
@@ -42,7 +43,7 @@ function capRatio(font) {
 const lerSvg = (f) => fs.readFileSync(f, "utf8");
 async function svgParaImagem(svg, largura, salvarComo) {
   const png = new Resvg(svg, { fitTo: { mode: "width", value: Math.round(largura * 2) } }).render().asPng();
-  if (salvarComo) fs.writeFileSync(path.join(OUT, "assets", salvarComo), png);
+  if (salvarComo && GRAVAR) fs.writeFileSync(path.join(OUT, "assets", salvarComo), png);
   return loadImage(png);
 }
 const HASTE_P = new Path2D(B.simbolo.hasteD);
@@ -59,6 +60,8 @@ class Doc {
     this.raiz = GRUPOS.map((name) => ({ name, opened: true, children: [] }));
     this.guias = [];
     this.avisos = [];
+    this.limiteBase = formato.zonaSegura ? this.H - formato.zonaSegura - 20 : this.H - 170; // texto com a base abaixo disso invade o rodapé/zona segura
+    this.emendas = []; // x das emendas de um carrossel contínuo: nenhum texto pode cruzá-las
     this.pixel("Fundo", fundo === K.roteiro ? "Fundo_roteiro" : "Fundo_coxia", (ctx) => {
       ctx.fillStyle = fundo;
       ctx.fillRect(0, 0, this.W, this.H);
@@ -89,8 +92,8 @@ class Doc {
    * (x, y) = ponto de ancoragem da primeira linha, na linha de base (esquerda, centro ou direita conforme `align`).
    */
   texto(grupo, name, str, o) {
-    const { font = "corpo", size, cor, x, y, align = "left", tracking = 0, underline = false, respiro = null, sub, rot = 0 } = o;
-    const linhas = str.split("\n");
+    const { font = "corpo", size, cor, x, y, align = "left", tracking = 0, underline = false, respiro = null, sub, rot = 0, w: maxW = null, maxLinhas = null } = o;
+    let linhas = str.split("\n");
     const leading = o.leading ?? Math.round(size * (font.startsWith("corpo") ? 1.55 : 1.0));
     const canvas = createCanvas(this.W, this.H);
     const ctx = canvas.getContext("2d");
@@ -105,6 +108,20 @@ class Doc {
         cx += ctx.measureText(ch).width + extra;
       }
     };
+    // quebra automática por palavras quando há largura máxima; os \n do texto continuam valendo
+    if (maxW) {
+      linhas = linhas.flatMap((par) => {
+        const saida = [];
+        let atual = "";
+        for (const palavra of par.split(" ")) {
+          const tentativa = atual ? `${atual} ${palavra}` : palavra;
+          if (atual && largura(tentativa) > maxW) (saida.push(atual), (atual = palavra));
+          else atual = tentativa;
+        }
+        saida.push(atual);
+        return saida;
+      });
+    }
     const larguras = linhas.map(largura);
     let x0 = Infinity;
     let x1 = -Infinity;
@@ -131,9 +148,13 @@ class Doc {
       if (underline) ctx.fillRect(lx, ly + size * 0.1, w, Math.max(2, size * 0.07));
       x0 = Math.min(x0, lx + (rot ? x : 0));
       x1 = Math.max(x1, lx + w + (rot ? x : 0));
+      if (!rot) for (const e of this.emendas) if (lx < e - 1 && lx + w > e + 1) this.avisos.push(`${name}: "${l.slice(0, 30)}" invade a emenda entre lâminas`);
     });
     ctx.restore();
     if (!rot && (x0 < this.M - 1 || x1 > this.W - this.M + 1)) this.avisos.push(`${name}: "${str.replace(/\n/g, " / ")}" sai da margem (${Math.round(x0)}–${Math.round(x1)})`);
+    if (maxW && !rot && Math.max(...larguras) > maxW + 1) this.avisos.push(`${name}: "${str.slice(0, 30)}" invade o espaço ao lado (palavra maior que a largura de ${maxW}px)`);
+    if (maxLinhas && linhas.length > maxLinhas) this.avisos.push(`${name}: "${str.slice(0, 30)}" invade o espaço do próximo bloco (${linhas.length} linhas, máximo ${maxLinhas})`);
+    if (!rot && !font.startsWith("mono") && y + (linhas.length - 1) * leading > this.limiteBase) this.avisos.push(`${name}: "${str.slice(0, 30)}" invade o rodapé (texto longo demais)`);
 
     const r = (rot * Math.PI) / 180;
     const camada = {
@@ -153,7 +174,7 @@ class Doc {
       };
     }
     this.grupo(grupo, sub).children.push(camada);
-    return { x0, x1, topo: y - capRatio(font) * size, base: y + (linhas.length - 1) * leading, leading };
+    return { x0, x1, topo: y - capRatio(font) * size, base: y + (linhas.length - 1) * leading, leading, linhas: linhas.length };
   }
 
   /** O título da marca: Bricolage ExtraBold, apertado. */
@@ -231,7 +252,7 @@ class Doc {
   }
 
   /** Bloco de mensagem. cliente = Papel com borda; ia = barra Ponto; pessoa = barra Ribalta. Nunca balão arredondado. `escala` aumenta texto e respiros. */
-  mensagem({ tipo, x, y, w, h, rotulo, corpo, escuro = false, nome, escala = 1 }) {
+  mensagem({ tipo, x, y, w, h, rotulo, corpo, escuro = false, nome, escala = 1, wTexto = null, maxLinhas = null }) {
     const n = nome ?? `Msg_${tipo}`;
     const fundo = tipo === "cliente" ? (escuro ? "#2a2632" : K.papel) : escuro ? "#2a2632" : K.rotunda;
     const barra = tipo === "ia" ? (escuro ? K.pontoClaro : K.ponto) : tipo === "pessoa" ? (escuro ? K.ribaltaAcesa : K.ribalta) : null;
@@ -249,7 +270,9 @@ class Doc {
     });
     const corRot = tipo === "ia" ? (escuro ? K.pontoClaro : K.ponto) : tipo === "pessoa" ? (escuro ? K.ribaltaAcesa : K.ribaltaFunda) : escuro ? K.roteiro : K.bastidor;
     this.texto("Texto", `${n}_rotulo`, rotulo, { font: "mono", size: Math.round(24 * escala), cor: corRot, x: x + 36 * escala, y: y + 50 * escala, tracking: 20 });
-    this.texto("Texto", `${n}_texto`, corpo, { size: Math.round(34 * escala), leading: Math.round(46 * escala), cor: escuro ? K.roteiro : K.coxia, x: x + 36 * escala, y: y + 104 * escala });
+    // linhas que cabem no bloco: a base da última tem de ficar acima do fim do bloco
+    const cabem = Math.max(1, Math.floor(1 + (h - 134 * escala) / (46 * escala)));
+    this.texto("Texto", `${n}_texto`, corpo, { size: Math.round(34 * escala), leading: Math.round(46 * escala), cor: escuro ? K.roteiro : K.coxia, x: x + 36 * escala, y: y + 104 * escala, w: wTexto ?? w - 72 * escala, maxLinhas: maxLinhas ?? cabem });
   }
 
   /** Botão principal: Ribalta Funda com texto Roteiro, corte seco. */
@@ -408,6 +431,8 @@ class Doc {
   salvar() {
     const composta = createCanvas(this.W, this.H);
     this.compor(this.raiz, composta.getContext("2d"));
+    this.composta = composta;
+    if (!GRAVAR) return composta;
     const psd = {
       width: this.W,
       height: this.H,
@@ -422,147 +447,177 @@ class Doc {
     console.log(`ok  ${this.nome}${COM_PSD ? " (+ .psd)" : ""}`);
     return composta;
   }
-}
 
+  /** JPEG da peça composta (serviço de render). */
+  jpg(qualidade = 92) {
+    if (!this.composta) this.salvar();
+    return this.composta.toBuffer("image/jpeg", qualidade);
+  }
+}
 
 const resolucao72 = { horizontalResolution: 72, horizontalResolutionUnit: "PPI", widthUnit: "Inches", verticalResolution: 72, verticalResolutionUnit: "PPI", heightUnit: "Inches" };
 
 // ── Os templates ──────────────────────────────────────────────────────────────
+// Cada template recebe um objeto de parâmetros opcional; os defaults são os textos de exemplo de sempre.
+// Rodando direto (npm run generate) gera tudo com os defaults; importado, o serviço de render passa os textos.
 const FEED = B.feed;
 const STORY = B.story;
 const exemplo = (d, x, y, cor) => d.etiqueta("simulação · exemplo", { nome: "Aviso_exemplo", x, y, size: 22, cor });
+const largTexto = (x) => FEED.largura - B.feed.margem - x; // largura útil de um texto que começa em x, dentro de uma lâmina de feed
 
 /** 1. Story: a conversa com a linha de passagem. Fundo Coxia. Zonas seguras de 250 px. */
-async function storyConversa() {
+async function storyConversa(p = {}) {
+  const T = { titulo: "A IA atende\nprimeiro. Seu time\nentra na deixa.", botao: "Teste grátis no link da bio", ...p };
+  const cliente = { rotulo: "cliente · 23:47", corpo: "Oi, ainda dá pra matricular hoje?", ...p.cliente };
+  const ia = { rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu reserve uma\naula grátis pra amanhã de manhã?", ...p.ia };
+  const pessoa = { rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua aula pra\nhoje às 9h. Te espero.", ...p.pessoa };
   const d = new Doc("story_conversa_1080x1920", STORY, K.coxia);
   const M = d.M;
   d.etiqueta("Simulação de atendimento · academia", { x: M, y: 300, cor: K.roteiro });
-  d.titulo("A IA atende\nprimeiro. Seu time\nentra na deixa.", { x: M, y: 430, size: 88, cor: K.roteiro });
-  d.mensagem({ tipo: "cliente", x: M, y: 740, w: 760, h: 170, rotulo: "cliente · 23:47", corpo: "Oi, ainda dá pra matricular hoje?", escuro: true });
-  d.mensagem({ tipo: "ia", x: M + 160, y: 940, w: 760, h: 200, rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu reserve uma\naula grátis pra amanhã de manhã?", escuro: true });
+  d.titulo(T.titulo, { x: M, y: 430, size: 88, cor: K.roteiro, w: 920, maxLinhas: 3 });
+  d.mensagem({ tipo: "cliente", x: M, y: 740, w: 760, h: 170, rotulo: cliente.rotulo, corpo: cliente.corpo, escuro: true });
+  d.mensagem({ tipo: "ia", x: M + 160, y: 940, w: 760, h: 200, rotulo: ia.rotulo, corpo: ia.corpo, escuro: true });
   d.linhaPassagem({ x: M, y: 1230, largura: 920, escuro: true });
   d.etiqueta("passou para a equipe", { x: M, y: 1290, cor: K.ribaltaAcesa, size: 24 });
-  d.mensagem({ tipo: "pessoa", x: M + 160, y: 1330, w: 760, h: 200, rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua aula pra\nhoje às 9h. Te espero.", escuro: true });
-  d.botao("Teste grátis no link da bio", { x: M, y: 1560 });
+  d.mensagem({ tipo: "pessoa", x: M + 160, y: 1330, w: 760, h: 200, rotulo: pessoa.rotulo, corpo: pessoa.corpo, escuro: true });
+  d.botao(T.botao, { x: M, y: 1560 });
   d.grade(STORY.zonaSegura);
   d.salvar();
+  return d;
 }
 
 /** 2. Frase de cliente: a pergunta, a resposta com horário e o símbolo gigante sangrando. Fundo Roteiro. */
-async function frase() {
+async function frase(p = {}) {
+  const T = { contexto: "23:47 · academia · WhatsApp", pergunta: "Oi, ainda dá\npra matricular\nhoje?", resposta: "Às 23h47 a IA respondeu.\nÀs 8h02 a Marina fechou.", ...p };
   const d = new Doc("feed_frase_1080x1350", FEED, K.roteiro);
   const M = d.M;
-  d.etiqueta("23:47 · academia · WhatsApp", { x: M, y: 130, cor: K.bastidor });
-  const t = d.titulo("“Oi, ainda dá\npra matricular\nhoje?”", { x: M, y: 310, size: 104, cor: K.coxia });
-  d.texto("Texto", "Resposta", "Às 23h47 a IA respondeu.\nÀs 8h02 a Marina fechou.", { size: 42, leading: 58, cor: K.coxia, x: M, y: t.base + 110 });
+  d.etiqueta(T.contexto, { x: M, y: 130, cor: K.bastidor });
+  const t = d.titulo(`“${T.pergunta}”`, { x: M, y: 310, size: 104, cor: K.coxia, w: 920, maxLinhas: 3 });
+  d.texto("Texto", "Resposta", T.resposta, { size: 42, leading: 58, cor: K.coxia, x: M, y: t.base + 110, w: 920, maxLinhas: 2 });
   d.etiqueta("exemplo, não é cliente real", { nome: "Aviso_exemplo", x: M, y: t.base + 215, size: 20, cor: K.bastidor });
   d.simbolo({ x: 400, y: 790, altura: 900, corHaste: K.coxia, corDeixa: K.ribalta });
   await d.logo(B.logo.principalCor, { x: M, y: 1190, largura: 190 });
   d.grade();
   d.salvar();
+  return d;
 }
 
 /** 3. Antes / depois: o horário da resposta. A linha de passagem divide as duas metades. */
-async function antesDepois() {
+async function antesDepois(p = {}) {
+  const sem = { horario: "08:02", texto: "O cliente escreveu às 23:47.\nA resposta veio no dia seguinte.", ...p.sem };
+  const com = { horario: "23:47", texto: "O cliente escreveu às 23:47.\nA IA respondeu às 23:47.", ...p.com };
   const d = new Doc("feed_antes_depois_1080x1350", FEED, K.roteiro);
+  d.limiteBase = 1250; // o texto de baixo fica à esquerda do logo
   const M = d.M;
   d.bloco({ x: 0, y: 0, w: FEED.largura, h: 675, cor: K.rotunda, nome: "Metade_sem" });
   d.etiqueta("Sem Puka", { x: M, y: 140, medium: true, size: 30, cor: K.bastidor });
-  d.titulo("08:02", { x: M, y: 450, size: 300, cor: K.coxia, nome: "Horario_sem" });
-  d.texto("Texto", "Sem_texto", "O cliente escreveu às 23:47.\nA resposta veio no dia seguinte.", { size: 36, leading: 50, cor: K.coxia, x: M, y: 540 });
+  d.titulo(sem.horario, { x: M, y: 450, size: 300, cor: K.coxia, nome: "Horario_sem" });
+  d.texto("Texto", "Sem_texto", sem.texto, { size: 36, leading: 50, cor: K.coxia, x: M, y: 540, w: 920, maxLinhas: 2 });
   d.linhaPassagem({ x: M, y: 675, largura: 920 });
   d.etiqueta("Com Puka", { x: M, y: 800, medium: true, size: 30, cor: K.ribaltaFunda });
-  d.titulo("23:47", { x: M, y: 1080, size: 300, cor: K.ponto, nome: "Horario_com" });
-  d.texto("Texto", "Com_texto", "O cliente escreveu às 23:47.\nA IA respondeu às 23:47.", { size: 36, leading: 50, cor: K.coxia, x: M, y: 1170 });
+  d.titulo(com.horario, { x: M, y: 1080, size: 300, cor: K.ponto, nome: "Horario_com" });
+  d.texto("Texto", "Com_texto", com.texto, { size: 36, leading: 50, cor: K.coxia, x: M, y: 1170, w: 640, maxLinhas: 2 });
   await d.logo(B.logo.principalCor, { x: FEED.largura - M, y: 1236, largura: 170, align: "right" });
   d.etiqueta("exemplo", { nome: "Aviso_exemplo", x: M, y: 1290, size: 20, cor: K.bastidor });
   d.grade();
   d.salvar();
+  return d;
 }
 
 /** 4. Número grande: a haste sangra de ponta a ponta e uma deixa pequena entra pela direita. */
-async function numero() {
+async function numero(p = {}) {
+  const T = { numero: "14", unidade: "dias pra testar.", apoio: "Sem cartão de crédito.\nO teste começa pelo link da bio.", ...p };
   const d = new Doc("feed_numero_1080x1350", FEED, K.roteiro);
   const M = d.M;
   d.haste({ x: M, y: 0, w: 28, h: FEED.altura, cor: K.coxia });
-  d.titulo("14", { x: M + 90, y: 700, size: 600, cor: K.coxia, nome: "Numero" });
-  d.deixa({ x: 880, y: 300, altura: 150, cor: K.ribalta });
-  d.titulo("dias pra testar.", { x: M + 90, y: 860, size: 96, cor: K.coxia, nome: "Unidade" });
-  d.texto("Texto", "Apoio", "Sem cartão de crédito.\nO teste começa pelo link da bio.", { size: 38, leading: 54, cor: K.bastidor, x: M + 90, y: 960 });
+  const num = d.titulo(T.numero, { x: M + 90, y: 700, size: 600, cor: K.coxia, nome: "Numero" });
+  d.deixa({ x: 880, y: num.x1 > 860 ? 100 : 300, altura: 150, cor: K.ribalta }); // número largo (2 dígitos largos): a deixa sobe para não ficar atrás dele
+  d.titulo(T.unidade, { x: M + 90, y: 860, size: 96, cor: K.coxia, nome: "Unidade", w: largTexto(M + 90), maxLinhas: 1 });
+  d.texto("Texto", "Apoio", T.apoio, { size: 38, leading: 54, cor: K.bastidor, x: M + 90, y: 960, w: largTexto(M + 90), maxLinhas: 3 });
   await d.logo(B.logo.principalCor, { x: M + 90, y: 1190, largura: 190 });
   d.grade();
   d.salvar();
+  return d;
 }
 
 /** 5. Lista: cada item tem uma haste como marcador; uma deixa pequena fecha a peça. */
-async function lista() {
+async function lista(p = {}) {
+  const T = { etiqueta: "3 sinais", titulo: "Você está perdendo\nlead no WhatsApp?", ...p };
+  const itens = p.itens ?? [
+    { nome: "Mensagem às 23h", texto: "A resposta só chega de manhã." },
+    { nome: "Ninguém sabe quem responde", texto: "A conversa fica com quem viu primeiro, ou com ninguém." },
+    { nome: "O cliente repete a pergunta", texto: "Cada pessoa que assume começa do zero." },
+  ];
   const d = new Doc("feed_lista_1080x1350", FEED, K.roteiro);
   const M = d.M;
-  d.etiqueta("3 sinais", { x: M, y: 140, medium: true, size: 30, cor: K.ribaltaFunda });
-  const t = d.titulo("Você está perdendo\nlead no WhatsApp?", { x: M, y: 290, size: 92, cor: K.coxia });
-  const itens = [
-    ["Mensagem às 23h", "A resposta só chega de manhã."],
-    ["Ninguém sabe quem responde", "A conversa fica com quem viu primeiro, ou com ninguém."],
-    ["O cliente repete a pergunta", "Cada pessoa que assume começa do zero."],
-  ];
+  d.etiqueta(T.etiqueta, { x: M, y: 140, medium: true, size: 30, cor: K.ribaltaFunda });
+  const t = d.titulo(T.titulo, { x: M, y: 290, size: 92, cor: K.coxia, w: 920, maxLinhas: 2 });
   let y = t.base + 130;
-  for (const [i, [nome, texto]] of itens.entries()) {
+  for (const [i, { nome, texto }] of itens.entries()) {
     d.haste({ x: M, y: y - 52, w: 14, h: 130, cor: K.coxia, nome: `Item${i + 1}_haste` });
-    d.texto("Texto", `Item${i + 1}_titulo`, nome, { font: "subtitulo", size: 46, cor: K.coxia, x: M + 44, y });
-    d.texto("Texto", `Item${i + 1}_texto`, texto, { size: 32, cor: K.bastidor, x: M + 44, y: y + 56 });
+    d.texto("Texto", `Item${i + 1}_titulo`, nome, { font: "subtitulo", size: 46, cor: K.coxia, x: M + 44, y, w: largTexto(M + 44), maxLinhas: 1 });
+    d.texto("Texto", `Item${i + 1}_texto`, texto, { size: 32, cor: K.bastidor, x: M + 44, y: y + 56, w: largTexto(M + 44), maxLinhas: 2 });
     y += 220;
   }
   d.deixa({ x: 900, y: y - 60, altura: 140, cor: K.ribalta });
   await d.logo(B.logo.principalCor, { x: M, y: 1190, largura: 190 });
   d.grade();
   d.salvar();
+  return d;
 }
 
 /** 6. Tela do produto: captura real da conversa, com a haste ao lado. */
-async function tela() {
+async function tela(p = {}) {
+  const T = { etiqueta: "Dentro do Puka", titulo: "A conversa passa\ncom o histórico.", ...p };
   const d = new Doc("feed_tela_1080x1350", FEED, K.roteiro);
   const M = d.M;
-  d.etiqueta("Dentro do Puka", { x: M, y: 140, medium: true, size: 30, cor: K.ribaltaFunda });
-  const t = d.titulo("A conversa passa\ncom o histórico.", { x: M, y: 290, size: 96, cor: K.coxia });
+  d.etiqueta(T.etiqueta, { x: M, y: 140, medium: true, size: 30, cor: K.ribaltaFunda });
+  const t = d.titulo(T.titulo, { x: M, y: 290, size: 96, cor: K.coxia, w: 920, maxLinhas: 2 });
   d.haste({ x: M - 24, y: t.base + 120, w: 12, h: 540, cor: K.ponto, nome: "Haste_tela" });
   const img = await d.tela(path.join(B.icones, "../telas/conversa.png"), { x: M, y: t.base + 120, w: 920, recorte: { x: 0, y: 90, w: 1051, h: 616 } });
   d.etiqueta("tela do Puka · conversa de teste", { nome: "Legenda_tela", x: M, y: img.y1 + 56, size: 22, cor: K.bastidor });
   await d.logo(B.logo.principalCor, { x: FEED.largura - M, y: 1236, largura: 170, align: "right" });
   d.grade();
   d.salvar();
+  return d;
 }
 
 /** 7. Enquete: pergunta e três respostas em blocos com haste. */
-async function enquete() {
+async function enquete(p = {}) {
+  const T = { etiqueta: "Pergunta rápida", pergunta: "Quanto tempo seu\ncliente espera uma\nresposta no WhatsApp?", chamada: "Responde A, B ou C nos comentários.", ...p };
+  const opcoes = p.opcoes ?? ["Menos de 5 minutos", "Até 1 hora", "Só no dia seguinte"];
   const d = new Doc("feed_enquete_1080x1350", FEED, K.roteiro);
   const M = d.M;
-  d.etiqueta("Pergunta rápida", { x: M, y: 140, medium: true, size: 30, cor: K.ribaltaFunda });
-  const t = d.titulo("Quanto tempo seu\ncliente espera uma\nresposta no WhatsApp?", { x: M, y: 290, size: 80, cor: K.coxia });
-  const opcoes = [["A", "Menos de 5 minutos"], ["B", "Até 1 hora"], ["C", "Só no dia seguinte"]];
+  d.etiqueta(T.etiqueta, { x: M, y: 140, medium: true, size: 30, cor: K.ribaltaFunda });
+  const t = d.titulo(T.pergunta, { x: M, y: 290, size: 80, cor: K.coxia, w: 920, maxLinhas: 3 });
   let y = t.base + 90;
-  for (const [l, texto] of opcoes) {
+  for (const [i, texto] of opcoes.entries()) {
+    const l = "ABC"[i];
     d.bloco({ x: M, y, w: 920, h: 150, cor: K.rotunda, nome: `Opcao_${l}_fundo` });
     d.haste({ x: M, y, w: 14, h: 150, cor: K.coxia, nome: `Opcao_${l}_haste` });
     d.titulo(l, { nome: `Opcao_${l}_letra`, x: M + 52, y: y + 112, size: 110, cor: K.coxia });
-    d.texto("Texto", `Opcao_${l}_texto`, texto, { font: "subtitulo", size: 46, cor: K.coxia, x: M + 190, y: y + 92 });
+    d.texto("Texto", `Opcao_${l}_texto`, texto, { font: "subtitulo", size: 46, cor: K.coxia, x: M + 190, y: y + 92, w: largTexto(M + 190) - 20, maxLinhas: 1 });
     y += 180;
   }
-  d.texto("Texto", "Chamada", "Responde A, B ou C nos comentários.", { font: "corpoBold", size: 34, cor: K.coxia, x: M, y: y + 50 });
+  d.texto("Texto", "Chamada", T.chamada, { font: "corpoBold", size: 34, cor: K.coxia, x: M, y: y + 50, w: 920, maxLinhas: 1 });
   await d.logo(B.logo.principalCor, { x: FEED.largura - M, y: 1236, largura: 170, align: "right" });
   d.grade();
   d.salvar();
+  return d;
 }
 
 /** 8. Foto com corte da deixa: a foto termina na curva, a lacuna separa o bloco de Ribalta. */
-async function foto() {
+async function foto(p = {}) {
+  const T = { titulo: "Bom dia.\nA conversa já começou.", ...p };
   const d = new Doc("feed_foto_1080x1350", FEED, K.roteiro);
   const M = d.M;
   d.fotoCorteDeixa({ x: 0, y: 0, w: 860, h: 880, legenda: "FOTO REAL\nrecepção 7h40\nluz de janela" });
-  d.titulo("Bom dia.\nA conversa já começou.", { x: M, y: 1040, size: 80, cor: K.coxia });
+  d.titulo(T.titulo, { x: M, y: 1040, size: 80, cor: K.coxia, w: 920, maxLinhas: 2 });
   d.etiqueta("foto real de cliente, com autorização", { nome: "Legenda_foto", x: M, y: 1230, size: 20, cor: K.bastidor });
   await d.logo(B.logo.principalCor, { x: FEED.largura - M, y: 1236, largura: 170, align: "right" });
   d.grade();
   d.salvar();
+  return d;
 }
 
 /** 9. Novidade / Em breve: etiqueta, título e três itens com ícone. Fundo Coxia. */
@@ -571,44 +626,58 @@ async function novidade(slug, { tag, titulo, itens }) {
   const M = d.M;
   d.bloco({ x: M, y: 100, w: 260, h: 60, cor: K.roteiro, nome: "Etiqueta_fundo" });
   d.etiqueta(tag, { nome: "Etiqueta_texto", x: M + 130, y: 140, medium: true, size: 28, cor: K.coxia, align: "center" });
-  const t = d.titulo(titulo, { x: M, y: 330, size: 104, cor: K.roteiro });
+  const t = d.titulo(titulo, { x: M, y: 330, size: 104, cor: K.roteiro, w: 920, maxLinhas: 2 });
   let y = t.base + 130;
   for (const [i, [icone, nome, texto]] of itens.entries()) {
     d.haste({ x: M, y: y - 50, w: 12, h: 150, cor: K.pontoClaro, nome: `Item${i + 1}_haste` });
     await d.icone(icone, { x: M + 44, y: y - 40, size: 64, cor: K.roteiro, nome: `Item${i + 1}_icone` });
-    d.texto("Texto", `Item${i + 1}_titulo`, nome, { font: "subtitulo", size: 42, cor: K.roteiro, x: M + 140, y });
-    d.texto("Texto", `Item${i + 1}_texto`, texto, { size: 30, cor: K.roteiro, x: M + 140, y: y + 52 });
+    d.texto("Texto", `Item${i + 1}_titulo`, nome, { font: "subtitulo", size: 42, cor: K.roteiro, x: M + 140, y, w: largTexto(M + 140), maxLinhas: 1 });
+    d.texto("Texto", `Item${i + 1}_texto`, texto, { size: 30, cor: K.roteiro, x: M + 140, y: y + 52, w: largTexto(M + 140), maxLinhas: 2 });
     y += 190;
   }
   d.deixa({ x: 930, y: 100, altura: 110, cor: K.ribaltaAcesa });
   await d.logo(B.logo.principalNegativo, { x: M, y: 1190, largura: 190 });
   d.grade();
   d.salvar();
+  return d;
 }
 const NOVIDADES = [
   { slug: "agenda", tag: "NOVIDADE", titulo: "A agenda mora\nno CRM.", itens: [["agenda", "Conversa e agenda juntas", "Os horários ficam no mesmo lugar das conversas."], ["conversa", "Marcou, ficou registrado", "O time vê o histórico antes de confirmar."], ["equipe", "Cada um na sua agenda", "Quem atende vê o que é dele."]] },
   { slug: "copilot_em_breve", tag: "EM BREVE", titulo: "Conversa parada?\nO time sabe.", itens: [["historico", "Aviso na hora certa", "3 conversas esperando alguém há mais de 10 min."], ["lead", "Sem notificação à toa", "Só fala quando tem algo útil."], ["deixa", "Passa a vez", "Quem precisa entrar vê o contexto todo."]] },
 ];
 
-/** Salva a arte contínua (PSD + prévia) e as fatias de 1080×1350 prontas para o Instagram. */
+/** Salva a arte contínua (PSD + prévia) e devolve as fatias de 1080×1350 prontas para o Instagram. */
 function salvarPanorama(d, N, pasta, prefixo) {
   const SW = FEED.largura;
   for (let i = 1; i < N; i++) d.guias.push({ location: SW * i, direction: "vertical" });
   const composta = d.salvar();
   const dir = path.join(OUT, pasta);
-  fs.mkdirSync(dir, { recursive: true });
+  if (GRAVAR) fs.mkdirSync(dir, { recursive: true });
+  const fatias = [];
   for (let i = 0; i < N; i++) {
     const c = createCanvas(SW, FEED.altura);
     c.getContext("2d").drawImage(composta, -i * SW, 0);
-    fs.writeFileSync(path.join(dir, `${prefixo}_${String(i + 1).padStart(2, "0")}.png`), c.toBuffer("image/png"));
-    fs.writeFileSync(path.join(dir, `${prefixo}_${String(i + 1).padStart(2, "0")}.jpg`), c.toBuffer("image/jpeg", 92));
+    const jpg = c.toBuffer("image/jpeg", 92);
+    fatias.push(jpg);
+    if (GRAVAR) {
+      fs.writeFileSync(path.join(dir, `${prefixo}_${String(i + 1).padStart(2, "0")}.png`), c.toBuffer("image/png"));
+      fs.writeFileSync(path.join(dir, `${prefixo}_${String(i + 1).padStart(2, "0")}.jpg`), jpg);
+    }
   }
+  return { doc: d, fatias };
 }
-const novoPano = (nome, N) => new Doc(nome, { largura: FEED.largura * N, altura: FEED.altura, margem: FEED.margem }, K.roteiro);
+const novoPano = (nome, N) => {
+  const d = new Doc(nome, { largura: FEED.largura * N, altura: FEED.altura, margem: FEED.margem }, K.roteiro);
+  for (let i = 1; i < N; i++) d.emendas.push(FEED.largura * i);
+  return d;
+};
 
 /** Carrossel contínuo, "A noite vira dia": Coxia (23:47) até a curva do k, Roteiro (08:02) depois.
  *  A borda da noite segue a curva da deixa, gigante; a lacuna e o bloco de Ribalta fazem a passagem. */
-async function carrosselNoiteDia() {
+async function carrosselNoiteDia(p = {}) {
+  const T = { horario_noite: "23:47", mensagem_cliente: "Oi, ainda dá pra\nmatricular hoje?", titulo_ia: "A IA\nresponde.", horario_manha: "08:02", texto_manha: "A Marina chegou,\nviu a conversa e assumiu.", titulo_time: "O time entra\ncom o histórico.", botao: "Teste grátis no link da bio", ...p };
+  const ia = { rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu reserve\numa aula grátis pra amanhã?", ...p.ia };
+  const pessoa = { rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua aula\npra hoje às 9h.", ...p.pessoa };
   const N = 4;
   const SW = FEED.largura;
   const d = novoPano("carrossel_noite_dia_4320x1350", N);
@@ -644,69 +713,83 @@ async function carrosselNoiteDia() {
   });
   // noite
   d.etiqueta("Noite · quinta-feira", { x: M, y: 160, cor: K.roteiro });
-  d.titulo("23:47", { x: M, y: 640, size: 330, cor: K.roteiro });
-  d.texto("Texto", "Noite_msg", "“Oi, ainda dá pra\nmatricular hoje?”", { size: 44, leading: 60, cor: K.roteiro, x: M, y: 790 });
+  d.titulo(T.horario_noite, { x: M, y: 640, size: 330, cor: K.roteiro });
+  d.texto("Texto", "Noite_msg", `“${T.mensagem_cliente}”`, { size: 44, leading: 60, cor: K.roteiro, x: M, y: 790, w: 920, maxLinhas: 2 });
   await d.logo(B.logo.principalNegativo, { x: M, y: 1190, largura: 190 });
   const x2 = SW + M;
   d.etiqueta("23:47 · IA", { x: x2, y: 160, cor: K.pontoClaro });
-  d.titulo("A IA\nresponde.", { x: x2, y: 400, size: 130, cor: K.roteiro });
-  d.mensagem({ tipo: "ia", x: x2, y: 760, w: 700, h: 200, rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu reserve\numa aula grátis pra amanhã?", escuro: true });
+  d.titulo(T.titulo_ia, { x: x2, y: 400, size: 130, cor: K.roteiro, w: 720, maxLinhas: 2 }); // 720: acima disso o texto encosta na curva da noite
+  d.mensagem({ tipo: "ia", x: x2, y: 760, w: 700, h: 200, rotulo: ia.rotulo, corpo: ia.corpo, escuro: true });
   // manhã
   const x3 = SW * 2 + 330;
   d.etiqueta("Manhã · sexta-feira", { x: x3, y: 160, cor: K.bastidor });
-  d.titulo("08:02", { x: x3, y: 640, size: 250, cor: K.ribalta });
-  d.texto("Texto", "Manha_msg", "A Marina chegou,\nviu a conversa e assumiu.", { size: 40, leading: 56, cor: K.coxia, x: x3, y: 790 });
+  d.titulo(T.horario_manha, { x: x3, y: 640, size: 250, cor: K.ribalta });
+  d.texto("Texto", "Manha_msg", T.texto_manha, { size: 40, leading: 56, cor: K.coxia, x: x3, y: 790, w: SW * 3 - M - x3, maxLinhas: 2 });
   const x4 = SW * 3 + M;
-  d.titulo("O time entra\ncom o histórico.", { x: x4, y: 330, size: 92, cor: K.coxia });
-  d.mensagem({ tipo: "pessoa", x: x4, y: 600, w: 860, h: 200, rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua aula\npra hoje às 9h." });
-  d.botao("Teste grátis no link da bio", { x: x4, y: 900 });
+  d.titulo(T.titulo_time, { x: x4, y: 330, size: 92, cor: K.coxia, w: 920, maxLinhas: 2 });
+  d.mensagem({ tipo: "pessoa", x: x4, y: 600, w: 860, h: 200, rotulo: pessoa.rotulo, corpo: pessoa.corpo });
+  d.botao(T.botao, { x: x4, y: 900 });
   await d.logo(B.logo.principalCor, { x: SW * N - M, y: 1190, largura: 190, align: "right" });
   d.etiqueta("simulação · exemplo", { nome: "Aviso_exemplo", x: x4, y: 1290, size: 20, cor: K.bastidor });
   d.grade();
-  salvarPanorama(d, N, "carrossel_noite_dia", "carrossel_noite_dia");
+  return salvarPanorama(d, N, "carrossel_noite_dia", "carrossel_noite_dia");
 }
 
 /** Carrossel contínuo, "A conversa que rola": blocos de mensagem grandes em zigue-zague, atravessando as emendas.
  *  O texto de cada bloco fica inteiro numa lâmina; o bloco é que cruza a emenda. */
-async function carrosselConversa() {
+async function carrosselConversa(p = {}) {
+  const T = { titulo_capa: "Como a conversa\npassa de mão.", titulo_ia: "A IA responde\nna hora.", titulo_passagem: "Quando precisa,\nela passa a vez.", titulo_time: "O time entra\ncom o histórico.", titulo_final: "A IA dá a deixa.\nSeu time entra\nem cena.", botao: "Teste grátis no link da bio", ...p };
+  const cliente = { rotulo: "cliente · 23:47", corpo: "Oi, ainda dá\npra matricular hoje?", ...p.cliente };
+  const ia = { rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu\nreserve uma aula grátis?", ...p.ia };
+  const pessoa = { rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua\naula pra hoje às 9h.", ...p.pessoa };
+  const final = { rotulo: "cliente · 08:05", corpo: "Perfeito, obrigada!", ...p.cliente_final };
   const N = 5;
   const SW = FEED.largura;
   const d = novoPano("carrossel_conversa_5400x1350", N);
   const M = d.M;
   const E = 1.5;
+  // largura do texto de um bloco: vai até a emenda seguinte (o texto de cada bloco fica inteiro numa lâmina)
+  const wT = (x) => {
+    const tx = x + 36 * E;
+    return (Math.floor(tx / SW) + 1) * SW - 24 - tx;
+  };
   // lâmina 1: capa
   await d.logo(B.logo.principalCor, { x: M, y: 96, largura: 190 });
-  d.titulo("Como a conversa\npassa de mão.", { x: M, y: 330, size: 100, cor: K.coxia });
-  d.mensagem({ tipo: "cliente", x: 470, y: 640, w: 1000, h: 270, escala: E, rotulo: "cliente · 23:47", corpo: "Oi, ainda dá\npra matricular hoje?" });
+  d.titulo(T.titulo_capa, { x: M, y: 330, size: 100, cor: K.coxia, w: 920, maxLinhas: 3 });
+  d.mensagem({ tipo: "cliente", x: 470, y: 640, w: 1000, h: 270, escala: E, rotulo: cliente.rotulo, corpo: cliente.corpo, wTexto: wT(470) });
   d.etiqueta("Arrasta pro lado", { x: M, y: 1230, medium: true, size: 26, cor: K.coxia });
   // lâmina 2: a IA responde
-  d.titulo("A IA responde\nna hora.", { x: SW + M + 60, y: 330, size: 92, cor: K.coxia });
-  d.mensagem({ tipo: "ia", x: 1480, y: 940, w: 1100, h: 270, escala: E, rotulo: "IA · 23:47", corpo: "Dá sim! Quer que eu\nreserve uma aula grátis?" });
+  d.titulo(T.titulo_ia, { x: SW + M + 60, y: 330, size: 92, cor: K.coxia, w: 860, maxLinhas: 3 });
+  d.mensagem({ tipo: "ia", x: 1480, y: 940, w: 1100, h: 270, escala: E, rotulo: ia.rotulo, corpo: ia.corpo, wTexto: wT(1480) });
   // lâmina 3: a passagem
-  d.titulo("Quando precisa,\nela passa a vez.", { x: SW * 2 + M + 60, y: 330, size: 92, cor: K.coxia });
+  d.titulo(T.titulo_passagem, { x: SW * 2 + M + 60, y: 330, size: 92, cor: K.coxia, w: 860, maxLinhas: 3 });
   d.linhaPassagem({ x: 2380, y: 1300, largura: 760, retoFrac: 0.45 });
   d.etiqueta("passou para a equipe", { x: 2380, y: 1255, size: 24, cor: K.ribaltaFunda });
   // lâmina 4: a pessoa entra
-  d.titulo("O time entra\ncom o histórico.", { x: SW * 3 + M + 60, y: 330, size: 92, cor: K.coxia });
-  d.mensagem({ tipo: "pessoa", x: 2620, y: 640, w: 1100, h: 270, escala: E, rotulo: "Marina · 08:02", corpo: "Bom dia! Reservei sua\naula pra hoje às 9h." });
-  d.mensagem({ tipo: "cliente", x: 3900, y: 940, w: 1000, h: 200, escala: E, rotulo: "cliente · 08:05", corpo: "Perfeito, obrigada!" });
+  d.titulo(T.titulo_time, { x: SW * 3 + M + 60, y: 330, size: 92, cor: K.coxia, w: 860, maxLinhas: 3 });
+  d.mensagem({ tipo: "pessoa", x: 2620, y: 640, w: 1100, h: 270, escala: E, rotulo: pessoa.rotulo, corpo: pessoa.corpo, wTexto: wT(2620) });
+  d.mensagem({ tipo: "cliente", x: 3790, y: 940, w: 1000, h: 200, escala: E, rotulo: final.rotulo, corpo: final.corpo, wTexto: wT(3790) }); // x 3790 (era 3900): em 3900 o texto cruzava a emenda 4320
   // lâmina 5: fechamento
   const x5 = SW * 4 + M;
-  d.titulo("A IA dá a deixa.\nSeu time entra\nem cena.", { x: x5, y: 330, size: 96, cor: K.coxia });
-  d.botao("Teste grátis no link da bio", { x: x5, y: 780 });
+  d.titulo(T.titulo_final, { x: x5, y: 330, size: 96, cor: K.coxia, w: 920, maxLinhas: 3 });
+  d.botao(T.botao, { x: x5, y: 780 });
   await d.logo(B.logo.principalCor, { x: SW * N - M, y: 1190, largura: 190, align: "right" });
   d.etiqueta("simulação · exemplo", { nome: "Aviso_exemplo", x: x5, y: 1290, size: 20, cor: K.bastidor });
   d.grade();
-  salvarPanorama(d, N, "carrossel_conversa", "carrossel_conversa");
+  return salvarPanorama(d, N, "carrossel_conversa", "carrossel_conversa");
 }
 
-(async () => {
-  for (const dir of ["", "previews", "jpg", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
-  for (const gerar of [storyConversa, frase, antesDepois, numero, lista, tela, enquete, foto]) await gerar();
-  for (const n of NOVIDADES) await novidade(n.slug, n);
-  await carrosselNoiteDia();
-  await carrosselConversa();
-})().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+module.exports = { ICONES, NOVIDADES, storyConversa, frase, antesDepois, numero, lista, tela, enquete, foto, novidade, carrosselNoiteDia, carrosselConversa };
+
+if (GRAVAR) {
+  (async () => {
+    for (const dir of ["", "previews", "jpg", "assets"]) fs.mkdirSync(path.join(OUT, dir), { recursive: true });
+    for (const gerar of [storyConversa, frase, antesDepois, numero, lista, tela, enquete, foto]) await gerar();
+    for (const n of NOVIDADES) await novidade(n.slug, n);
+    await carrosselNoiteDia();
+    await carrosselConversa();
+  })().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}

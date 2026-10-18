@@ -3,6 +3,6 @@
   "private": true,
   "version": "1.0.0",
   "description": "Serviço HTTP que recebe {marca, modelo, textos} e devolve JPG de Instagram (n8n chama este serviço)",
-  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "scripts": { "start": "node server.js", "test": "node test.js && node test-tabua.js && node test-puka.js" },
   "engines": { "node": ">=20" }
 }
