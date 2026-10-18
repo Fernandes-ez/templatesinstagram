@@ -82,7 +82,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Escolhe o pilar usado há mais tempo, o motor do Reels (Veo ou animação) e monta a pesquisa.\nconst marca = $('Início: produzir post').first().json;\nconst historico = $('Histórico da marca').all()\n  .map((i) => i.json)\n  .filter((r) => r && r.marca === marca.marca_id);\n\n// Pilar: nunca usado primeiro; depois o usado há mais tempo (histórico vem do mais novo pro mais antigo)\nconst ultimoUso = {};\nhistorico.forEach((r, idx) => { if (r.pilar && ultimoUso[r.pilar] === undefined) ultimoUso[r.pilar] = idx; });\nconst pilar = [...marca.pilares].sort((a, b) => (ultimoUso[b.nome] ?? Infinity) - (ultimoUso[a.nome] ?? Infinity))[0];\n\n// Motor do Reels: alterna Veo e animação; respeita o teto mensal de Veo (somando todas as marcas)\nlet motor = 'template';\nlet veo_no_mes = 0;\nif (marca.tipo === 'reel') {\n  const inicioMes = $now.setZone(marca.geral.fuso).startOf('month');\n  veo_no_mes = $('Veo usados no mês').all()\n    .map((i) => i.json)\n    .filter((r) => r && r.motor === 'veo' && r.createdAt && DateTime.fromISO(String(r.createdAt)) >= inicioMes)\n    .length;\n  const ultimoReel = historico.find((r) => r.tipo === 'reel' && (r.motor === 'veo' || r.motor === 'animacao'));\n  const preferido = ultimoReel && ultimoReel.motor === 'veo' ? 'animacao' : 'veo';\n  motor = preferido === 'veo' && veo_no_mes < marca.geral.veo_limite_mes ? 'veo' : 'animacao';\n}\n\nconst recentes = historico.filter((r) => r.tema).slice(0, 20)\n  .map((r) => `- [${r.tipo || 'feed'}${r.modelo ? '/' + r.modelo : ''}] ${r.tema} (${r.status})`);\n\nreturn [{\n  json: {\n    marca,\n    tipo: marca.tipo,\n    motor,\n    veo_no_mes,\n    pilar: pilar.nome,\n    consulta: pilar.consulta,\n    temas_recentes: recentes.length ? recentes.join('\\n') : '(nenhum post anterior)',\n  },\n}];\n"
+        "jsCode": "// Escolhe o pilar usado há mais tempo, o motor do Reels (Veo ou animação) e monta a pesquisa.\nconst marca = $('Início: produzir post').first().json;\nconst historico = $('Histórico da marca').all()\n  .map((i) => i.json)\n  .filter((r) => r && r.marca === marca.marca_id);\n\n// Pilar: nunca usado primeiro; depois o usado há mais tempo (histórico vem do mais novo pro mais antigo)\nconst ultimoUso = {};\nhistorico.forEach((r, idx) => { if (r.pilar && ultimoUso[r.pilar] === undefined) ultimoUso[r.pilar] = idx; });\nconst pilar = [...marca.pilares].sort((a, b) => (ultimoUso[b.nome] ?? Infinity) - (ultimoUso[a.nome] ?? Infinity))[0];\n\n// Motor do Reels: alterna Veo e animação; respeita o teto mensal de Veo (somando todas as marcas)\nlet motor = 'template';\nlet veo_no_mes = 0;\nif (marca.tipo === 'reel') {\n  const inicioMes = $now.setZone(marca.geral.fuso).startOf('month');\n  veo_no_mes = $('Veo usados no mês').all()\n    .map((i) => i.json)\n    .filter((r) => r && r.motor === 'veo' && r.createdAt && DateTime.fromISO(String(r.createdAt)) >= inicioMes)\n    .length;\n  const ultimoReel = historico.find((r) => r.tipo === 'reel' && (r.motor === 'veo' || r.motor === 'animacao'));\n  const preferido = ultimoReel && ultimoReel.motor === 'veo' ? 'animacao' : 'veo';\n  motor = preferido === 'veo' && veo_no_mes < marca.geral.veo_limite_mes ? 'veo' : 'animacao';\n}\n\n// Radar da semana (workflow 00): inspiração de ângulo, formato e gancho. Só vale se tiver até 10 dias.\nconst linhaRadar = $('Briefing do radar (semana)').first()?.json || {};\nlet briefing = null;\ntry { briefing = linhaRadar.briefing ? JSON.parse(linhaRadar.briefing) : null; } catch (e) { briefing = null; }\nconst idade = linhaRadar.createdAt ? $now.diff(DateTime.fromISO(String(linhaRadar.createdAt)), 'days').days : 0;\nlet radar = '(sem radar recente para esta marca)';\nif (briefing && idade <= 10) {\n  const ideias = briefing.ideias || [];\n  const doTipo = ideias.filter((i) => i.formato === (marca.tipo === 'carrossel' ? 'carrossel' : marca.tipo === 'reel' ? 'reel' : 'feed'));\n  const lista = (doTipo.length ? doTipo : ideias).slice(0, 5);\n  radar = [\n    `Resumo: ${briefing.resumo || ''}`,\n    (briefing.padroes || []).length ? `Padrões: ${(briefing.padroes || []).slice(0, 4).map((p) => `${p.padrao} (${p.por_que_funciona})`).join('; ')}` : '',\n    (briefing.ganchos || []).length ? `Estruturas de gancho: ${(briefing.ganchos || []).slice(0, 4).join(' | ')}` : '',\n    (briefing.lacunas || []).length ? `Lacunas do mercado: ${(briefing.lacunas || []).slice(0, 4).join('; ')}` : '',\n    lista.length ? `Ideias: ${lista.map((i) => `[${i.formato}/${i.modelo}] ${i.titulo} (${i.angulo})`).join(' | ')}` : '',\n  ].filter(Boolean).join('\\n');\n}\n\nconst recentes = historico.filter((r) => r.tema).slice(0, 20)\n  .map((r) => `- [${r.tipo || 'feed'}${r.modelo ? '/' + r.modelo : ''}] ${r.tema} (${r.status})`);\n\nreturn [{\n  json: {\n    marca,\n    tipo: marca.tipo,\n    motor,\n    veo_no_mes,\n    pilar: pilar.nome,\n    consulta: pilar.consulta,\n    radar,\n    temas_recentes: recentes.length ? recentes.join('\\n') : '(nenhum post anterior)',\n  },\n}];\n"
       },
       "id": "e34c5ff0-6c8e-47e7-8a28-027e66524a7e",
       "name": "Escolher pilar e pesquisa",
@@ -141,12 +141,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Pilar de conteúdo de hoje: {{ $json.pilar }}\nPeça: {{ $json.tipo === 'reel' ? 'Reels (' + $json.motor + ')' : ($json.tipo === 'carrossel' ? 'carrossel' : 'post de feed') }}\nPublicação prevista para: {{ $json.marca.data_postagem }}\n\nREFERÊNCIAS PESQUISADAS AGORA (única base para dados de mercado):\n{{ $json.fontes_texto }}\n\nTEMAS RECENTES DA MARCA (não repetir):\n{{ $json.temas_recentes }}\n\nEscreva a peça para a marca {{ $json.marca.nome }}.",
+        "text": "=Pilar de conteúdo de hoje: {{ $json.pilar }}\nPeça: {{ $json.tipo === 'reel' ? 'Reels (' + $json.motor + ')' : ($json.tipo === 'carrossel' ? 'carrossel' : 'post de feed') }}\nPublicação prevista para: {{ $json.marca.data_postagem }}\n\nREFERÊNCIAS PESQUISADAS AGORA (única base para dados de mercado):\n{{ $json.fontes_texto }}\n\nRADAR DA SEMANA (só inspiração de ângulo, formato e gancho observados em outras marcas; nunca fato do produto nem texto copiado):\n{{ $json.radar }}\n\nTEMAS RECENTES DA MARCA (não repetir):\n{{ $json.temas_recentes }}\n\nEscreva a peça para a marca {{ $json.marca.nome }}.",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente."
+              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente.\n11. RADAR: use uma ideia do radar só se encaixar no pilar de hoje e no que a marca realmente faz; adapte o ângulo para a nossa voz. Nunca copie texto ou gancho, nunca cite concorrente e nunca trate algo do radar como fato da nossa marca (fatos do produto vêm só dos FATOS DA MARCA). Se nada encaixar, ignore o radar."
             }
           ]
         },
@@ -201,12 +201,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed e carrossel').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed e carrossel').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed e carrossel').item.json.fontes_texto }}\n\nRADAR (inspiração, nunca fato):\n{{ $('Montar instruções de feed e carrossel').item.json.radar }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed e carrossel').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
+              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português, texto ou gancho copiado de uma referência ou do RADAR, e qualquer coisa do radar tratada como fato da nossa marca.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
             }
           ]
         },
@@ -296,12 +296,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed e carrossel').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed e carrossel').item.json.temas_recentes }}\n\nPEÇA REPROVADA:\n{{ JSON.stringify($('Redator da marca').item.json.output, null, 2) }}\n\nREVISÃO (nota {{ $json.output.nota }}/10):\nProblemas: {{ ($json.output.problemas || []).join(' | ') }}\nSugestões: {{ $json.output.sugestoes }}\n\nReescreva a peça inteira corrigindo tudo.",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed e carrossel').item.json.fontes_texto }}\n\nRADAR DA SEMANA (só inspiração, nunca fato):\n{{ $('Montar instruções de feed e carrossel').item.json.radar }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed e carrossel').item.json.temas_recentes }}\n\nPEÇA REPROVADA:\n{{ JSON.stringify($('Redator da marca').item.json.output, null, 2) }}\n\nREVISÃO (nota {{ $json.output.nota }}/10):\nProblemas: {{ ($json.output.problemas || []).join(' | ') }}\nSugestões: {{ $json.output.sugestoes }}\n\nReescreva a peça inteira corrigindo tudo.",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente.\n10. Você está reescrevendo uma peça reprovada. Corrija todos os problemas apontados pela revisão, mantendo o que estava bom."
+              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente.\n10. Você está reescrevendo uma peça reprovada. Corrija todos os problemas apontados pela revisão, mantendo o que estava bom.\n11. RADAR: use uma ideia do radar só se encaixar no pilar de hoje e no que a marca realmente faz; adapte o ângulo para a nossa voz. Nunca copie texto ou gancho, nunca cite concorrente e nunca trate algo do radar como fato da nossa marca (fatos do produto vêm só dos FATOS DA MARCA). Se nada encaixar, ignore o radar."
             }
           ]
         },
@@ -361,7 +361,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
+              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português, texto ou gancho copiado de uma referência ou do RADAR.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
             }
           ]
         },
@@ -652,6 +652,42 @@
       ],
       "notes": "Feed: troca as instruções de formato pelo catálogo real do render. Reels: não muda nada.",
       "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_referencias"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "marca",
+              "condition": "eq",
+              "keyValue": "={{ $('Início: produzir post').first().json.marca_id }}"
+            }
+          ]
+        },
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "createdAt",
+        "orderByDirection": "DESC"
+      },
+      "id": "9452ed61-754a-47c6-be11-93460139aec0",
+      "name": "Briefing do radar (semana)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        550,
+        850
+      ],
+      "alwaysOutputData": true,
+      "notes": "Última linha do radar (workflow 00) para esta marca. Se não houver, a peça sai sem radar.",
+      "notesInFlow": true
     }
   ],
   "connections": {
@@ -769,7 +805,7 @@
       "main": [
         [
           {
-            "node": "Escolher pilar e pesquisa",
+            "node": "Briefing do radar (semana)",
             "type": "main",
             "index": 0
           }
@@ -927,6 +963,17 @@
         [
           {
             "node": "Redator da marca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing do radar (semana)": {
+      "main": [
+        [
+          {
+            "node": "Escolher pilar e pesquisa",
             "type": "main",
             "index": 0
           }

@@ -65,6 +65,10 @@ Quando você cria um modelo novo no render, ele aparece para o redator sozinho, 
 
 A credencial do render é **Header Auth** com Name `Authorization` e Value `Bearer <RENDER_TOKEN>`.
 
+## Radar → redator
+
+No 02, o nó **Briefing do radar (semana)** lê a última linha de `instagram_referencias` da marca. **Escolher pilar e pesquisa** monta um texto com resumo, padrões, ganchos, lacunas e até 5 ideias do formato da peça (carrossel, feed ou Reels), só se o briefing tiver até 10 dias. O redator e o reescritor recebem esse texto como inspiração de ângulo; o revisor reprova cópia de texto ou gancho e qualquer coisa do radar tratada como fato da marca. Sem briefing recente, a peça sai normalmente, sem radar. Os modelos sugeridos pelo radar (00) agora usam os nomes reais do render.
+
 ## Carrossel (de ponta a ponta)
 
 | Etapa | O que acontece |
@@ -79,7 +83,6 @@ O carrossel usa o mesmo horário de feed da marca. Para mudar a frequência, edi
 
 ## O que ainda não está alinhado (próximo passo)
 
-- **Radar → redator:** o trecho que injeta o briefing do radar no prompt do redator está descrito em `fluxo/00-radar-semanal.md`, mas ainda não foi aplicado ao 02.
 
 ## Arquivos
 
