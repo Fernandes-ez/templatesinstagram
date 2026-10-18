@@ -1,0 +1,74 @@
+{
+  "name": "07 · Alerta de erro (Telegram)",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "13920336-4b8e-432c-9978-2ed601c262b6",
+      "name": "Quando algum workflow falhar",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "PREENCHER_CHAT_ID",
+        "text": "=⚠️ Erro no n8n\nWorkflow: {{ $json.workflow.name }}\nNó: {{ $json.execution.lastNodeExecuted }}\nMotivo: {{ $json.execution.error.message }}\nExecução: {{ $json.execution.url }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a26f5ac8-f7d9-46b5-b564-71d15ad7720f",
+      "name": "Avisar erro no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        300,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 07 · Alerta de erro\n**O que faz:** avisa no Telegram qual workflow e qual nó falharam.\n**Como ligar:** em cada workflow 01 a 06 → ⋯ → Configurações → **Error workflow** → escolha este.\nTroque `PREENCHER_CHAT_ID` e a credencial do Telegram.",
+        "height": 220,
+        "width": 700,
+        "color": 4
+      },
+      "id": "b69085a6-fb46-4366-a670-4c1d8f58a4f5",
+      "name": "Nota: 07 · Alerta de erro",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -300
+      ]
+    }
+  ],
+  "connections": {
+    "Quando algum workflow falhar": {
+      "main": [
+        [
+          {
+            "node": "Avisar erro no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

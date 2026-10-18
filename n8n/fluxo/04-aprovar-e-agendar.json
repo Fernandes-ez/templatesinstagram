@@ -1,0 +1,825 @@
+{
+  "name": "04 · Aprovar e agendar (revisão visual, Telegram, fila)",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Junta tudo antes da prévia: qual motor foi usado de fato e se a peça passa pelo revisor visual.\nconst p = $('Receber peça pronta').first().json;\nconst veoOk = !!p.veo_ok;\nlet motor = p.motor;\nif (p.tipo === 'reel') motor = veoOk ? 'veo' : 'animacao';\nconst veo_falhou = p.motor === 'veo' && !veoOk;\nconst revisao = p.rota === 'feed-foto' ? 'imagem' : (veoOk ? 'video' : 'nenhuma');\nconst veoUsados = p.veo_no_mes + (veoOk ? 1 : 0);\nreturn [{ json: { ...p, motor, revisao, veo_falhou, veo_no_mes: veoUsados, eh_video: p.tipo === 'reel' } }];\n"
+      },
+      "id": "44b3f9e0-9bb4-42ac-9178-092dbd4e0651",
+      "name": "Preparar prévia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ca7ba851-8325-4944-8449-138e9d3ae6ad",
+                    "leftValue": "={{ $json.revisao }}",
+                    "rightValue": "imagem",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "imagem"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "08ea11c5-415c-4f2f-8d80-2bfe123f0fa5",
+                    "leftValue": "={{ $json.revisao }}",
+                    "rightValue": "video",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "video"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "45305d08-f326-41bf-930d-a3db98fe9d50",
+                    "leftValue": "={{ $json.revisao }}",
+                    "rightValue": "nenhuma",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "nenhuma"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b217c1c9-8bcc-4fab-9120-9c0cce933cf0",
+      "name": "Revisão visual",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1880,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "text": "=Você é o diretor de arte da marca {{ $('Preparar prévia').item.json.marca.nome }}. Avalie esta peça de Instagram já finalizada, antes de ir para aprovação.\nConceito: {{ $('Preparar prévia').item.json.marca.visual.conceito }}\nPaleta: {{ $('Preparar prévia').item.json.marca.visual.paleta }}\nDireção de imagem: {{ $('Preparar prévia').item.json.marca.visual.direcao }}\nProibido: {{ $('Preparar prévia').item.json.marca.visual.proibido }}\nTexto esperado na peça: {{ $('Preparar prévia').item.json.dados_render_json }}\n\nConfira: texto legível e sem erro de português; a imagem combina com a direção da marca e não tem nada proibido; nada de mãos, rostos ou objetos deformados, texto falso ou letreiro sem sentido gerado pela IA; composição limpa.\nResponda SOMENTE com JSON no formato {\"aprovado\": true ou false, \"problemas\": [\"...\"]}.",
+        "inputType": "url",
+        "imageUrls": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "simplify": true,
+        "options": {
+          "maxOutputTokens": 800
+        }
+      },
+      "id": "abdcda3f-405c-43bf-be7d-29a2e4d4ffd8",
+      "name": "Revisor visual (imagem)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2120,
+        1700
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "text": "=Você é o diretor de arte da marca {{ $('Preparar prévia').item.json.marca.nome }}. Avalie esta peça de Instagram já finalizada, antes de ir para aprovação.\nConceito: {{ $('Preparar prévia').item.json.marca.visual.conceito }}\nPaleta: {{ $('Preparar prévia').item.json.marca.visual.paleta }}\nDireção de imagem: {{ $('Preparar prévia').item.json.marca.visual.direcao }}\nProibido: {{ $('Preparar prévia').item.json.marca.visual.proibido }}\nTexto esperado na peça: {{ $('Preparar prévia').item.json.dados_render_json }}\n\nConfira: texto legível e sem erro de português; a imagem combina com a direção da marca e não tem nada proibido; nada de mãos, rostos ou objetos deformados, texto falso ou letreiro sem sentido gerado pela IA; composição limpa.\nResponda SOMENTE com JSON no formato {\"aprovado\": true ou false, \"problemas\": [\"...\"]}.",
+        "inputType": "url",
+        "videoUrls": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "simplify": true,
+        "options": {
+          "maxOutputTokens": 800
+        }
+      },
+      "id": "2fffdd5e-5b6c-4b9b-9821-8d58c5ef7648",
+      "name": "Revisor visual (vídeo)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2120,
+        1900
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lê o parecer do revisor visual (Gemini olhando a peça final).\nconst p = $('Preparar prévia').first().json;\nconst resp = $input.first().json || {};\nconst texto = (resp.content?.parts || []).map((x) => x.text || '').join('\\n') || JSON.stringify(resp);\nlet parecer = { aprovado: true, problemas: [] };\ntry {\n  const bruto = texto.replace(/```(json)?/g, '').trim();\n  const ini = bruto.indexOf('{'), fim = bruto.lastIndexOf('}');\n  parecer = JSON.parse(bruto.slice(ini, fim + 1));\n} catch (e) {\n  parecer = { aprovado: false, problemas: ['Não consegui ler o parecer do revisor visual: confira a peça com atenção.'] };\n}\nconst problemas = Array.isArray(parecer.problemas) ? parecer.problemas : [];\nreturn [{ json: { ...p, visual_aprovado: parecer.aprovado === true, visual_nota: parecer.aprovado === true\n  ? '✅ Revisor visual: sem problemas.'\n  : `⚠️ Revisor visual: ${problemas.join('; ') || 'reprovou sem detalhar'}` } }];\n"
+      },
+      "id": "ffc06bb5-9ead-4c73-876a-de984741ed0f",
+      "name": "Ler revisão visual",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2340,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e8eca10-6d2d-40da-8b22-2e8a097fb023",
+              "leftValue": "={{ $('Preparar prévia').item.json.eh_video }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d74b300e-109c-47ac-bef7-2a4610862348",
+      "name": "É vídeo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2560,
+        1900
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "binaryData": false,
+        "file": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "additionalFields": {
+          "caption": "=Prévia · {{ $('Preparar prévia').item.json.marca.nome }} · Reels ({{ $('Preparar prévia').item.json.motor }})"
+        }
+      },
+      "id": "7ea28934-e885-463e-8cad-fae50dbb6c15",
+      "name": "Prévia do vídeo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2780,
+        1800
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "binaryData": false,
+        "file": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "additionalFields": {
+          "caption": "=Prévia · {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.modelo }}"
+        }
+      },
+      "id": "b8a42cda-8516-42da-9567-642520871ab1",
+      "name": "Prévia da imagem",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2780,
+        2000
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "message": "=📝 {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.tipo === 'reel' ? 'Reels (' + $('Preparar prévia').item.json.motor + ')' : 'Feed (' + $('Preparar prévia').item.json.modelo + ')' }} · {{ $('Preparar prévia').item.json.pilar }}\nTema: {{ $('Preparar prévia').item.json.tema }}\nRevisão automática: {{ $('Preparar prévia').item.json.nota_revisao }}/10{{ $('Preparar prévia').item.json.reescrito ? ' (reescrito após 1ª revisão)' : '' }}\n{{ $('Ler revisão visual').isExecuted ? $('Ler revisão visual').item.json.visual_nota : '' }}{{ $('Preparar prévia').item.json.veo_falhou ? '⚠️ O Veo falhou; o Reels saiu na versão animada.' : '' }}\nPublicação prevista: {{ $('Preparar prévia').item.json.marca.data_postagem }}\n\nLEGENDA\n{{ $('Preparar prévia').item.json.legenda }}\n\nFONTES\n{{ $('Preparar prévia').item.json.fontes_usadas || '(peça atemporal, sem fontes externas)' }}\n\nObservações da revisão: {{ $('Preparar prévia').item.json.observacoes_revisao || 'nenhuma' }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "✅ Aprovar e agendar",
+            "disapproveLabel": "❌ Reprovar"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 20,
+              "resumeUnit": "hours"
+            }
+          },
+          "appendAttribution": false
+        }
+      },
+      "id": "691db836-b87a-43c4-a462-55b13fbd4de2",
+      "name": "Aprovação humana",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3000,
+        1900
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5d15dc34-14c9-4cc1-b71a-e04abb602c71",
+              "leftValue": "={{ $json.data?.approved === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "495acc2d-a0e2-4a78-aceb-375a3c931755",
+      "name": "Você aprovou?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3220,
+        1900
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Próximo horário de postagem da marca (feed ou Reels), a partir da data planejada e nunca no passado.\nconst p = $('Preparar prévia').first().json;\nconst m = p.marca;\nconst dias = p.tipo === 'reel' ? [m.reel_dia] : m.dias_postagem;\nconst [h, min] = (p.tipo === 'reel' ? m.horario_reel : m.horario).split(':').map(Number);\nconst agora = $now.setZone(m.geral.fuso);\n\nlet dia = DateTime.fromISO(m.data_postagem, { zone: m.geral.fuso }).set({ hour: h, minute: min, second: 0, millisecond: 0 });\nfor (let i = 0; i < 21; i++) {\n  if (dias.includes(dia.weekday) && dia > agora.plus({ minutes: 5 })) break;\n  dia = dia.plus({ days: 1 });\n}\nreturn [{ json: { ...p, agendado_para: dia.toISO(), agendado_legivel: dia.setLocale('pt-BR').toFormat(\"cccc, dd/LL 'às' HH:mm\") } }];\n"
+      },
+      "id": "f6b80f94-cc94-4c78-ae1e-519e5b1936f6",
+      "name": "Calcular horário",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3440,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "24bf7d22-5c30-45d8-8a4f-76ffcfa6edda",
+              "name": "marca",
+              "value": "={{ $json.marca.marca_id }}",
+              "type": "string"
+            },
+            {
+              "id": "8618b1e4-0242-405b-bb4b-9e6035202b33",
+              "name": "tipo",
+              "value": "={{ $json.tipo }}",
+              "type": "string"
+            },
+            {
+              "id": "32eaf81c-7557-44aa-95d8-bd9cf14948d7",
+              "name": "modelo",
+              "value": "={{ $json.modelo || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "027c10d4-b48a-4706-836e-85c6fdfe3d7b",
+              "name": "motor",
+              "value": "={{ $json.motor }}",
+              "type": "string"
+            },
+            {
+              "id": "031f26cf-343b-4c1f-a04d-da46125280d7",
+              "name": "pilar",
+              "value": "={{ $json.pilar }}",
+              "type": "string"
+            },
+            {
+              "id": "6fc380a2-2a98-4326-8293-2898cee53e56",
+              "name": "tema",
+              "value": "={{ $json.tema }}",
+              "type": "string"
+            },
+            {
+              "id": "5b96de90-3974-4f0a-9fc9-b697920c9b5c",
+              "name": "legenda",
+              "value": "={{ $json.legenda }}",
+              "type": "string"
+            },
+            {
+              "id": "2990ca56-93dd-4529-9c52-d4ed21c1999b",
+              "name": "midia_url",
+              "value": "={{ $json.midia_url }}",
+              "type": "string"
+            },
+            {
+              "id": "edbab370-b703-471a-b265-a2f35ddd8bce",
+              "name": "fontes",
+              "value": "={{ $json.fontes_usadas }}",
+              "type": "string"
+            },
+            {
+              "id": "61a6445a-7451-4f56-8b28-74d0e0d483c5",
+              "name": "nota_revisao",
+              "value": "={{ $json.nota_revisao }}",
+              "type": "number"
+            },
+            {
+              "id": "52b899b6-2f9c-42b7-aa83-0f069eb6aca8",
+              "name": "status",
+              "value": "agendado",
+              "type": "string"
+            },
+            {
+              "id": "65df143a-3f6a-4177-87f8-744d5e892c8a",
+              "name": "agendado_para",
+              "value": "={{ $json.agendado_para }}",
+              "type": "string"
+            },
+            {
+              "id": "1b91161f-c413-4ee7-a583-ea48f1cbed10",
+              "name": "ig_user_id",
+              "value": "={{ $json.marca.ig_user_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c6077d81-c52e-4a57-aa4d-54e701af6776",
+      "name": "Linha agendada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3660,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "56364db5-386c-4888-b503-2aa9dbe32e91",
+      "name": "Salvar na fila",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3880,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "text": "=📅 Agendado: {{ $('Calcular horário').item.json.marca.nome }} ({{ $('Calcular horário').item.json.tipo }}), {{ $('Calcular horário').item.json.agendado_legivel }}.\nTema: {{ $('Calcular horário').item.json.tema }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d3eaea1d-1981-47b8-aa3d-c07dc956c67f",
+      "name": "Confirmar agendamento",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4100,
+        1800
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "d9622781-2b2e-4ad9-8134-9a4ca39209cb",
+      "name": "Receber peça pronta",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        1360,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Você reprovou a peça final no Telegram (ou não respondeu no prazo): monta o registro e segue para o workflow 05.\nconst p = $('Preparar prévia').first().json;\nreturn [{ json: {\n  marca: p.marca.marca_id, nome_marca: p.marca.nome, telegram_chat_id: p.marca.geral.telegram_chat_id,\n  tipo: p.tipo, modelo: p.modelo || '', motor: p.veo_gerado ? 'veo' : p.motor, pilar: p.pilar, tema: p.tema, legenda: p.legenda, midia_url: p.midia_url,\n  nota_revisao: Number(p.nota_revisao) || 0, status: 'reprovado',\n  erro: 'Peça final reprovada por você no Telegram (ou sem resposta no prazo).',\n} }];\n"
+      },
+      "id": "9995f358-2caa-4177-aa81-4a0a26906197",
+      "name": "Montar reprovação (você reprovou)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3480,
+        2160
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "PREENCHER_ID_05_REPROVACAO"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "11d1d6d0-81ad-4e5d-a8e1-3f39be5d4fb2",
+      "name": "Chamar 05 · Registrar reprovação",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        3740,
+        2160
+      ],
+      "notes": "Registra e avisa.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "## 04 · Aprovar e agendar\n**O que faz:** um revisor visual confere a foto/vídeo, você recebe a prévia no Telegram e aprova ou reprova. Aprovou → calcula o próximo horário da marca e **grava na fila** (`instagram_posts`).\n**Entra:** a peça com a mídia pronta (do 03).\n**Sai:** linha `agendado` na fila (quem publica é o **06**). Reprovou → **05**.",
+        "height": 330,
+        "width": 1500,
+        "color": 4
+      },
+      "id": "d45db189-0267-43cd-9383-79227c3a0caa",
+      "name": "Nota: 04 · Aprovar e agendar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        -560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ① Revisão visual\nFoto e vídeo passam por revisor; o feed de template segue direto.",
+        "height": 530,
+        "width": 1260,
+        "color": 6
+      },
+      "id": "a29e8205-efd7-42aa-968e-0061e0809170",
+      "name": "Nota: ① Revisão visual",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        1550
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ② Você aprova\nPrévia + botões no Telegram. Sem resposta no prazo = reprovado.",
+        "height": 530,
+        "width": 800,
+        "color": 5
+      },
+      "id": "bc4fe9c1-030b-4f02-8f54-1b45209d8d4d",
+      "name": "Nota: ② Você aprova",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        1650
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ③ Agendar\nPróximo horário da marca → fila.",
+        "height": 330,
+        "width": 1020,
+        "color": 3
+      },
+      "id": "a6fc8181-4082-4add-b264-e47f87146121",
+      "name": "Nota: ③ Agendar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3380,
+        1650
+      ]
+    }
+  ],
+  "connections": {
+    "Preparar prévia": {
+      "main": [
+        [
+          {
+            "node": "Revisão visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisão visual": {
+      "main": [
+        [
+          {
+            "node": "Revisor visual (imagem)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Revisor visual (vídeo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É vídeo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisor visual (imagem)": {
+      "main": [
+        [
+          {
+            "node": "Ler revisão visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisor visual (vídeo)": {
+      "main": [
+        [
+          {
+            "node": "Ler revisão visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler revisão visual": {
+      "main": [
+        [
+          {
+            "node": "É vídeo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É vídeo?": {
+      "main": [
+        [
+          {
+            "node": "Prévia do vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prévia da imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prévia do vídeo": {
+      "main": [
+        [
+          {
+            "node": "Aprovação humana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prévia da imagem": {
+      "main": [
+        [
+          {
+            "node": "Aprovação humana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aprovação humana": {
+      "main": [
+        [
+          {
+            "node": "Você aprovou?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Você aprovou?": {
+      "main": [
+        [
+          {
+            "node": "Calcular horário",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar reprovação (você reprovou)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular horário": {
+      "main": [
+        [
+          {
+            "node": "Linha agendada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linha agendada": {
+      "main": [
+        [
+          {
+            "node": "Salvar na fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar na fila": {
+      "main": [
+        [
+          {
+            "node": "Confirmar agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receber peça pronta": {
+      "main": [
+        [
+          {
+            "node": "Preparar prévia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar reprovação (você reprovou)": {
+      "main": [
+        [
+          {
+            "node": "Chamar 05 · Registrar reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

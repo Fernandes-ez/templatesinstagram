@@ -1,0 +1,748 @@
+{
+  "name": "03 · Produzir mídia (template, foto, Reels)",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "db1c68d0-1861-4591-a401-84c6e47753ca",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "feed-template",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "feed-template"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d89dc7a8-6f61-4528-9006-3f2d1c6c98bb",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "feed-foto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "feed-foto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "99fea77a-5fc7-4272-b59e-3fc9043600a0",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "reel-animacao",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reel-animacao"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "143eb7d6-212c-4868-81a7-8c9ed6d1cb40",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "reel-veo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reel-veo"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cb747b41-1b5f-43d3-97f9-dd7ead7e758f",
+      "name": "Rota da peça",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        220,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Receber peça').item.json.marca.geral.render_url }}/post",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Receber peça').item.json.dados_render_json }}"
+      },
+      "id": "9c4bf397-4d79-4d27-89c0-75b3e0b5efb6",
+      "name": "Renderizar post (template)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        520,
+        1500
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "generate",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3.1-flash-image-preview"
+        },
+        "prompt": "={{ $('Receber peça').item.json.prompt_imagem }}",
+        "options": {}
+      },
+      "id": "563064e5-30c8-4c2b-9b1e-cb1f1539cf94",
+      "name": "Gerar foto (Nano Banana)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        1700
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Receber peça').item.json.marca.geral.render_url }}/post",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "dados",
+              "value": "={{ $('Receber peça').item.json.dados_render_json }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "midia",
+              "inputDataFieldName": "data"
+            }
+          ]
+        }
+      },
+      "id": "8d8313c9-481d-4131-820f-f0ab1b9e5e96",
+      "name": "Renderizar post com foto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        1700
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Receber peça').item.json.marca.geral.render_url }}/reel",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Receber peça').item.json.dados_render_json }}"
+      },
+      "id": "1219961b-f810-4e5b-8811-510a59a20293",
+      "name": "Renderizar Reels (animação)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        760,
+        1900
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Receber peça').item.json.marca.geral.telegram_chat_id }}",
+        "message": "=🎬 Roteiro de Reels com Veo · {{ $('Receber peça').item.json.marca.nome }} · {{ $('Receber peça').item.json.pilar }}\nTema: {{ $('Receber peça').item.json.tema }}\nRevisão automática: {{ $('Receber peça').item.json.nota_revisao }}/10\n\nLEGENDAS NO VÍDEO\n{{ $('Receber peça').item.json.cenas_texto }}\n\nCENA PARA O VEO (8 s)\n{{ $('Receber peça').item.json.prompt_veo }}\n\nVeo já usado este mês: {{ $('Receber peça').item.json.veo_no_mes }} de {{ $('Receber peça').item.json.marca.geral.veo_limite_mes }}.\nAprovar gasta 1 geração do Veo (~US$ 0,64 no Lite 1080p, dos seus créditos). Se recusar, nada é gasto.",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "✅ Gerar no Veo",
+            "disapproveLabel": "❌ Recusar"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 20,
+              "resumeUnit": "hours"
+            }
+          },
+          "appendAttribution": false
+        }
+      },
+      "id": "34a2218d-1da3-4362-99d0-7a14fea2ec9b",
+      "name": "Aprovar roteiro do Veo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        520,
+        2100
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7c96d90c-6675-4b6d-8608-ba32db0efa53",
+              "leftValue": "={{ $json.data?.approved === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "01650441-c3f6-49e3-8f4b-432017da70fc",
+      "name": "Roteiro aprovado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        740,
+        2100
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "generate",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "prompt": "={{ $('Receber peça').item.json.prompt_veo }}",
+        "returnAs": "video",
+        "options": {
+          "sampleCount": 1,
+          "durationSeconds": 8,
+          "aspectRatio": "9:16",
+          "personGeneration": "allow_adult"
+        }
+      },
+      "id": "7ba04e49-c12f-478c-a0e6-6f1c5aedf8e8",
+      "name": "Gerar vídeo (Veo)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        960,
+        2060
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Receber peça').item.json.marca.geral.render_url }}/reel",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "dados",
+              "value": "={{ $('Receber peça').item.json.dados_render_json }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "midia",
+              "inputDataFieldName": "data"
+            }
+          ]
+        }
+      },
+      "id": "47878cad-6771-416b-a78e-c7f3dda20fac",
+      "name": "Renderizar Reels (Veo)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        2060
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "bucketName": "={{ $('Receber peça').item.json.marca.geral.bucket }}",
+        "fileName": "={{ $('Receber peça').item.json.arquivo }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "parentFolderKey": "={{ $('Receber peça').item.json.pasta }}"
+        },
+        "tagsUi": {}
+      },
+      "id": "377c0fdd-e307-4e87-a8dd-9e8cc908c124",
+      "name": "Hospedar mídia (S3/R2)",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1440,
+        1800
+      ],
+      "credentials": {
+        "s3": {
+          "id": "",
+          "name": "S3 / R2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "221bf523-fc7a-47f9-a615-29ec9f18f3d5",
+      "name": "Receber peça",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -300,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta a peça com o que aconteceu aqui (o Veo foi gerado? o render do Veo deu certo?) para o workflow 04.\nconst p = $('Receber peça').first().json;\nreturn [{ json: { ...p, veo_gerado: $('Gerar vídeo (Veo)').isExecuted, veo_ok: $('Renderizar Reels (Veo)').isExecuted } }];\n"
+      },
+      "id": "48b71202-cc67-4b36-a259-1d6d1986f7ac",
+      "name": "Fechar etapa de mídia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1700,
+        1800
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Você recusou o roteiro do Veo (nenhum crédito gasto): monta o registro e segue para o workflow 05.\nconst p = $('Receber peça').first().json;\nreturn [{ json: {\n  marca: p.marca.marca_id, nome_marca: p.marca.nome, telegram_chat_id: p.marca.geral.telegram_chat_id,\n  tipo: p.tipo, modelo: '', motor: 'nenhum', pilar: p.pilar, tema: p.tema, legenda: p.legenda, midia_url: '',\n  nota_revisao: Number(p.nota_revisao) || 0, status: 'reprovado',\n  erro: 'Roteiro do Veo recusado por você (nenhum crédito gasto).',\n} }];\n"
+      },
+      "id": "a13e8406-b357-4eda-9a9a-f9bc8c23cdcb",
+      "name": "Montar reprovação (roteiro do Veo)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        2360
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "PREENCHER_ID_05_REPROVACAO"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "c26fe637-224f-4e60-918d-5f22d6dc4f41",
+      "name": "Chamar 05 · Registrar reprovação",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1260,
+        2360
+      ],
+      "notes": "Registra e avisa.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "PREENCHER_ID_04_APROVAR_AGENDAR"
+        },
+        "mode": "once",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "e5074651-e820-44b0-a60b-cc39deb91653",
+      "name": "Chamar 04 · Aprovar e agendar",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1960,
+        1800
+      ],
+      "notes": "Envia a mídia pronta para a sua aprovação.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "## 03 · Produzir mídia\n**O que faz:** transforma a peça em arquivo: feed pelo **template da marca** (serviço de render), feed com **foto** (Nano Banana) ou **Reels** (animação ou Veo, o Veo só depois que você aprova o roteiro e dentro do teto do mês). O arquivo é hospedado (S3/R2).\n**Entra:** a **peça** (do 02).\n**Sai:** a peça + `veo_gerado` / `veo_ok` → **04 · Aprovar e agendar**. Roteiro do Veo recusado → **05**.",
+        "height": 330,
+        "width": 1500,
+        "color": 4
+      },
+      "id": "7eef6c03-5d0e-41e7-9968-06880a1bc69b",
+      "name": "Nota: 03 · Produzir mídia",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -300,
+        -560
+      ]
+    }
+  ],
+  "connections": {
+    "Rota da peça": {
+      "main": [
+        [
+          {
+            "node": "Renderizar post (template)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gerar foto (Nano Banana)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Renderizar Reels (animação)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aprovar roteiro do Veo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar foto (Nano Banana)": {
+      "main": [
+        [
+          {
+            "node": "Renderizar post com foto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aprovar roteiro do Veo": {
+      "main": [
+        [
+          {
+            "node": "Roteiro aprovado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Roteiro aprovado?": {
+      "main": [
+        [
+          {
+            "node": "Gerar vídeo (Veo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar reprovação (roteiro do Veo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar vídeo (Veo)": {
+      "main": [
+        [
+          {
+            "node": "Renderizar Reels (Veo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Renderizar Reels (animação)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar post (template)": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar post com foto": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Reels (animação)": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Reels (Veo)": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receber peça": {
+      "main": [
+        [
+          {
+            "node": "Rota da peça",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hospedar mídia (S3/R2)": {
+      "main": [
+        [
+          {
+            "node": "Fechar etapa de mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fechar etapa de mídia": {
+      "main": [
+        [
+          {
+            "node": "Chamar 04 · Aprovar e agendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar reprovação (roteiro do Veo)": {
+      "main": [
+        [
+          {
+            "node": "Chamar 05 · Registrar reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

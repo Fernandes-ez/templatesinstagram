@@ -1,0 +1,216 @@
+{
+  "name": "05 · Registrar reprovação (compartilhado)",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f3721a98-5de7-48bb-a217-62c3259841be",
+              "name": "marca",
+              "value": "={{ $json.marca }}",
+              "type": "string"
+            },
+            {
+              "id": "a58ecc6d-db75-4144-98d1-b233105b8c04",
+              "name": "tipo",
+              "value": "={{ $json.tipo }}",
+              "type": "string"
+            },
+            {
+              "id": "d321407c-e063-472c-bc5f-ea960a067a29",
+              "name": "modelo",
+              "value": "={{ $json.modelo }}",
+              "type": "string"
+            },
+            {
+              "id": "4b98959f-148c-4f1d-ae2b-94ebbf4962f4",
+              "name": "motor",
+              "value": "={{ $json.motor }}",
+              "type": "string"
+            },
+            {
+              "id": "0ddcc072-e658-479c-9d55-036aeadf9364",
+              "name": "pilar",
+              "value": "={{ $json.pilar }}",
+              "type": "string"
+            },
+            {
+              "id": "7eb63bf9-87bd-40a5-982e-fcaa84d54bba",
+              "name": "tema",
+              "value": "={{ $json.tema }}",
+              "type": "string"
+            },
+            {
+              "id": "137a8554-6035-406a-9f60-699bc14473ea",
+              "name": "legenda",
+              "value": "={{ $json.legenda }}",
+              "type": "string"
+            },
+            {
+              "id": "1178bb42-b3d6-4c17-a501-11da59129df6",
+              "name": "midia_url",
+              "value": "={{ $json.midia_url }}",
+              "type": "string"
+            },
+            {
+              "id": "6f6c4920-afaf-4929-b6a4-7b813e3ba124",
+              "name": "nota_revisao",
+              "value": "={{ $json.nota_revisao }}",
+              "type": "number"
+            },
+            {
+              "id": "26677316-5b2d-4b80-ab98-ce1da2438b98",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "45e4f8cf-e8d0-4e11-a9f1-275815dc0357",
+              "name": "erro",
+              "value": "={{ $json.erro }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "36f9da44-0347-4e10-9f3b-d949945f2f11",
+      "name": "Linha reprovada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3660,
+        2200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3ec7b3fc-8623-43f0-8ff4-84926dbfae9f",
+      "name": "Registrar reprovação",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        3880,
+        2200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Receber reprovação').first().json.telegram_chat_id }}",
+        "text": "=🚫 {{ $('Receber reprovação').item.json.nome_marca }}: peça não agendada.\nTema: {{ $('Receber reprovação').item.json.tema }}\nMotivo: {{ $('Receber reprovação').item.json.erro }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "30b348a8-94a4-40e0-8ab2-c0b3f1445b09",
+      "name": "Avisar reprovação",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        4100,
+        2200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "34598a70-b260-42e8-bf26-7320b4fe5451",
+      "name": "Receber reprovação",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        3360,
+        2200
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 05 · Registrar reprovação\n**O que faz:** toda peça que não vai ao ar passa por aqui: grava na tabela `instagram_posts` (status `reprovado` ou `reprovado_ia`, com o motivo) e avisa no Telegram.\n**Entra (de 02, 03 ou 04):** `marca, nome_marca, telegram_chat_id, tipo, modelo, motor, pilar, tema, legenda, midia_url, nota_revisao, status, erro`.\n**Sai:** nada. É o fim da linha para a peça.\n\nChamado por três lugares; assim a regra de registrar e avisar existe uma vez só.",
+        "height": 330,
+        "width": 1100,
+        "color": 4
+      },
+      "id": "84846cf8-577b-4a48-8cb5-7f2cae68fac7",
+      "name": "Nota: 05 · Registrar reprovação",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3360,
+        -380
+      ]
+    }
+  ],
+  "connections": {
+    "Linha reprovada": {
+      "main": [
+        [
+          {
+            "node": "Registrar reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar reprovação": {
+      "main": [
+        [
+          {
+            "node": "Avisar reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receber reprovação": {
+      "main": [
+        [
+          {
+            "node": "Linha reprovada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

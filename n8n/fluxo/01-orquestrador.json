@@ -1,0 +1,157 @@
+{
+  "name": "01 · Orquestrador (produção diária 16h)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 * * *"
+            }
+          ]
+        }
+      },
+      "id": "9b16d002-ac3c-4a7b-9ceb-e27c2d107d4d",
+      "name": "Agenda de produção (16h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "98c984f7-5460-4274-8e92-d3450055e9a7",
+      "name": "Testar feed (todas as marcas)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "2dc4906b-f7be-472f-9265-e754e874f08a",
+      "name": "Testar Reels (todas as marcas)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// CONFIGURAÇÃO GERAL — preencha os campos marcados com PREENCHER\n// ============================================================\nconst GERAL = {\n  telegram_chat_id: 'PREENCHER_CHAT_ID',          // seu chat com o bot (use @get_id_bot)\n  bucket: 'PREENCHER_BUCKET',                     // bucket S3 / Cloudflare R2 / Oracle Object Storage\n  url_publica_base: 'https://PREENCHER-DOMINIO-PUBLICO', // ex.: https://midia.ezf-tech.com (sem / no fim)\n  render_url: 'https://PREENCHER-RENDER',          // endereço do serviço ezf-render (sem / no fim)\n  nota_minima: 8,                                 // nota mínima (0 a 10) da revisão automática\n  veo_limite_mes: 8,                              // teto de Reels com Veo por mês (somando as 3 marcas)\n  fuso: 'America/Sao_Paulo',\n};\n\n// ============================================================\n// MARCAS — fatos, voz e visual tirados dos manuais e dos sites\n// ============================================================\nconst MARCAS = [\n  {\n    marca_id: 'tabua',\n    nome: 'Tábua',\n    instagram: '@PREENCHER',\n    ig_user_id: 'PREENCHER_IG_USER_ID_TABUA',\n    site: 'tabua.app.br',\n    dias_postagem: [2, 4, 6],   // feed: 1=seg ... 7=dom\n    horario: '10:30',\n    reel_dia: 5,                // Reels às sextas...\n    reels_a_cada_semanas: 2,    // ...a cada 2 semanas (2 a 3 por mês)\n    horario_reel: '18:30',\n    segmento: 'Cardápio digital para restaurantes, bares e lanchonetes independentes no Brasil',\n    publico: 'Dono de restaurante pequeno e médio, que está no balcão e resolve tudo pelo celular',\n    posicionamento: 'A Tábua é a estrutura de vendas do restaurante independente: cardápio, pedidos e atendente no WhatsApp, sem comissão por pedido. Não é marketplace: o cliente é do restaurante.',\n    personalidade: 'Artesã, direta, confiável, calorosa sem ser fofa, com humor seco de balcão.',\n    voz: [\n      'Fala como um bom gerente de salão: frases curtas, verbos de ação, zero jargão.',\n      'Fala de balcão, não de palco: curto, direto, verbo na frente.',\n      'Mostra o prato, não a receita: resultado concreto antes da tecnologia.',\n      'Número é número: preço, prazo e taxa sem letra miúda.',\n      'Humor de boteco, com respeito: uma piada leve, nunca às custas do cliente.',\n      'Português de verdade: \"painel\", não \"dashboard\"; \"pedido\", não \"order\".',\n    ],\n    assim_sim: ['Seu cardápio no ar em 10 minutos.', 'Pedido anotado. Já tá na cozinha.', 'Sem comissão por pedido. Nenhuma.', 'Fechou mais cedo? Um toque e o cardápio avisa.'],\n    assim_nao: ['Revolucione a experiência digital do seu negócio.', 'Seu pedido foi processado com sucesso pelo sistema.', 'Taxas competitivas e transparentes*', 'Gerencie dinamicamente sua disponibilidade operacional.'],\n    taglines: ['A freguesia é sua.', 'Pedido anotado.', 'Do letreiro pro celular.'],\n    fatos: [\n      'Cardápio digital com pedido pela mesa (QR code) e pelo WhatsApp.',\n      'O cliente não precisa de app: o cardápio abre no navegador do celular pelo QR ou pelo link.',\n      'Sem comissão por pedido; o cliente continua sendo do restaurante.',\n      'Cardápio montado em cerca de 10 minutos, no estilo do restaurante.',\n      'Painel ao vivo, tela da cozinha, comanda térmica 80 mm e delivery por raio.',\n      'Plano Fundador: R$ 59 por mês, 30 dias grátis, preço travado por 12 meses, sem fidelidade e sem cartão no teste.',\n      'Atendente de IA no WhatsApp: módulo à parte, ainda \"em breve\" (não prometer como disponível).',\n    ],\n    ctas: ['Crie seu cardápio grátis em tabua.app.br', 'Link na bio: 30 dias grátis, sem cartão', 'Chama a gente no WhatsApp pelo link da bio'],\n    hashtags_base: ['#restaurante', '#cardapiodigital', '#donoderestaurante'],\n    pilares: [\n      { nome: 'Comissão e margem do restaurante', consulta: 'comissão aplicativos de delivery margem restaurantes Brasil {ano}' },\n      { nome: 'Operação de salão e cozinha', consulta: 'gestão de restaurante pequeno operação cozinha salão dicas {ano}' },\n      { nome: 'Cardápio que vende', consulta: 'engenharia de cardápio precificação restaurante {ano}' },\n      { nome: 'Pedido próprio pelo WhatsApp e delivery próprio', consulta: 'delivery próprio restaurante pedidos WhatsApp tendência {ano}' },\n      { nome: 'Mercado de bares e restaurantes', consulta: 'Abrasel pesquisa bares e restaurantes {ano}' },\n    ],\n    visual: {\n      conceito: 'Letreiro: a tecnologia com sotaque de rua. Placa pintada à mão do boteco, preço escrito a giz, prato do dia no quadro.',\n      paleta: 'Verde-boteco #1E5B43 (marca, títulos, fundos de destaque); Cal #F6F1E6 (fundo padrão, nunca branco puro); Tinta #1A1A17 (texto e contornos); Amarelo-ovo #F2B91E; Vermelho-placa #C8372D (só alerta/destaque pequeno); Azulejo #D5E5D9.',\n      direcao: 'Fotos reais de restaurante com gente trabalhando. Luz natural ou de salão, quente e lateral, contraste médio, grão leve. Enquadramento de perto: mãos, balcão, prato, letreiro. Prato de cima na mesa de fórmica ou madeira.',\n      proibido: 'Chef sorrindo para a câmera de banco de imagem; hambúrguer flutuando em fundo degradê; celular 3D flutuando; foto escura e dramática de restaurante gourmet; filtro vintage falso; fundo branco puro; logotipos.',\n      texto_arte: 'Título curto em letras de placa pintada à mão, grossas e condensadas, em Tinta ou Cal, sobre área lisa.',\n    },\n  },\n  {\n    marca_id: 'puka',\n    nome: 'Puka',\n    instagram: '@PREENCHER',\n    ig_user_id: 'PREENCHER_IG_USER_ID_PUKA',\n    site: 'pukacrm.com.br',\n    dias_postagem: [1, 3, 5],\n    horario: '08:30',\n    reel_dia: 2,\n    reels_a_cada_semanas: 2,\n    horario_reel: '12:00',\n    segmento: 'CRM com atendimento por IA no WhatsApp para negócios que vivem de atender (academias, clínicas, escolas, consultorias, imobiliárias, comércio)',\n    publico: 'Donos de negócio que vivem de atender no WhatsApp',\n    posicionamento: 'Para donos de negócio que vivem de atender no WhatsApp, a Puka é o CRM em que a IA recebe o cliente e o time fecha, sem o cliente sentir a troca e sem ninguém repetir pergunta.',\n    personalidade: 'A recepcionista boa de bairro. Lembra o nome de todo mundo, resolve rápido e sabe a hora de chamar o dono. Acolhedora no trato, precisa no método.',\n    voz: [\n      'Direto, brasileiro, com humor seco. Fala como quem já atendeu balcão. Promete o que entrega e mostra o preço.',\n      'Fala como quem atende: frase curta, verbo na frente, \"pra\" quando soa natural.',\n      'Mostra o número: preço, limite, prazo e o que não está incluso, sem letra miúda.',\n      'A IA é ferramenta, não personagem: diz o que ela faz; não dá nome, não diz que ela \"pensa\", não fala em revolução.',\n      'Entra na hora certa: só fala quando tem algo útil; nada de três exclamações.',\n      'Humor seco, nunca piada; nada de trocadilho com o nome.',\n      'Vocabulário do teatro (deixa, ponto, coxia, ribalta) só nas palavras; nunca imagens de cortina, palco ou máscara.',\n    ],\n    assim_sim: ['A IA responde na hora. Quando precisa de alguém, chama seu time.', 'R$ 197 por mês, até 3 pessoas. A agenda fica no plano Completo.', 'Ela responde horário, preço e plano, e passa a conversa quando é negociação.', 'Sem três ferramentas coladas com fita adesiva.'],\n    assim_nao: ['Potencialize a jornada omnichannel do seu cliente com IA de ponta.', 'Planos flexíveis que cabem no seu bolso! Consulte condições.', 'Conheça a IA revolucionária que entende seu cliente como ninguém.', 'Ei! Não perca! Você tem novidades incríveis esperando por você!!!'],\n    taglines: ['A IA dá a deixa. Seu time entra em cena.', 'Atende na hora. Passa na hora certa.', 'Ninguém sem resposta. Ninguém repetindo pergunta.'],\n    fatos: [\n      'A IA responde primeiro no WhatsApp e passa a conversa para a pessoa certa da equipe, com o histórico junto.',\n      'Cada conversa vira lead no CRM com etapa e responsável.',\n      'Usa a API oficial da Meta (sem QR Code nem gambiarra que arrisca banir o número).',\n      'Essencial: R$ 197/mês, 1 número de WhatsApp, até 3 funcionários, IA configurável, CRM, distribuição automática de leads, acesso por cargo. Não inclui Agenda nem Puka Copilot.',\n      'Completo: R$ 397/mês, funcionários ilimitados, Agenda, Puka Copilot, campanhas segmentadas, templates com botões, fila prioritária, suporte com SLA.',\n      'Descontos: trimestral 8%, semestral 15%, anual 20%.',\n      '14 dias grátis em qualquer plano, sem cartão de crédito.',\n    ],\n    ctas: ['Teste 14 dias grátis, sem cartão: pukacrm.com.br', 'Link na bio pra ver como funciona', 'Comece grátis pelo link da bio'],\n    hashtags_base: ['#atendimento', '#whatsappbusiness', '#crm'],\n    pilares: [\n      { nome: 'Tempo de resposta no WhatsApp', consulta: 'tempo de resposta atendimento WhatsApp vendas pequenas empresas {ano}' },\n      { nome: 'Lead perdido e follow-up', consulta: 'leads perdidos follow-up atendimento pequenas empresas Brasil {ano}' },\n      { nome: 'IA no atendimento, sem hype', consulta: 'inteligência artificial atendimento ao cliente pequenas empresas Brasil {ano}' },\n      { nome: 'Atendimento em academias, clínicas e escolas', consulta: 'academia clínica matrícula atendimento WhatsApp {ano}' },\n      { nome: 'Regras e novidades do WhatsApp Business', consulta: 'WhatsApp Business Platform Meta novidades regras {ano}' },\n    ],\n    visual: {\n      conceito: 'A deixa: uma forma reta e constante (o sistema) e uma curva feita à mão (a pessoa), separadas por um pequeno espaço (a passagem da IA para o humano).',\n      paleta: 'Roteiro #F4EEE4 (fundo, ~60%); Coxia #1E1B24 (texto e estrutura, ~25%); Ponto #2D3F9E (a IA, ~10%); Ribalta #D2502D (a pessoa, no máximo 5%). Rotunda #E6DCCB para superfícies. Cantos retos, sem arredondado.',\n      direcao: 'O atendimento acontecendo, não posando. Luz natural lateral de janela ou porta de loja; lado iluminado quente, sombra levemente azul. Por cima do ombro, na altura do balcão, mãos no celular, meio rosto. Recepção de academia às 7h, consultório com agenda aberta, secretaria de escola, balcão de loja. Saturação baixa, grão fino.',\n      proibido: 'Robô, cérebro brilhante, circuito, holograma de IA; banco de imagem com equipe sorrindo para a câmera; escritório corporativo de vidro; mockup de celular flutuando; balões verdes imitando WhatsApp; cortina, palco ou máscara de teatro; gradientes; logotipos.',\n      texto_arte: 'Título em grotesca bold, preto Coxia sobre fundo Roteiro, alinhado à esquerda, com muito respiro.',\n    },\n  },\n  {\n    marca_id: 'ezf',\n    nome: 'ezf.tech',\n    instagram: '@ezf.tech',\n    ig_user_id: 'PREENCHER_IG_USER_ID_EZF',\n    site: 'ezf-tech.com',\n    dias_postagem: [2, 4],\n    horario: '12:15',\n    reel_dia: 5,\n    reels_a_cada_semanas: 2,\n    horario_reel: '12:15',\n    segmento: 'Sites, atendimento automático no WhatsApp e sistemas sob medida para empresas locais',\n    publico: 'Empresas e profissionais locais (academias, clínicas, restaurantes, comércio) que querem organizar atendimento, vendas e operação',\n    posicionamento: 'Sites, atendimento automático no WhatsApp e sistemas para a sua empresa. Quem conversa com você é quem escreve o código.',\n    personalidade: 'Pessoal, direto e organizado. Um desenvolvedor que atende pessoalmente, do orçamento à entrega.',\n    voz: [\n      'Primeira pessoa, próximo: \"Eu desenho, programo e mantenho. Você fala direto comigo, do orçamento à entrega.\"',\n      'Direto e informal, sem jargão de agência e sem promessas de \"explodir vendas\".',\n      'Mostra processo e organização: improviso vira processo.',\n      'Preço \"a partir de\" quando falar de valores, sem letra miúda.',\n    ],\n    assim_sim: ['Nenhum cliente esperando resposta.', 'Sua operação fora da planilha.', 'Sua empresa encontrada fora do Instagram.', 'Na ezf.tech, quem conversa com você é quem escreve o código.'],\n    assim_nao: ['Alavanque sua presença digital com soluções disruptivas!', 'Somos a maior agência de marketing digital do Brasil.'],\n    taglines: ['Nenhum cliente esperando resposta.', 'Sua operação fora da planilha.', 'Sua empresa encontrada fora do Instagram.'],\n    fatos: [\n      'Sites com a marca do cliente, rápidos no celular e com WhatsApp em cada produto ou serviço: a partir de R$ 790.',\n      'Automação: atendimento no WhatsApp com respostas imediatas, triagem para a pessoa certa e lembretes automáticos: a partir de R$ 690.',\n      'Sistemas: agendamento online, painéis, cadastros e relatórios sob medida, entregues por etapas: a partir de R$ 99/mês.',\n      'Produtos próprios: Puka (CRM com atendimento por IA no WhatsApp) e Tábua (cardápio digital para restaurantes).',\n      'Atendimento direto com o Enzo, de São Paulo/SP. WhatsApp (11) 99108-4238.',\n    ],\n    ctas: ['Pede um orçamento no WhatsApp: (11) 99108-4238', 'Chama no WhatsApp pelo link da bio', 'Veja os projetos em ezf-tech.com'],\n    hashtags_base: ['#pequenasempresas', '#sitesprofissionais', '#automacao'],\n    pilares: [\n      { nome: 'Site próprio para negócio local', consulta: 'pequenas empresas site próprio busca local consumidores Brasil {ano}' },\n      { nome: 'Perfil da empresa no Google', consulta: 'Perfil da Empresa no Google negócios locais avaliações {ano}' },\n      { nome: 'Atendimento automático no WhatsApp', consulta: 'automação atendimento WhatsApp pequenas empresas {ano}' },\n      { nome: 'Sair da planilha: sistemas sob medida', consulta: 'pequenas empresas planilha gestão digitalização processos Brasil {ano}' },\n    ],\n    visual: {\n      conceito: 'Entre chaves: o improviso (fio embaraçado) vira processo (fio reto); palavras-chave entre chaves {assim}.',\n      paleta: 'Tinta #1B1026 (fundo escuro); Névoa #EEEAF3 (fundo claro); Violeta #8A12B4 (fundo de destaque); Lilás #B98BE0 (acento sobre Tinta); Âmbar #F2B233 (acento sobre Violeta).',\n      direcao: 'Composição gráfica limpa: tipografia grande geométrica, um fio que começa embaraçado e termina reto, chaves { } como elemento gráfico. Quando houver foto: tela de site ou sistema real num notebook ou celular apoiado na mesa de um negócio local, luz natural.',\n      proibido: 'Pessoas de banco de imagem apertando as mãos; foguetes, gráficos subindo, cifrões; robôs; neon genérico de tecnologia; logotipos.',\n      texto_arte: 'Título em sans geométrica larga, com a palavra principal entre chaves { }, em Névoa sobre Tinta ou Tinta sobre Névoa.',\n    },\n  },\n];\n\n// ============================================================\n// Seleção: o que cada marca posta AMANHÃ (a produção roda na véspera)\n// ============================================================\nconst amanha = $now.setZone(GERAL.fuso).plus({ days: 1 });\nconst ano = String(amanha.year);\nconst testeFeed = $('Testar feed (todas as marcas)').isExecuted;\nconst testeReel = $('Testar Reels (todas as marcas)').isExecuted;\n\nconst itens = [];\nfor (const m of MARCAS) {\n  let tipo = null;\n  if (testeFeed) tipo = 'feed';\n  else if (testeReel) tipo = 'reel';\n  else if (m.reel_dia === amanha.weekday && amanha.weekNumber % m.reels_a_cada_semanas === 0) tipo = 'reel';\n  else if (m.dias_postagem.includes(amanha.weekday)) tipo = 'feed';\n  if (!tipo) continue;\n  itens.push({\n    json: {\n      ...m,\n      tipo,\n      pilares: m.pilares.map((p) => ({ ...p, consulta: p.consulta.replace('{ano}', ano) })),\n      geral: GERAL,\n      data_postagem: amanha.toISODate(),\n    },\n  });\n}\nreturn itens;\n"
+      },
+      "id": "13ec8c4a-c207-432e-9b26-97b520dccbf8",
+      "name": "Marcas e regras",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "PREENCHER_ID_02_CRIAR_TEXTO"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "d6284daa-b1f4-47ec-81c9-c221940641e8",
+      "name": "Chamar 02 · Criar texto da peça",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        980,
+        90
+      ],
+      "notes": "Uma execução por marca. Não espera o fim: cada peça segue sozinha.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "## 01 · Orquestrador (16h)\n**O que faz:** todo dia às 16h decide o que cada marca posta amanhã (feed nos dias de feed, Reels no dia de Reels) e dispara a criação de uma peça por marca.\n**Entra:** relógio (16h) ou os botões de teste.\n**Sai:** 1 item por marca → workflow **02 · Criar texto da peça**.\n\n**Aqui você configura tudo:** abra o nó **Marcas e regras** e troque os `PREENCHER` (chat do Telegram, bucket, URL pública, URL do render, IDs do Instagram).",
+        "height": 360,
+        "width": 1000,
+        "color": 4
+      },
+      "id": "6182388a-4ae4-48a9-b81e-307bce762431",
+      "name": "Nota: 01 · Orquestrador (16h)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "Agenda de produção (16h)": {
+      "main": [
+        [
+          {
+            "node": "Marcas e regras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testar feed (todas as marcas)": {
+      "main": [
+        [
+          {
+            "node": "Marcas e regras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testar Reels (todas as marcas)": {
+      "main": [
+        [
+          {
+            "node": "Marcas e regras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcas e regras": {
+      "main": [
+        [
+          {
+            "node": "Chamar 02 · Criar texto da peça",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
