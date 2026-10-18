@@ -9,7 +9,7 @@ module.exports = {
     lista_recebe: { fn: ezf.listaRecebe, descricao: "Lista com 3 a 4 itens, cada um com ícone.", campos: { etiqueta: t(40), titulo: t(22, { obrigatorio: true }), itens: { tipo: "itens", min: 3, max: 4, icone: icone(), texto: t(60), obrigatorio: true }, rodape: t(34) } },
     numero: { fn: ezf.numero, descricao: "Número grande com ícone.", campos: { etiqueta: t(40), numero: t(3, { obrigatorio: true, padrao: "^[0-9.,+%x]+$", dica: "só dígitos e + % x" }), unidade: t(12, { obrigatorio: true }), icone: icone(), titulo: t(50, { obrigatorio: true }), apoio: t(45) } },
     pergunta_cliente: { fn: ezf.perguntaCliente, descricao: "Pergunta real de cliente como capa.", campos: { etiqueta: t(40), pergunta: t(60, { obrigatorio: true }), titulo: t(36) } },
-    trabalho_entregue: { fn: ezf.trabalhoEntregue, descricao: "Site entregue com captura de tela (só Aqua Fit por enquanto; só com autorização do cliente).", campos: { etiqueta: t(40), titulo: t(36, { obrigatorio: true }), local: t(34) } },
+    trabalho_entregue: { fn: ezf.trabalhoEntregue, automatico: false, descricao: "Site entregue com captura de tela (só Aqua Fit por enquanto; só com autorização do cliente).", campos: { etiqueta: t(40), titulo: t(36, { obrigatorio: true }), local: t(34) } },
     antes_depois: { fn: ezf.antesDepois, descricao: "Antes e depois em duas linhas.", campos: { etiqueta: t(40), titulo: t(55, { obrigatorio: true }), antes: t(36), depois: t(36) } },
     story_pergunta: { fn: ezf.storyPergunta, descricao: "Story 1080×1920 com pergunta de cliente.", campos: { etiqueta: t(40), pergunta: t(60, { obrigatorio: true }), titulo: t(60), chamada: t(24) } },
     carrossel_escopo: {

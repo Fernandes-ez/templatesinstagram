@@ -50,14 +50,23 @@ Reprovação: quem reprova monta um registro com `marca, nome_marca, telegram_ch
 3. **Ligue os "Chamar":** em cada nó **Chamar 0X · ...** (laranja, com nota) escolha o workflow de destino na lista. Estão com `PREENCHER_ID_...`.
    - 01 → chama o 02 · 02 → chama 03 e 05 · 03 → chama 04 e 05 · 04 → chama 05.
 4. **Configuração única:** no workflow **01**, nó **Marcas e regras**, troque os `PREENCHER` (chat do Telegram, bucket, URL pública, URL do render, IDs do Instagram). No **06**, troque o chat em **Avisar resultado**. No **07**, o chat do alerta.
-5. **Credenciais:** Gemini texto (projeto sem faturamento) · Gemini imagem/vídeo (projeto com faturamento) · Perplexity · Telegram · S3/R2 · Header Auth do render · Meta Graph API.
+5. **Credenciais:** Gemini texto · Gemini imagem/vídeo · Perplexity (só no 02) · Telegram · S3/R2 · Header Auth do render (`Authorization: Bearer …`) · Meta Graph API.
 6. **Fuso:** cada workflow → Configurações → **America/Sao_Paulo**.
 7. **Error workflow:** em cada workflow de 01 a 06 → Configurações → **Error workflow** → *07 · Alerta de erro*.
 8. **Teste:** no 01, rode **Testar feed (todas as marcas)** e acompanhe a peça passando pelos workflows na lista de execuções. Ative o 06 por último.
 
+## Como o redator e o render conversam
+
+1. No 02, o nó **Catálogo de modelos (render)** pergunta ao serviço (`GET /modelos?marca=…&formato=feed&automatico=1`) quais modelos a marca tem e o que cada um aceita.
+2. **Montar instruções de feed** transforma esse catálogo em instruções para o redator: ele escolhe **um modelo** e preenche **`modelo` + `textos`** respeitando os limites de caracteres.
+3. **Consolidar post aprovado** confere se o modelo existe e monta `{marca, modelo, textos}`; o 03 manda isso para `POST /render?binario=1` e recebe o JPG.
+
+Quando você cria um modelo novo no render, ele aparece para o redator sozinho, sem mexer no n8n. Modelos de conteúdo fixo (como o do cliente Aqua Fit, da ezf) ficam de fora da escolha automática. Modelos com foto real não estão no catálogo, então a rota "feed-foto" (Nano Banana) fica dormente.
+
+A credencial do render é **Header Auth** com Name `Authorization` e Value `Bearer <RENDER_TOKEN>`.
+
 ## O que ainda não está alinhado (próximo passo)
 
-- **Render:** os nós de render do 03 chamam `{render_url}/post` com o formato antigo (`modelo: titulo|lista|numero|foto`). O serviço novo (`render/`, na raiz do repositório) expõe `POST /render` com `{marca, modelo, textos}` e vários modelos por marca. Falta trocar o *Redator* para escolher entre os modelos de cada marca (`GET /modelos`) e ajustar o nó de render. Enquanto isso o 03 só funciona com o render antigo.
 - **Perplexity no 02:** o radar (00) já usa Gemini com busca no Google; o 02 ainda usa Perplexity.
 - **Carrossel:** o 06 publica imagem ou Reels; carrossel (vários JPG) ainda não está no publicador.
 - **Radar → redator:** o trecho que injeta o briefing do radar no prompt do redator está descrito em `fluxo/00-radar-semanal.md`, mas ainda não foi aplicado ao 02.

@@ -21,7 +21,7 @@ Todas as rotas, menos `/health` e `/files/*`, pedem `Authorization: Bearer <REND
 
 | Rota | Faz |
 |---|---|
-| `GET /modelos` | Lista modelos, campos, limites de tamanho e os ícones aceitos. Use no prompt da IA. |
+| `GET /modelos` | Lista modelos, campos, limites de tamanho e os ícones aceitos. Use no prompt da IA. Filtros: `?marca=puka&formato=feed&automatico=1` (formato: `feed`, `story`, `lamina`, `carrossel`; `automatico=1` esconde modelos de conteúdo fixo, como o do cliente Aqua Fit). |
 | `POST /render` | Gera o post. Corpo: `{"marca":"ezf","modelo":"miolo_carrossel","textos":{...}}` |
 | `POST /render?binario=1` | Igual, mas devolve o JPG direto (só modelos de 1 imagem). |
 | `GET /files/<id>.jpg` | Baixa a imagem (URL pública, nome aleatório, apaga após 48 h). |

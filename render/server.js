@@ -92,7 +92,7 @@ const servidor = http.createServer(async (req, res) => {
       return res.end(b);
     }
     if (!autorizado(req)) return json(res, 401, { erro: "token inválido" });
-    if (req.method === "GET" && url.pathname === "/modelos") return json(res, 200, descrever());
+    if (req.method === "GET" && url.pathname === "/modelos") return json(res, 200, descrever({ marca: url.searchParams.get("marca") || undefined, formato: url.searchParams.get("formato") || undefined, automatico: url.searchParams.get("automatico") === "1" }));
     if (req.method === "POST" && url.pathname === "/render") {
       let corpo;
       try {

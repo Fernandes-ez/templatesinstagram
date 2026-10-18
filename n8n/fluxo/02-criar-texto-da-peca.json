@@ -144,7 +144,7 @@
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Organizar fontes').item.json.guia_marca }}\n\n{{ $('Organizar fontes').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente."
+              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente."
             }
           ]
         },
@@ -185,7 +185,7 @@
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tema\": {\n      \"type\": \"string\",\n      \"description\": \"Assunto da peça em uma frase\"\n    },\n    \"legenda\": {\n      \"type\": \"string\",\n      \"description\": \"Legenda do post, sem hashtags\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"alt_text\": {\n      \"type\": \"string\"\n    },\n    \"fontes_usadas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"URLs das referências usadas\"\n    },\n    \"modelo\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"titulo\",\n        \"lista\",\n        \"numero\",\n        \"foto\"\n      ],\n      \"description\": \"Só para post de feed\"\n    },\n    \"arte\": {\n      \"type\": \"object\",\n      \"description\": \"Textos que vão no template do feed\",\n      \"properties\": {\n        \"etiqueta\": {\n          \"type\": \"string\"\n        },\n        \"titulo\": {\n          \"type\": \"string\"\n        },\n        \"apoio\": {\n          \"type\": \"string\"\n        },\n        \"rotulo\": {\n          \"type\": \"string\"\n        },\n        \"itens\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"titulo\": {\n                \"type\": \"string\"\n              },\n              \"detalhe\": {\n                \"type\": \"string\"\n              }\n            },\n            \"required\": [\n              \"titulo\"\n            ]\n          }\n        },\n        \"numero\": {\n          \"type\": \"string\"\n        },\n        \"legenda\": {\n          \"type\": \"string\"\n        },\n        \"fonte\": {\n          \"type\": \"string\"\n        },\n        \"cta\": {\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"prompt_imagem\": {\n      \"type\": \"string\",\n      \"description\": \"Só no modelo foto: cena sem texto\"\n    },\n    \"cenas\": {\n      \"type\": \"array\",\n      \"description\": \"Só para Reels\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"texto\": {\n            \"type\": \"string\"\n          },\n          \"apoio\": {\n            \"type\": \"string\"\n          },\n          \"etiqueta\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"texto\"\n        ]\n      }\n    },\n    \"cta_video\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels\"\n    },\n    \"prompt_veo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels com Veo, em inglês\"\n    }\n  },\n  \"required\": [\n    \"tema\",\n    \"legenda\",\n    \"hashtags\",\n    \"alt_text\",\n    \"fontes_usadas\"\n  ]\n}"
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tema\": {\n      \"type\": \"string\",\n      \"description\": \"Assunto da peça em uma frase\"\n    },\n    \"legenda\": {\n      \"type\": \"string\",\n      \"description\": \"Legenda do post, sem hashtags\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"alt_text\": {\n      \"type\": \"string\"\n    },\n    \"fontes_usadas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"URLs das referências usadas\"\n    },\n    \"modelo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para post de feed: nome exato de um modelo do catálogo\"\n    },\n    \"cenas\": {\n      \"type\": \"array\",\n      \"description\": \"Só para Reels\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"texto\": {\n            \"type\": \"string\"\n          },\n          \"apoio\": {\n            \"type\": \"string\"\n          },\n          \"etiqueta\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"texto\"\n        ]\n      }\n    },\n    \"cta_video\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels\"\n    },\n    \"prompt_veo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels com Veo, em inglês\"\n    },\n    \"textos\": {\n      \"type\": \"object\",\n      \"description\": \"Só para post de feed: campos do modelo escolhido, conforme o catálogo\",\n      \"additionalProperties\": true\n    }\n  },\n  \"required\": [\n    \"tema\",\n    \"legenda\",\n    \"hashtags\",\n    \"alt_text\",\n    \"fontes_usadas\"\n  ]\n}"
       },
       "id": "bb41900e-f667-406b-acb9-13aa8f608669",
       "name": "Formato da peça",
@@ -199,12 +199,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=REFERÊNCIAS:\n{{ $('Organizar fontes').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Organizar fontes').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Organizar fontes').item.json.guia_marca }}\n\n{{ $('Organizar fontes').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos da arte, limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Organizar fontes').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
+              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
             }
           ]
         },
@@ -268,7 +268,7 @@
           "conditions": [
             {
               "id": "3ce2b351-b737-4af3-a1b6-6c37cb821d13",
-              "leftValue": "={{ $json.output.aprovado === true && Number($json.output.nota) >= $('Organizar fontes').item.json.marca.geral.nota_minima }}",
+              "leftValue": "={{ $json.output.aprovado === true && Number($json.output.nota) >= $('Montar instruções de feed').item.json.marca.geral.nota_minima }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -294,12 +294,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=REFERÊNCIAS:\n{{ $('Organizar fontes').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Organizar fontes').item.json.temas_recentes }}\n\nPEÇA REPROVADA:\n{{ JSON.stringify($('Redator da marca').item.json.output, null, 2) }}\n\nREVISÃO (nota {{ $json.output.nota }}/10):\nProblemas: {{ ($json.output.problemas || []).join(' | ') }}\nSugestões: {{ $json.output.sugestoes }}\n\nReescreva a peça inteira corrigindo tudo.",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed').item.json.temas_recentes }}\n\nPEÇA REPROVADA:\n{{ JSON.stringify($('Redator da marca').item.json.output, null, 2) }}\n\nREVISÃO (nota {{ $json.output.nota }}/10):\nProblemas: {{ ($json.output.problemas || []).join(' | ') }}\nSugestões: {{ $json.output.sugestoes }}\n\nReescreva a peça inteira corrigindo tudo.",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Organizar fontes').item.json.guia_marca }}\n\n{{ $('Organizar fontes').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente.\n10. Você está reescrevendo uma peça reprovada. Corrija todos os problemas apontados pela revisão, mantendo o que estava bom."
+              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente.\n10. Você está reescrevendo uma peça reprovada. Corrija todos os problemas apontados pela revisão, mantendo o que estava bom."
             }
           ]
         },
@@ -340,7 +340,7 @@
     {
       "parameters": {
         "schemaType": "manual",
-        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tema\": {\n      \"type\": \"string\",\n      \"description\": \"Assunto da peça em uma frase\"\n    },\n    \"legenda\": {\n      \"type\": \"string\",\n      \"description\": \"Legenda do post, sem hashtags\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"alt_text\": {\n      \"type\": \"string\"\n    },\n    \"fontes_usadas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"URLs das referências usadas\"\n    },\n    \"modelo\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"titulo\",\n        \"lista\",\n        \"numero\",\n        \"foto\"\n      ],\n      \"description\": \"Só para post de feed\"\n    },\n    \"arte\": {\n      \"type\": \"object\",\n      \"description\": \"Textos que vão no template do feed\",\n      \"properties\": {\n        \"etiqueta\": {\n          \"type\": \"string\"\n        },\n        \"titulo\": {\n          \"type\": \"string\"\n        },\n        \"apoio\": {\n          \"type\": \"string\"\n        },\n        \"rotulo\": {\n          \"type\": \"string\"\n        },\n        \"itens\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"titulo\": {\n                \"type\": \"string\"\n              },\n              \"detalhe\": {\n                \"type\": \"string\"\n              }\n            },\n            \"required\": [\n              \"titulo\"\n            ]\n          }\n        },\n        \"numero\": {\n          \"type\": \"string\"\n        },\n        \"legenda\": {\n          \"type\": \"string\"\n        },\n        \"fonte\": {\n          \"type\": \"string\"\n        },\n        \"cta\": {\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"prompt_imagem\": {\n      \"type\": \"string\",\n      \"description\": \"Só no modelo foto: cena sem texto\"\n    },\n    \"cenas\": {\n      \"type\": \"array\",\n      \"description\": \"Só para Reels\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"texto\": {\n            \"type\": \"string\"\n          },\n          \"apoio\": {\n            \"type\": \"string\"\n          },\n          \"etiqueta\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"texto\"\n        ]\n      }\n    },\n    \"cta_video\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels\"\n    },\n    \"prompt_veo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels com Veo, em inglês\"\n    }\n  },\n  \"required\": [\n    \"tema\",\n    \"legenda\",\n    \"hashtags\",\n    \"alt_text\",\n    \"fontes_usadas\"\n  ]\n}"
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tema\": {\n      \"type\": \"string\",\n      \"description\": \"Assunto da peça em uma frase\"\n    },\n    \"legenda\": {\n      \"type\": \"string\",\n      \"description\": \"Legenda do post, sem hashtags\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"alt_text\": {\n      \"type\": \"string\"\n    },\n    \"fontes_usadas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"URLs das referências usadas\"\n    },\n    \"modelo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para post de feed: nome exato de um modelo do catálogo\"\n    },\n    \"cenas\": {\n      \"type\": \"array\",\n      \"description\": \"Só para Reels\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"texto\": {\n            \"type\": \"string\"\n          },\n          \"apoio\": {\n            \"type\": \"string\"\n          },\n          \"etiqueta\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"texto\"\n        ]\n      }\n    },\n    \"cta_video\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels\"\n    },\n    \"prompt_veo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels com Veo, em inglês\"\n    },\n    \"textos\": {\n      \"type\": \"object\",\n      \"description\": \"Só para post de feed: campos do modelo escolhido, conforme o catálogo\",\n      \"additionalProperties\": true\n    }\n  },\n  \"required\": [\n    \"tema\",\n    \"legenda\",\n    \"hashtags\",\n    \"alt_text\",\n    \"fontes_usadas\"\n  ]\n}"
       },
       "id": "199fde8a-a339-4a36-8628-33e850df8fc0",
       "name": "Formato da peça (reescrita)",
@@ -354,12 +354,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=REFERÊNCIAS:\n{{ $('Organizar fontes').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Organizar fontes').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
             {
-              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Organizar fontes').item.json.guia_marca }}\n\n{{ $('Organizar fontes').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos da arte, limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Organizar fontes').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
+              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
             }
           ]
         },
@@ -423,7 +423,7 @@
           "conditions": [
             {
               "id": "84b9576e-c365-49a3-bcbb-f47cafaed96f",
-              "leftValue": "={{ $json.output.aprovado === true && Number($json.output.nota) >= $('Organizar fontes').item.json.marca.geral.nota_minima }}",
+              "leftValue": "={{ $json.output.aprovado === true && Number($json.output.nota) >= $('Montar instruções de feed').item.json.marca.geral.nota_minima }}",
               "rightValue": "",
               "operator": {
                 "type": "boolean",
@@ -448,7 +448,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Pega a versão aprovada (1ª ou reescrita) e monta os dados para o renderizador da marca.\nconst reescrito = $('Reescrever com a revisão').isExecuted;\nconst post = reescrito ? $('Reescrever com a revisão').first().json.output : $('Redator da marca').first().json.output;\nconst revisao = reescrito ? $('Revisor final').first().json.output : $('Revisor editorial').first().json.output;\nconst ctx = $('Organizar fontes').first().json;\nconst m = ctx.marca;\n\nconst hashtags = [...new Set((post.hashtags || []).map((h) => (String(h).startsWith('#') ? h : '#' + h)))].slice(0, 6);\nconst legendaFinal = `${post.legenda.trim()}\\n\\n${hashtags.join(' ')}`;\n\nlet modelo = null, dados_render, rota = 'feed-template', prompt_imagem = '', prompt_veo = '';\nif (ctx.tipo === 'feed') {\n  modelo = ['titulo', 'lista', 'numero', 'foto'].includes(post.modelo) ? post.modelo : 'titulo';\n  dados_render = { marca: m.marca_id, modelo, ...(post.arte || {}) };\n  if (modelo === 'foto') {\n    rota = 'feed-foto';\n    prompt_imagem = [\n      `Fotografia vertical para Instagram da marca ${m.nome}. ${post.prompt_imagem}`,\n      `Direção: ${m.visual.direcao}`,\n      `Cores predominantes que combinam com a paleta: ${m.visual.paleta}`,\n      'Sem nenhum texto, letra, número, placa legível ou logotipo na imagem.',\n      `Não inclua: ${m.visual.proibido}`,\n    ].join('\\n');\n  }\n} else {\n  dados_render = { marca: m.marca_id, cenas: (post.cenas || []).slice(0, ctx.motor === 'veo' ? 2 : 4), cta: post.cta_video || '' };\n  rota = ctx.motor === 'veo' ? 'reel-veo' : 'reel-animacao';\n  if (ctx.motor === 'veo') {\n    prompt_veo = `${post.prompt_veo}\\nStyle notes: ${m.visual.direcao}\\nAvoid: ${m.visual.proibido}\\nNo on-screen text, no logos.`;\n  }\n}\n\nconst agora = $now.setZone(m.geral.fuso);\nconst ext = ctx.tipo === 'reel' ? 'mp4' : 'jpg';\nconst arquivo = `${m.marca_id}-${ctx.tipo}-${agora.toFormat('yyyyLLdd-HHmmss')}.${ext}`;\n\nreturn [{\n  json: {\n    marca: m,\n    tipo: ctx.tipo,\n    motor: ctx.tipo === 'reel' ? ctx.motor : (modelo === 'foto' ? 'nano_banana' : 'template'),\n    rota,\n    modelo,\n    pilar: ctx.pilar,\n    tema: post.tema,\n    legenda: legendaFinal,\n    alt_text: post.alt_text,\n    dados_render,\n    dados_render_json: JSON.stringify(dados_render),\n    prompt_imagem: prompt_imagem.slice(0, 3800),\n    prompt_veo: prompt_veo.slice(0, 3800),\n    cenas_texto: (dados_render.cenas || []).map((c, i) => `${i + 1}. ${c.texto}${c.apoio ? ' — ' + c.apoio : ''}`).join('\\n'),\n    fontes_usadas: (post.fontes_usadas || []).join('\\n'),\n    nota_revisao: revisao.nota,\n    observacoes_revisao: (revisao.problemas || []).join('; '),\n    reescrito,\n    veo_no_mes: $('Escolher pilar e pesquisa').first().json.veo_no_mes,\n    arquivo,\n    pasta: `instagram/${m.marca_id}`,\n    midia_url: `${m.geral.url_publica_base}/instagram/${m.marca_id}/${arquivo}`,\n  },\n}];\n"
+        "jsCode": "// Pega a versão aprovada (1ª ou reescrita) e monta os dados para o renderizador da marca.\nconst reescrito = $('Reescrever com a revisão').isExecuted;\nconst post = reescrito ? $('Reescrever com a revisão').first().json.output : $('Redator da marca').first().json.output;\nconst revisao = reescrito ? $('Revisor final').first().json.output : $('Revisor editorial').first().json.output;\nconst ctx = $('Montar instruções de feed').first().json;\nconst m = ctx.marca;\n\nconst hashtags = [...new Set((post.hashtags || []).map((h) => (String(h).startsWith('#') ? h : '#' + h)))].slice(0, 6);\nconst legendaFinal = `${post.legenda.trim()}\\n\\n${hashtags.join(' ')}`;\n\nlet modelo = null, dados_render, rota = 'feed-template', prompt_imagem = '', prompt_veo = '';\nif (ctx.tipo === 'feed') {\n  // o render valida o resto (campos, tamanhos, ícones); aqui só garante que o modelo existe no catálogo da marca\n  if (!(ctx.modelos_validos || []).includes(post.modelo)) throw new Error(`Modelo \"${post.modelo}\" não existe no catálogo de ${m.marca_id}. Válidos: ${(ctx.modelos_validos || []).join(', ')}`);\n  modelo = post.modelo;\n  dados_render = { marca: m.marca_id, modelo, textos: post.textos || {} };\n} else {\n  dados_render = { marca: m.marca_id, cenas: (post.cenas || []).slice(0, ctx.motor === 'veo' ? 2 : 4), cta: post.cta_video || '' };\n  rota = ctx.motor === 'veo' ? 'reel-veo' : 'reel-animacao';\n  if (ctx.motor === 'veo') {\n    prompt_veo = `${post.prompt_veo}\\nStyle notes: ${m.visual.direcao}\\nAvoid: ${m.visual.proibido}\\nNo on-screen text, no logos.`;\n  }\n}\n\nconst agora = $now.setZone(m.geral.fuso);\nconst ext = ctx.tipo === 'reel' ? 'mp4' : 'jpg';\nconst arquivo = `${m.marca_id}-${ctx.tipo}-${agora.toFormat('yyyyLLdd-HHmmss')}.${ext}`;\n\nreturn [{\n  json: {\n    marca: m,\n    tipo: ctx.tipo,\n    motor: ctx.tipo === 'reel' ? ctx.motor : ('template'),\n    rota,\n    modelo,\n    pilar: ctx.pilar,\n    tema: post.tema,\n    legenda: legendaFinal,\n    alt_text: post.alt_text,\n    dados_render,\n    dados_render_json: JSON.stringify(dados_render),\n    prompt_imagem: prompt_imagem.slice(0, 3800),\n    prompt_veo: prompt_veo.slice(0, 3800),\n    cenas_texto: (dados_render.cenas || []).map((c, i) => `${i + 1}. ${c.texto}${c.apoio ? ' — ' + c.apoio : ''}`).join('\\n'),\n    fontes_usadas: (post.fontes_usadas || []).join('\\n'),\n    nota_revisao: revisao.nota,\n    observacoes_revisao: (revisao.problemas || []).join('; '),\n    reescrito,\n    veo_no_mes: $('Escolher pilar e pesquisa').first().json.veo_no_mes,\n    arquivo,\n    pasta: `instagram/${m.marca_id}`,\n    midia_url: `${m.geral.url_publica_base}/instagram/${m.marca_id}/${arquivo}`,\n  },\n}];\n"
       },
       "id": "b0fbead1-5164-46ba-8ebb-b26b3eceff8b",
       "name": "Consolidar post aprovado",
@@ -461,7 +461,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// A revisão automática reprovou a 2ª versão: monta o registro e segue para o workflow 05.\nconst ctx = $('Organizar fontes').first().json;\nconst post = $('Reescrever com a revisão').first().json.output;\nconst rev = $('Revisor final').first().json.output;\nreturn [{ json: {\n  marca: ctx.marca.marca_id, nome_marca: ctx.marca.nome, telegram_chat_id: ctx.marca.geral.telegram_chat_id,\n  tipo: ctx.tipo, modelo: '', motor: 'nenhum', pilar: ctx.pilar, tema: post.tema, legenda: post.legenda, midia_url: '',\n  nota_revisao: Number(rev.nota) || 0, status: 'reprovado_ia',\n  erro: String('Revisão automática reprovou duas vezes: ' + (rev.problemas || []).join('; ')).slice(0, 1000),\n} }];\n"
+        "jsCode": "// A revisão automática reprovou a 2ª versão: monta o registro e segue para o workflow 05.\nconst ctx = $('Montar instruções de feed').first().json;\nconst post = $('Reescrever com a revisão').first().json.output;\nconst rev = $('Revisor final').first().json.output;\nreturn [{ json: {\n  marca: ctx.marca.marca_id, nome_marca: ctx.marca.nome, telegram_chat_id: ctx.marca.geral.telegram_chat_id,\n  tipo: ctx.tipo, modelo: '', motor: 'nenhum', pilar: ctx.pilar, tema: post.tema, legenda: post.legenda, midia_url: '',\n  nota_revisao: Number(rev.nota) || 0, status: 'reprovado_ia',\n  erro: String('Revisão automática reprovou duas vezes: ' + (rev.problemas || []).join('; ')).slice(0, 1000),\n} }];\n"
       },
       "id": "fa5be3fc-0f4c-4b36-8a3f-763bce815c5e",
       "name": "Montar reprovação (revisão automática)",
@@ -597,6 +597,59 @@
         -60,
         1650
       ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Organizar fontes').first().json.marca.geral.render_url }}/modelos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "marca",
+              "value": "={{ $('Organizar fontes').first().json.marca.marca_id }}"
+            },
+            {
+              "name": "formato",
+              "value": "feed"
+            },
+            {
+              "name": "automatico",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "2cbc255b-b576-4b7a-a32e-df2a4c1d9df3",
+      "name": "Catálogo de modelos (render)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1360,
+        700
+      ],
+      "notes": "Pergunta ao serviço de render quais modelos a marca tem e o que cada um aceita (campos e limites).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta as instruções de formato do FEED a partir do catálogo real do serviço de render.\n// Para Reels, mantém as instruções que vieram de \"Organizar fontes\".\nconst ctx = $('Organizar fontes').first().json;\nif (ctx.tipo !== 'feed') return [{ json: { ...ctx, modelos_validos: [] } }];\n\nconst cat = ($input.first().json || {})[ctx.marca.marca_id] || {};\nconst nomes = Object.keys(cat);\nif (!nomes.length) throw new Error('O render não devolveu modelos de feed para ' + ctx.marca.marca_id + '. Confira render_url e a credencial do render em \"Marcas e regras\".');\n\nconst campo = (n, d) => {\n  const obrig = d.obrigatorio ? '*' : '';\n  if (d.tipo === 'texto') return `${n}${obrig} (texto, máx ${d.max} caracteres${d.dica ? '; ' + d.dica : ''})`;\n  if (d.tipo === 'icone') return `${n}${obrig} (um de: ${d.enum.join(' | ')})`;\n  if (d.tipo === 'itens') return `${n}${obrig} (lista de ${d.min} a ${d.max} itens {icone, texto máx ${d.texto.max}})`;\n  if (d.tipo === 'sinais') return `${n}${obrig} (lista de ${d.min} itens {icone, titulo máx ${d.titulo.max}, apoio máx ${d.apoio.max}})`;\n  if (d.tipo === 'lista') return `${n}${obrig} (lista de ${d.min} a ${d.max} itens {${Object.entries(d.campos).map(([k, v]) => campo(k, v)).join(', ')}})`;\n  if (d.tipo === 'objeto') return `${n} (objeto {${Object.entries(d.campos).map(([k, v]) => campo(k, v)).join(', ')}})`;\n  return n;\n};\nconst linhas = nomes.map((nome) => `- \"${nome}\": ${cat[nome].descricao}\\n    campos: ${Object.entries(cat[nome].campos).map(([k, v]) => campo(k, v)).join('; ')}`);\n\nconst instrucoes = [\n  'FORMATO: post de feed (imagem única 1080x1350) montado no TEMPLATE da marca. Escolha UM modelo do catálogo abaixo e preencha \"modelo\" (nome exato) e \"textos\" (objeto só com os campos desse modelo). Campo com * é obrigatório.',\n  'CATÁLOGO DE MODELOS DA MARCA:',\n  linhas.join('\\n'),\n  'REGRAS DA ARTE',\n  '- Respeite os limites de caracteres: texto maior que o limite é recusado e a peça não sai. Prefira frases curtas.',\n  '- Use só os campos que existem no modelo escolhido. Ícone: só os da lista, escolhendo o que acompanha a informação.',\n  '- Destaque de palavra com {chaves} só quando a descrição do modelo disser que aceita.',\n  '- Número ou percentual só se estiver nas referências ou nos FATOS DA MARCA. Modelos de exemplo (antes/depois, tela) são exemplos: não afirme que é resultado real de cliente.',\n  '- Modelos de \"novidade\" ou \"em breve\" só se os FATOS DA MARCA disserem em que estado o recurso está (no ar, liberado a poucos ou em breve). Sem isso, escolha outro modelo.',\n  '- Varie: olhe os temas recentes (aparecem como [feed/modelo]) e não repita o mesmo modelo seguidamente.',\n].join('\\n');\n\nreturn [{ json: { ...ctx, instrucoes_formato: instrucoes, modelos_validos: nomes } }];\n"
+      },
+      "id": "60607c74-e776-466c-ae9a-fcd752a27c03",
+      "name": "Montar instruções de feed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1620,
+        700
+      ],
+      "notes": "Feed: troca as instruções de formato pelo catálogo real do render. Reels: não muda nada.",
+      "notesInFlow": true
     }
   ],
   "connections": {
@@ -747,7 +800,7 @@
       "main": [
         [
           {
-            "node": "Redator da marca",
+            "node": "Catálogo de modelos (render)",
             "type": "main",
             "index": 0
           }
@@ -850,6 +903,28 @@
         [
           {
             "node": "Chamar 03 · Produzir mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catálogo de modelos (render)": {
+      "main": [
+        [
+          {
+            "node": "Montar instruções de feed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar instruções de feed": {
+      "main": [
+        [
+          {
+            "node": "Redator da marca",
             "type": "main",
             "index": 0
           }

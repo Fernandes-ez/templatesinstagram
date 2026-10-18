@@ -117,7 +117,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Receber peça').item.json.marca.geral.render_url }}/post",
+        "url": "={{ $('Receber peça').item.json.marca.geral.render_url }}/render?binario=1",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
@@ -149,7 +149,9 @@
       },
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "notes": "Chama o serviço de render (POST /render). Corpo: {marca, modelo, textos}. Devolve o JPG. Credencial Header Auth: Name = Authorization, Value = Bearer <RENDER_TOKEN>.",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -178,7 +180,9 @@
         }
       },
       "retryOnFail": true,
-      "maxTries": 2
+      "maxTries": 2,
+      "notes": "Rota dormente: o catálogo do render não oferece modelos com foto, então o redator não gera esta rota. Mantida para quando houver foto real.",
+      "notesInFlow": true
     },
     {
       "parameters": {
@@ -227,7 +231,9 @@
       },
       "retryOnFail": true,
       "maxTries": 2,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "notes": "Rota dormente: o catálogo do render não oferece modelos com foto, então o redator não gera esta rota. Mantida para quando houver foto real.",
+      "notesInFlow": true
     },
     {
       "parameters": {
