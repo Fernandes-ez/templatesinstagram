@@ -11,12 +11,17 @@ PORT="${PORT:-3100}"
 ENV_FILE=/etc/ezf-render.env
 USUARIO="$(id -un)"
 
+# Sem perguntas durante a instalação (o "needrestart" do Ubuntu abre um menu que trava scripts) e com a saída visível.
+export DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a
+APT="sudo -E apt-get -o Dpkg::Options::=--force-confold -o DPkg::Lock::Timeout=120"
+
 echo "==> 1/6 Pacotes e Node.js"
-sudo apt-get update -y >/dev/null
-sudo apt-get install -y git curl ca-certificates openssl >/dev/null
+$APT update -y
+$APT install -y git curl ca-certificates openssl
 if ! command -v node >/dev/null || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 20 ]; then
-  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - >/dev/null
-  sudo apt-get install -y nodejs >/dev/null
+  echo "    instalando Node 22 (pode levar 1 a 3 minutos)"
+  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+  $APT install -y nodejs
 fi
 echo "    node $(node -v)"
 
