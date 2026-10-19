@@ -81,6 +81,10 @@ No 02, o nó **Briefing do radar (semana)** lê a última linha de `instagram_re
 
 O carrossel usa o mesmo horário de feed da marca. Para mudar a frequência, edite os dois campos acima. A Meta aceita de 2 a 10 imagens por carrossel; o fluxo recusa fora disso.
 
+## Reels
+
+O render faz **Reels animado da ezf** (rota `/reel`, com trilha original). Tábua e Puka ainda não têm Reels (`reels_disponivel: false` em "Marcas e regras"), e o Veo está desligado (`veo_limite_mes: 0`) até o render montar o clipe do Veo.
+
 ## O que ainda não está alinhado (próximo passo)
 
 

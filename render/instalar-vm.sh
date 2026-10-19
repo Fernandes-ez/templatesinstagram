@@ -17,7 +17,7 @@ APT="sudo -E apt-get -o Dpkg::Options::=--force-confold -o DPkg::Lock::Timeout=1
 
 echo "==> 1/6 Pacotes e Node.js"
 $APT update -y
-$APT install -y git curl ca-certificates openssl
+$APT install -y git curl ca-certificates openssl ffmpeg
 if ! command -v node >/dev/null || [ "$(node -p 'process.versions.node.split(".")[0]')" -lt 20 ]; then
   echo "    instalando Node 22 (pode levar 1 a 3 minutos)"
   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -

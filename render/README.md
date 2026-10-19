@@ -28,6 +28,7 @@ Todas as rotas, menos `/health` e `/files/*`, pedem `Authorization: Bearer <REND
 | `GET /modelos` | Lista modelos, campos, limites de tamanho e os ícones aceitos. Use no prompt da IA. Filtros: `?marca=puka&formato=feed&automatico=1` (formato: `feed`, `story`, `lamina`, `carrossel`; `automatico=1` esconde modelos de conteúdo fixo, como o do cliente Aqua Fit). |
 | `POST /render` | Gera o post. Corpo: `{"marca":"ezf","modelo":"miolo_carrossel","textos":{...}}` |
 | `POST /render?binario=1` | Igual, mas devolve o JPG direto (só modelos de 1 imagem). |
+| `POST /reel` | Reels animado (MP4 1080×1920, 30 fps, H.264 + AAC) com trilha original. Corpo: `{"marca":"ezf","cenas":[{texto,apoio?,etiqueta?}],"cta":"…","musica":"suave\|pulso\|brisa"}`. Devolve o vídeo direto. Só a ezf por enquanto; o clipe do Veo (multipart) ainda não. Precisa de `ffmpeg` na VM (o script de instalação instala). |
 | `GET /files/<id>.jpg` | Baixa a imagem (URL pública, nome aleatório, apaga após 48 h). |
 
 Resposta do `/render`: `{ marca, modelo, arquivos: [{ordem, url}], avisos, ms }`. O carrossel devolve 5 arquivos, na ordem de publicação.
@@ -47,6 +48,12 @@ O ícone é um campo com lista fechada (`celular, relogio, loja, pin, mensagem, 
 - Escute só em `127.0.0.1` e exponha apenas `/files/` por um proxy com HTTPS (nginx/Caddy). A API de render não precisa estar na internet: o n8n está na mesma VM.
 - O token vai em header; nunca em URL. Troque-o se vazar.
 - Os arquivos têm nome aleatório de 128 bits e expiram, mas são públicos para quem tiver o link.
+
+## Reels
+
+- A animação é desenhada quadro a quadro com as fontes e cores da marca e codificada com ffmpeg. A trilha é **original, gerada por código** (`musica.js`), sem amostras de terceiros, então não há problema de licença. Estilos: `suave` (lo-fi), `pulso` (tech), `brisa` (ambiente).
+- Um Reels de ~15 s leva em torno de 10 s para renderizar numa máquina de 4 núcleos.
+- Zona segura: o texto fica entre 300 e 1500 px de altura, fora da área coberta pela interface do Instagram.
 
 ## Limites conhecidos
 

@@ -8,6 +8,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
 const { MODELOS, validar, descrever, ErroValidacao } = require("./modelos.js");
+const REELS = require("./reels.js");
+const { renderizarVideo } = require("./video.js");
 
 const PORT = Number(process.env.PORT || 3100);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -78,6 +80,18 @@ async function render({ marca, modelo, textos }) {
   return { marca, modelo, arquivos: [{ ordem: 1, ...salvar(r.jpg()) }], avisos: r.avisos, ms: Date.now() - t0 };
 }
 
+async function renderReel(corpo) {
+  const m = REELS[corpo.marca];
+  if (!m) throw new ErroValidacao(`Reels ainda não existe para a marca "${corpo.marca}". Disponíveis: ${Object.keys(REELS).join(", ")}`);
+  const { musica, ...resto } = validar({ campos: m.campos }, { cenas: corpo.cenas, cta: corpo.cta, musica: corpo.musica });
+  // a mesma peça sempre gera a mesma trilha; peças diferentes variam
+  const seed = [...JSON.stringify(resto.cenas)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+  return emFila(async () => {
+    const reel = await m.fn(resto);
+    return renderizarVideo(reel, { estilo: musica || "suave", seed });
+  });
+}
+
 const servidor = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://x");
@@ -93,6 +107,19 @@ const servidor = http.createServer(async (req, res) => {
     }
     if (!autorizado(req)) return json(res, 401, { erro: "token inválido" });
     if (req.method === "GET" && url.pathname === "/modelos") return json(res, 200, descrever({ marca: url.searchParams.get("marca") || undefined, formato: url.searchParams.get("formato") || undefined, automatico: url.searchParams.get("automatico") === "1" }));
+    if (req.method === "POST" && url.pathname === "/reel") {
+      if (/multipart/i.test(req.headers["content-type"] || "")) throw new ErroValidacao("Reels com o clipe do Veo ainda não é suportado; só a animação (JSON).");
+      let corpo;
+      try {
+        corpo = JSON.parse(await lerCorpo(req));
+      } catch (e) {
+        if (e instanceof ErroValidacao) throw e;
+        throw new ErroValidacao("corpo precisa ser JSON válido");
+      }
+      const mp4 = await renderReel(corpo);
+      res.writeHead(200, { "content-type": "video/mp4", "content-length": mp4.length });
+      return res.end(mp4);
+    }
     if (req.method === "POST" && url.pathname === "/render") {
       let corpo;
       try {

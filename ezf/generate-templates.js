@@ -447,7 +447,7 @@ async function carrosselEscopo({ capa = "{3} sinais de que o seu site perde clie
   return { doc: d, fatias };
 }
 
-module.exports = { ICONES, capaCarrossel, miolo, finalCarrossel, listaRecebe, numero, perguntaCliente, trabalhoEntregue, antesDepois, storyPergunta, carrosselEscopo };
+module.exports = { Doc, quebrar, fonte, imagem, iconeImg, K, B, FAM, ICONES, capaCarrossel, miolo, finalCarrossel, listaRecebe, numero, perguntaCliente, trabalhoEntregue, antesDepois, storyPergunta, carrosselEscopo };
 
 if (GRAVAR) (async () => {
   await capaCarrossel();
