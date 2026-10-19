@@ -632,8 +632,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1360,
-        700
+        1100,
+        960
       ],
       "notes": "Pergunta ao serviço de render quais modelos a marca tem e o que cada um aceita (campos e limites).",
       "notesInFlow": true
@@ -647,8 +647,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1620,
-        700
+        1360,
+        960
       ],
       "notes": "Feed: troca as instruções de formato pelo catálogo real do render. Reels: não muda nada.",
       "notesInFlow": true
