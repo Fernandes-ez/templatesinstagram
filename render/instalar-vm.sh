@@ -38,13 +38,35 @@ for marca in ezf puka tabua; do
 done
 
 echo "==> 4/6 Onde escutar"
-# Se o n8n roda em Docker, ele não enxerga 127.0.0.1 da VM: escutamos só no IP da ponte do Docker (não fica exposto na internet).
+# Se o n8n roda em Docker, ele não enxerga 127.0.0.1 da VM. Escutamos só no gateway da rede do container do n8n
+# (não fica exposto na internet) e liberamos no firewall só essa interface, só nessa porta.
 HOST_BIND="${HOST_BIND:-127.0.0.1}"
-if [ "$HOST_BIND" = "127.0.0.1" ] && command -v docker >/dev/null && sudo docker ps --format '{{.Image}} {{.Names}}' 2>/dev/null | grep -qi n8n; then
-  PONTE="$(ip -4 addr show docker0 2>/dev/null | awk '/inet /{sub("/.*","",$2); print $2; exit}')"
-  [ -n "$PONTE" ] && HOST_BIND="$PONTE"
+IFACE=""
+if [ "$HOST_BIND" = "127.0.0.1" ] && command -v docker >/dev/null; then
+  N8N="$(sudo docker ps --format '{{.Names}} {{.Image}}' | awk 'tolower($2) ~ /n8n/ && tolower($2) !~ /postgres/ {print $1; exit}')"
+  if [ -n "$N8N" ]; then
+    GW="$(sudo docker inspect "$N8N" --format '{{range .NetworkSettings.Networks}}{{.Gateway}} {{end}}' | awk '{print $1}')"
+    if [ -n "$GW" ]; then
+      HOST_BIND="$GW"
+      IFACE="$(ip -o -4 addr show | awk -v ip="$GW" '$4 ~ "^"ip"/" {print $2; exit}')"
+      echo "    n8n no container '$N8N', rede com gateway $GW (interface ${IFACE:-?})"
+    fi
+  fi
 fi
 echo "    escutando em $HOST_BIND:$PORT"
+if [ -n "$IFACE" ] && command -v iptables >/dev/null; then
+  if ! sudo iptables -C INPUT -i "$IFACE" -p tcp --dport "$PORT" -j ACCEPT 2>/dev/null; then
+    sudo iptables -I INPUT -i "$IFACE" -p tcp --dport "$PORT" -j ACCEPT
+    echo "    firewall: liberada a porta $PORT para a interface $IFACE"
+  fi
+  # grava a regra para sobreviver a reinício da VM
+  if ! dpkg -s iptables-persistent >/dev/null 2>&1; then
+    echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
+    echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
+    $APT install -y iptables-persistent
+  fi
+  sudo netfilter-persistent save >/dev/null 2>&1 || true
+fi
 
 echo "==> 5/6 Configuração e serviço"
 if [ ! -f "$ENV_FILE" ]; then
@@ -80,7 +102,10 @@ echo "==> 6/6 Conferindo"
 (cd "$DIR/render" && npm test 2>&1 | tail -3)
 sleep 2
 TOKEN="$(sudo grep '^RENDER_TOKEN=' "$ENV_FILE" | cut -d= -f2)"
-curl -fsS "http://$HOST_BIND:$PORT/health" >/dev/null && echo "    /health ok"
+curl -fsS "http://$HOST_BIND:$PORT/health" >/dev/null && echo "    /health ok (a partir da VM)"
+if [ -n "${N8N:-}" ]; then
+  if sudo docker exec "$N8N" wget -qO- "http://$HOST_BIND:$PORT/health" >/dev/null 2>&1; then echo "    /health ok (a partir do container $N8N)"; else echo "    ATENÇÃO: o container $N8N NÃO alcança http://$HOST_BIND:$PORT. Veja o firewall (sudo iptables -S INPUT)."; fi
+fi
 curl -fsS -H "Authorization: Bearer $TOKEN" "http://$HOST_BIND:$PORT/modelos?formato=feed&automatico=1" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const m=JSON.parse(s);console.log("    modelos de feed:",Object.entries(m).map(([k,v])=>k+"="+Object.keys(v).length).join(" "))})'
 
 cat <<FIM
