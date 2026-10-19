@@ -1,6 +1,6 @@
 # 00 · Radar semanal (detalhes)
 
-`00-radar-semanal.json`: sub-workflow semanal que pesquisa concorrentes, marcas similares, hashtags e a web para as 3 marcas e entrega um briefing de ideias. **Importe em um workflow separado** do fluxo principal.
+`03-radar.json`: sub-workflow semanal que pesquisa concorrentes, marcas similares, hashtags e a web para as 3 marcas e entrega um briefing de ideias. **Importe em um workflow separado** do fluxo principal.
 
 ## O que faz
 

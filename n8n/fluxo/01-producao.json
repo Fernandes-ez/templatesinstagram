@@ -1,0 +1,3011 @@
+{
+  "name": "Produção de posts (orquestrador, texto, mídia, aprovação)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 16 * * *"
+            }
+          ]
+        }
+      },
+      "id": "9b16d002-ac3c-4a7b-9ceb-e27c2d107d4d",
+      "name": "Agenda de produção (16h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        60,
+        420
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "98c984f7-5460-4274-8e92-d3450055e9a7",
+      "name": "Testar feed (todas as marcas)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        60,
+        600
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "2dc4906b-f7be-472f-9265-e754e874f08a",
+      "name": "Testar Reels (todas as marcas)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        60,
+        780
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// CONFIGURAÇÃO GERAL — preencha os campos marcados com PREENCHER\n// ============================================================\nconst GERAL = {\n  telegram_chat_id: 'PREENCHER_CHAT_ID',          // seu chat com o bot (use @get_id_bot)\n  bucket: 'PREENCHER_BUCKET',                     // bucket S3 / Cloudflare R2 / Oracle Object Storage\n  url_publica_base: 'https://PREENCHER-DOMINIO-PUBLICO', // ex.: https://midia.ezf-tech.com (sem / no fim)\n  render_url: 'http://127.0.0.1:3100',            // serviço ezf-render (na mesma VM do n8n; sem / no fim)\n  nota_minima: 8,                                 // nota mínima (0 a 10) da revisão automática\n  veo_limite_mes: 0,                              // teto de Reels com Veo por mês (somando as 3 marcas). 0 = desligado: o render ainda não monta o clipe do Veo\n  fuso: 'America/Sao_Paulo',\n};\n\n// ============================================================\n// MARCAS — fatos, voz e visual tirados dos manuais e dos sites\n// ============================================================\nconst MARCAS = [\n  {\n    marca_id: 'tabua',\n    nome: 'Tábua',\n    instagram: '@PREENCHER',\n    ig_user_id: 'PREENCHER_IG_USER_ID_TABUA',\n    site: 'tabua.app.br',\n    dias_postagem: [2, 4, 6],   // feed: 1=seg ... 7=dom\n    carrossel_dia: 4,          // carrossel (várias lâminas) nesse dia da semana, no lugar do feed\n    carrossel_a_cada_semanas: 1, // 1 = toda semana\n    horario: '10:30',\n    reel_dia: 5,                // Reels às sextas...\n    reels_a_cada_semanas: 2,    // ...a cada 2 semanas (2 a 3 por mês)\n    reels_disponivel: true,        // o render faz Reels animado (rota /reel)\n    horario_reel: '18:30',\n    segmento: 'Cardápio digital para restaurantes, bares e lanchonetes independentes no Brasil',\n    publico: 'Dono de restaurante pequeno e médio, que está no balcão e resolve tudo pelo celular',\n    posicionamento: 'A Tábua é a estrutura de vendas do restaurante independente: cardápio, pedidos e atendente no WhatsApp, sem comissão por pedido. Não é marketplace: o cliente é do restaurante.',\n    personalidade: 'Artesã, direta, confiável, calorosa sem ser fofa, com humor seco de balcão.',\n    voz: [\n      'Fala como um bom gerente de salão: frases curtas, verbos de ação, zero jargão.',\n      'Fala de balcão, não de palco: curto, direto, verbo na frente.',\n      'Mostra o prato, não a receita: resultado concreto antes da tecnologia.',\n      'Número é número: preço, prazo e taxa sem letra miúda.',\n      'Humor de boteco, com respeito: uma piada leve, nunca às custas do cliente.',\n      'Português de verdade: \"painel\", não \"dashboard\"; \"pedido\", não \"order\".',\n    ],\n    assim_sim: ['Seu cardápio no ar em 10 minutos.', 'Pedido anotado. Já tá na cozinha.', 'Sem comissão por pedido. Nenhuma.', 'Fechou mais cedo? Um toque e o cardápio avisa.'],\n    assim_nao: ['Revolucione a experiência digital do seu negócio.', 'Seu pedido foi processado com sucesso pelo sistema.', 'Taxas competitivas e transparentes*', 'Gerencie dinamicamente sua disponibilidade operacional.'],\n    taglines: ['A freguesia é sua.', 'Pedido anotado.', 'Do letreiro pro celular.'],\n    fatos: [\n      'Cardápio digital com pedido pela mesa (QR code) e pelo WhatsApp.',\n      'O cliente não precisa de app: o cardápio abre no navegador do celular pelo QR ou pelo link.',\n      'Sem comissão por pedido; o cliente continua sendo do restaurante.',\n      'Cardápio montado em cerca de 10 minutos, no estilo do restaurante.',\n      'Painel ao vivo, tela da cozinha, comanda térmica 80 mm e delivery por raio.',\n      'Plano Fundador: R$ 59 por mês, 30 dias grátis, preço travado por 12 meses, sem fidelidade e sem cartão no teste.',\n      'Atendente de IA no WhatsApp: módulo à parte, ainda \"em breve\" (não prometer como disponível).',\n    ],\n    ctas: ['Crie seu cardápio grátis em tabua.app.br', 'Link na bio: 30 dias grátis, sem cartão', 'Chama a gente no WhatsApp pelo link da bio'],\n    hashtags_base: ['#restaurante', '#cardapiodigital', '#donoderestaurante'],\n    pilares: [\n      { nome: 'Comissão e margem do restaurante', consulta: 'comissão aplicativos de delivery margem restaurantes Brasil {ano}' },\n      { nome: 'Operação de salão e cozinha', consulta: 'gestão de restaurante pequeno operação cozinha salão dicas {ano}' },\n      { nome: 'Cardápio que vende', consulta: 'engenharia de cardápio precificação restaurante {ano}' },\n      { nome: 'Pedido próprio pelo WhatsApp e delivery próprio', consulta: 'delivery próprio restaurante pedidos WhatsApp tendência {ano}' },\n      { nome: 'Mercado de bares e restaurantes', consulta: 'Abrasel pesquisa bares e restaurantes {ano}' },\n    ],\n    visual: {\n      conceito: 'Letreiro: a tecnologia com sotaque de rua. Placa pintada à mão do boteco, preço escrito a giz, prato do dia no quadro.',\n      paleta: 'Verde-boteco #1E5B43 (marca, títulos, fundos de destaque); Cal #F6F1E6 (fundo padrão, nunca branco puro); Tinta #1A1A17 (texto e contornos); Amarelo-ovo #F2B91E; Vermelho-placa #C8372D (só alerta/destaque pequeno); Azulejo #D5E5D9.',\n      direcao: 'Fotos reais de restaurante com gente trabalhando. Luz natural ou de salão, quente e lateral, contraste médio, grão leve. Enquadramento de perto: mãos, balcão, prato, letreiro. Prato de cima na mesa de fórmica ou madeira.',\n      proibido: 'Chef sorrindo para a câmera de banco de imagem; hambúrguer flutuando em fundo degradê; celular 3D flutuando; foto escura e dramática de restaurante gourmet; filtro vintage falso; fundo branco puro; logotipos.',\n      texto_arte: 'Título curto em letras de placa pintada à mão, grossas e condensadas, em Tinta ou Cal, sobre área lisa.',\n    },\n  },\n  {\n    marca_id: 'puka',\n    nome: 'Puka',\n    instagram: '@PREENCHER',\n    ig_user_id: 'PREENCHER_IG_USER_ID_PUKA',\n    site: 'pukacrm.com.br',\n    dias_postagem: [1, 3, 5],\n    carrossel_dia: 3,          // carrossel (várias lâminas) nesse dia da semana, no lugar do feed\n    carrossel_a_cada_semanas: 1, // 1 = toda semana\n    horario: '08:30',\n    reel_dia: 2,\n    reels_a_cada_semanas: 2,\n    reels_disponivel: true,        // o render faz Reels animado (rota /reel)\n    horario_reel: '12:00',\n    segmento: 'CRM com atendimento por IA no WhatsApp para negócios que vivem de atender (academias, clínicas, escolas, consultorias, imobiliárias, comércio)',\n    publico: 'Donos de negócio que vivem de atender no WhatsApp',\n    posicionamento: 'Para donos de negócio que vivem de atender no WhatsApp, a Puka é o CRM em que a IA recebe o cliente e o time fecha, sem o cliente sentir a troca e sem ninguém repetir pergunta.',\n    personalidade: 'A recepcionista boa de bairro. Lembra o nome de todo mundo, resolve rápido e sabe a hora de chamar o dono. Acolhedora no trato, precisa no método.',\n    voz: [\n      'Direto, brasileiro, com humor seco. Fala como quem já atendeu balcão. Promete o que entrega e mostra o preço.',\n      'Fala como quem atende: frase curta, verbo na frente, \"pra\" quando soa natural.',\n      'Mostra o número: preço, limite, prazo e o que não está incluso, sem letra miúda.',\n      'A IA é ferramenta, não personagem: diz o que ela faz; não dá nome, não diz que ela \"pensa\", não fala em revolução.',\n      'Entra na hora certa: só fala quando tem algo útil; nada de três exclamações.',\n      'Humor seco, nunca piada; nada de trocadilho com o nome.',\n      'Vocabulário do teatro (deixa, ponto, coxia, ribalta) só nas palavras; nunca imagens de cortina, palco ou máscara.',\n    ],\n    assim_sim: ['A IA responde na hora. Quando precisa de alguém, chama seu time.', 'R$ 197 por mês, até 3 pessoas. A agenda fica no plano Completo.', 'Ela responde horário, preço e plano, e passa a conversa quando é negociação.', 'Sem três ferramentas coladas com fita adesiva.'],\n    assim_nao: ['Potencialize a jornada omnichannel do seu cliente com IA de ponta.', 'Planos flexíveis que cabem no seu bolso! Consulte condições.', 'Conheça a IA revolucionária que entende seu cliente como ninguém.', 'Ei! Não perca! Você tem novidades incríveis esperando por você!!!'],\n    taglines: ['A IA dá a deixa. Seu time entra em cena.', 'Atende na hora. Passa na hora certa.', 'Ninguém sem resposta. Ninguém repetindo pergunta.'],\n    fatos: [\n      'A IA responde primeiro no WhatsApp e passa a conversa para a pessoa certa da equipe, com o histórico junto.',\n      'Cada conversa vira lead no CRM com etapa e responsável.',\n      'Usa a API oficial da Meta (sem QR Code nem gambiarra que arrisca banir o número).',\n      'Essencial: R$ 197/mês, 1 número de WhatsApp, até 3 funcionários, IA configurável, CRM, distribuição automática de leads, acesso por cargo. Não inclui Agenda nem Puka Copilot.',\n      'Completo: R$ 397/mês, funcionários ilimitados, Agenda, Puka Copilot, campanhas segmentadas, templates com botões, fila prioritária, suporte com SLA.',\n      'Descontos: trimestral 8%, semestral 15%, anual 20%.',\n      '14 dias grátis em qualquer plano, sem cartão de crédito.',\n    ],\n    ctas: ['Teste 14 dias grátis, sem cartão: pukacrm.com.br', 'Link na bio pra ver como funciona', 'Comece grátis pelo link da bio'],\n    hashtags_base: ['#atendimento', '#whatsappbusiness', '#crm'],\n    pilares: [\n      { nome: 'Tempo de resposta no WhatsApp', consulta: 'tempo de resposta atendimento WhatsApp vendas pequenas empresas {ano}' },\n      { nome: 'Lead perdido e follow-up', consulta: 'leads perdidos follow-up atendimento pequenas empresas Brasil {ano}' },\n      { nome: 'IA no atendimento, sem hype', consulta: 'inteligência artificial atendimento ao cliente pequenas empresas Brasil {ano}' },\n      { nome: 'Atendimento em academias, clínicas e escolas', consulta: 'academia clínica matrícula atendimento WhatsApp {ano}' },\n      { nome: 'Regras e novidades do WhatsApp Business', consulta: 'WhatsApp Business Platform Meta novidades regras {ano}' },\n    ],\n    visual: {\n      conceito: 'A deixa: uma forma reta e constante (o sistema) e uma curva feita à mão (a pessoa), separadas por um pequeno espaço (a passagem da IA para o humano).',\n      paleta: 'Roteiro #F4EEE4 (fundo, ~60%); Coxia #1E1B24 (texto e estrutura, ~25%); Ponto #2D3F9E (a IA, ~10%); Ribalta #D2502D (a pessoa, no máximo 5%). Rotunda #E6DCCB para superfícies. Cantos retos, sem arredondado.',\n      direcao: 'O atendimento acontecendo, não posando. Luz natural lateral de janela ou porta de loja; lado iluminado quente, sombra levemente azul. Por cima do ombro, na altura do balcão, mãos no celular, meio rosto. Recepção de academia às 7h, consultório com agenda aberta, secretaria de escola, balcão de loja. Saturação baixa, grão fino.',\n      proibido: 'Robô, cérebro brilhante, circuito, holograma de IA; banco de imagem com equipe sorrindo para a câmera; escritório corporativo de vidro; mockup de celular flutuando; balões verdes imitando WhatsApp; cortina, palco ou máscara de teatro; gradientes; logotipos.',\n      texto_arte: 'Título em grotesca bold, preto Coxia sobre fundo Roteiro, alinhado à esquerda, com muito respiro.',\n    },\n  },\n  {\n    marca_id: 'ezf',\n    nome: 'ezf.tech',\n    instagram: '@ezf.tech',\n    ig_user_id: 'PREENCHER_IG_USER_ID_EZF',\n    site: 'ezf-tech.com',\n    dias_postagem: [2, 4],\n    carrossel_dia: 4,          // carrossel (várias lâminas) nesse dia da semana, no lugar do feed\n    carrossel_a_cada_semanas: 1, // 1 = toda semana\n    horario: '12:15',\n    reel_dia: 5,\n    reels_a_cada_semanas: 2,\n    reels_disponivel: true,        // o render faz Reels animado (rota /reel)\n    horario_reel: '12:15',\n    segmento: 'Sites, atendimento automático no WhatsApp e sistemas sob medida para empresas locais',\n    publico: 'Empresas e profissionais locais (academias, clínicas, restaurantes, comércio) que querem organizar atendimento, vendas e operação',\n    posicionamento: 'Sites, atendimento automático no WhatsApp e sistemas para a sua empresa. Quem conversa com você é quem escreve o código.',\n    personalidade: 'Pessoal, direto e organizado. Um desenvolvedor que atende pessoalmente, do orçamento à entrega.',\n    voz: [\n      'Primeira pessoa, próximo: \"Eu desenho, programo e mantenho. Você fala direto comigo, do orçamento à entrega.\"',\n      'Direto e informal, sem jargão de agência e sem promessas de \"explodir vendas\".',\n      'Mostra processo e organização: improviso vira processo.',\n      'Preço \"a partir de\" quando falar de valores, sem letra miúda.',\n    ],\n    assim_sim: ['Nenhum cliente esperando resposta.', 'Sua operação fora da planilha.', 'Sua empresa encontrada fora do Instagram.', 'Na ezf.tech, quem conversa com você é quem escreve o código.'],\n    assim_nao: ['Alavanque sua presença digital com soluções disruptivas!', 'Somos a maior agência de marketing digital do Brasil.'],\n    taglines: ['Nenhum cliente esperando resposta.', 'Sua operação fora da planilha.', 'Sua empresa encontrada fora do Instagram.'],\n    fatos: [\n      'Sites com a marca do cliente, rápidos no celular e com WhatsApp em cada produto ou serviço: a partir de R$ 790.',\n      'Automação: atendimento no WhatsApp com respostas imediatas, triagem para a pessoa certa e lembretes automáticos: a partir de R$ 690.',\n      'Sistemas: agendamento online, painéis, cadastros e relatórios sob medida, entregues por etapas: a partir de R$ 99/mês.',\n      'Produtos próprios: Puka (CRM com atendimento por IA no WhatsApp) e Tábua (cardápio digital para restaurantes).',\n      'Atendimento direto com o Enzo, de São Paulo/SP. WhatsApp (11) 99108-4238.',\n    ],\n    ctas: ['Pede um orçamento no WhatsApp: (11) 99108-4238', 'Chama no WhatsApp pelo link da bio', 'Veja os projetos em ezf-tech.com'],\n    hashtags_base: ['#pequenasempresas', '#sitesprofissionais', '#automacao'],\n    pilares: [\n      { nome: 'Site próprio para negócio local', consulta: 'pequenas empresas site próprio busca local consumidores Brasil {ano}' },\n      { nome: 'Perfil da empresa no Google', consulta: 'Perfil da Empresa no Google negócios locais avaliações {ano}' },\n      { nome: 'Atendimento automático no WhatsApp', consulta: 'automação atendimento WhatsApp pequenas empresas {ano}' },\n      { nome: 'Sair da planilha: sistemas sob medida', consulta: 'pequenas empresas planilha gestão digitalização processos Brasil {ano}' },\n    ],\n    visual: {\n      conceito: 'Entre chaves: o improviso (fio embaraçado) vira processo (fio reto); palavras-chave entre chaves {assim}.',\n      paleta: 'Tinta #1B1026 (fundo escuro); Névoa #EEEAF3 (fundo claro); Violeta #8A12B4 (fundo de destaque); Lilás #B98BE0 (acento sobre Tinta); Âmbar #F2B233 (acento sobre Violeta).',\n      direcao: 'Composição gráfica limpa: tipografia grande geométrica, um fio que começa embaraçado e termina reto, chaves { } como elemento gráfico. Quando houver foto: tela de site ou sistema real num notebook ou celular apoiado na mesa de um negócio local, luz natural.',\n      proibido: 'Pessoas de banco de imagem apertando as mãos; foguetes, gráficos subindo, cifrões; robôs; neon genérico de tecnologia; logotipos.',\n      texto_arte: 'Título em sans geométrica larga, com a palavra principal entre chaves { }, em Névoa sobre Tinta ou Tinta sobre Névoa.',\n    },\n  },\n];\n\n// ============================================================\n// Seleção: o que cada marca posta AMANHÃ (a produção roda na véspera)\n// ============================================================\nconst amanha = $now.setZone(GERAL.fuso).plus({ days: 1 });\nconst ano = String(amanha.year);\nconst testeFeed = $('Testar feed (todas as marcas)').isExecuted;\nconst testeReel = $('Testar Reels (todas as marcas)').isExecuted;\nconst testeCarrossel = $('Testar carrossel (todas as marcas)').isExecuted;\n\nconst itens = [];\nfor (const m of MARCAS) {\n  let tipo = null;\n  if (testeFeed) tipo = 'feed';\n  else if (testeReel) tipo = m.reels_disponivel ? 'reel' : null;\n  else if (testeCarrossel) tipo = 'carrossel';\n  else if (m.reels_disponivel && m.reel_dia === amanha.weekday && amanha.weekNumber % m.reels_a_cada_semanas === 0) tipo = 'reel';\n  else if (m.carrossel_dia === amanha.weekday && amanha.weekNumber % m.carrossel_a_cada_semanas === 0) tipo = 'carrossel';\n  else if (m.dias_postagem.includes(amanha.weekday)) tipo = 'feed';\n  if (!tipo) continue;\n  itens.push({\n    json: {\n      ...m,\n      tipo,\n      pilares: m.pilares.map((p) => ({ ...p, consulta: p.consulta.replace('{ano}', ano) })),\n      geral: GERAL,\n      data_postagem: amanha.toISODate(),\n    },\n  });\n}\nreturn itens;\n"
+      },
+      "id": "13ec8c4a-c207-432e-9b26-97b520dccbf8",
+      "name": "Marcas e regras",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $workflow.id }}"
+        },
+        "mode": "each",
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "id": "d6284daa-b1f4-47ec-81c9-c221940641e8",
+      "name": "Produzir peça de cada marca",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1040,
+        510
+      ],
+      "notes": "Chama este mesmo workflow, uma vez por marca, pelo gatilho \"Início: produzir post\". Assim a aprovação de uma marca no Telegram não trava a outra.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "## ① Orquestrador (16h)\n**O que faz:** todo dia às 16h decide o que cada marca posta amanhã (feed, carrossel ou Reels) e dispara **uma execução por marca**.\n**Entra:** relógio (16h) ou os botões de teste.\n**Sai:** 1 item por marca → este mesmo workflow, a partir do gatilho **Início: produzir post** (seção ②).\n\n**Aqui você configura tudo:** abra o nó **Marcas e regras** e troque os `PREENCHER` (chat do Telegram, bucket, URL pública, ids do Instagram).",
+        "height": 360,
+        "width": 1000,
+        "color": 4
+      },
+      "id": "6182388a-4ae4-48a9-b81e-307bce762431",
+      "name": "Nota: 01 · Orquestrador (16h)",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "79904e0a-7f08-4958-8d20-eed017ed8b9c",
+      "name": "Testar carrossel (todas as marcas)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        60,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "8312f7f8-bf6f-4e66-af8d-3b37131ccc3c",
+      "name": "Início: produzir post",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        60,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "marca",
+              "condition": "eq",
+              "keyValue": "={{ $json.marca_id }}"
+            }
+          ]
+        },
+        "limit": 30,
+        "orderBy": true,
+        "orderByColumn": "createdAt",
+        "orderByDirection": "DESC"
+      },
+      "id": "36819417-afc8-4714-90a9-9d7a163d3eb7",
+      "name": "Histórico da marca",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        280,
+        2880
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "motor",
+              "condition": "eq",
+              "keyValue": "veo"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "id": "438866d9-1c26-49be-bbd6-7b4982f0c814",
+      "name": "Veo usados no mês",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        500,
+        2880
+      ],
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Escolhe o pilar usado há mais tempo, o motor do Reels (Veo ou animação) e monta a pesquisa.\nconst marca = $('Início: produzir post').first().json;\nconst historico = $('Histórico da marca').all()\n  .map((i) => i.json)\n  .filter((r) => r && r.marca === marca.marca_id);\n\n// Pilar: nunca usado primeiro; depois o usado há mais tempo (histórico vem do mais novo pro mais antigo)\nconst ultimoUso = {};\nhistorico.forEach((r, idx) => { if (r.pilar && ultimoUso[r.pilar] === undefined) ultimoUso[r.pilar] = idx; });\nconst pilar = [...marca.pilares].sort((a, b) => (ultimoUso[b.nome] ?? Infinity) - (ultimoUso[a.nome] ?? Infinity))[0];\n\n// Motor do Reels: alterna Veo e animação; respeita o teto mensal de Veo (somando todas as marcas)\nlet motor = 'template';\nlet veo_no_mes = 0;\nif (marca.tipo === 'reel') {\n  const inicioMes = $now.setZone(marca.geral.fuso).startOf('month');\n  veo_no_mes = $('Veo usados no mês').all()\n    .map((i) => i.json)\n    .filter((r) => r && r.motor === 'veo' && r.createdAt && DateTime.fromISO(String(r.createdAt)) >= inicioMes)\n    .length;\n  const ultimoReel = historico.find((r) => r.tipo === 'reel' && (r.motor === 'veo' || r.motor === 'animacao'));\n  const preferido = ultimoReel && ultimoReel.motor === 'veo' ? 'animacao' : 'veo';\n  motor = preferido === 'veo' && veo_no_mes < marca.geral.veo_limite_mes ? 'veo' : 'animacao';\n}\n\n// Radar da semana (workflow 00): inspiração de ângulo, formato e gancho. Só vale se tiver até 10 dias.\nconst linhaRadar = $('Briefing do radar (semana)').first()?.json || {};\nlet briefing = null;\ntry { briefing = linhaRadar.briefing ? JSON.parse(linhaRadar.briefing) : null; } catch (e) { briefing = null; }\nconst idade = linhaRadar.createdAt ? $now.diff(DateTime.fromISO(String(linhaRadar.createdAt)), 'days').days : 0;\nlet radar = '(sem radar recente para esta marca)';\nif (briefing && idade <= 10) {\n  const ideias = briefing.ideias || [];\n  const doTipo = ideias.filter((i) => i.formato === (marca.tipo === 'carrossel' ? 'carrossel' : marca.tipo === 'reel' ? 'reel' : 'feed'));\n  const lista = (doTipo.length ? doTipo : ideias).slice(0, 5);\n  radar = [\n    `Resumo: ${briefing.resumo || ''}`,\n    (briefing.padroes || []).length ? `Padrões: ${(briefing.padroes || []).slice(0, 4).map((p) => `${p.padrao} (${p.por_que_funciona})`).join('; ')}` : '',\n    (briefing.ganchos || []).length ? `Estruturas de gancho: ${(briefing.ganchos || []).slice(0, 4).join(' | ')}` : '',\n    (briefing.lacunas || []).length ? `Lacunas do mercado: ${(briefing.lacunas || []).slice(0, 4).join('; ')}` : '',\n    lista.length ? `Ideias: ${lista.map((i) => `[${i.formato}/${i.modelo}] ${i.titulo} (${i.angulo})`).join(' | ')}` : '',\n  ].filter(Boolean).join('\\n');\n}\n\nconst recentes = historico.filter((r) => r.tema).slice(0, 20)\n  .map((r) => `- [${r.tipo || 'feed'}${r.modelo ? '/' + r.modelo : ''}] ${r.tema} (${r.status})`);\n\nreturn [{\n  json: {\n    marca,\n    tipo: marca.tipo,\n    motor,\n    veo_no_mes,\n    pilar: pilar.nome,\n    consulta: pilar.consulta,\n    radar,\n    temas_recentes: recentes.length ? recentes.join('\\n') : '(nenhum post anterior)',\n  },\n}];\n"
+      },
+      "id": "e34c5ff0-6c8e-47e7-8a28-027e66524a7e",
+      "name": "Escolher pilar e pesquisa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Pesquise na web, em português do Brasil, conteúdo dos últimos 30 dias sobre: ' + $json.consulta + '. Responda em até 8 tópicos curtos. Cada tópico: o que aconteceu ou está em alta e por que importa para uma marca pequena. Não invente: se não encontrar, diga que não encontrou.' }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "95b1219e-a381-4873-bac5-d166e051dc36",
+      "name": "Buscar referências (Gemini + Google)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        2880
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (texto, projeto gratuito)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "notes": "Gemini com busca no Google (no lugar do Perplexity). Devolve resumo + fontes citadas. Os links das fontes são redirecionamentos do Google.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta o contexto da marca com as referências encontradas.\nconst ctx = $('Escolher pilar e pesquisa').first().json;\n// Resposta do Gemini com busca no Google: resumo + fontes citadas (groundingChunks) + trechos ligados a cada fonte (groundingSupports).\nconst resposta = $input.first().json || {};\nconst cand = (resposta.candidates || [])[0] || {};\nconst meta = cand.groundingMetadata || {};\nconst resumo = ((cand.content || {}).parts || []).map((p) => p.text || '').join('\\n').replace(/\\s+/g, ' ').trim();\nconst chunks = (meta.groundingChunks || []).map((c) => c.web || {});\nconst trechos = chunks.map(() => []);\nfor (const s of (meta.groundingSupports || [])) {\n  for (const i of (s.groundingChunkIndices || [])) if (trechos[i] && s.segment && s.segment.text) trechos[i].push(s.segment.text);\n}\nconst resultados = chunks.map((c, i) => ({ title: c.title, url: c.uri, date: '', snippet: trechos[i].join(' ') || (i === 0 ? resumo : '') })).filter((r) => r.url);\nif (!resultados.length && resumo) resultados.push({ title: 'Resumo da busca (sem fontes citadas)', url: '', date: '', snippet: resumo });\n\nconst vistos = new Set();\nconst fontes = resultados\n  .filter((r) => r && r.title && (r.url || r.snippet))\n  .filter((r) => {\n    if (vistos.has(r.url)) return false;\n    vistos.add(r.url);\n    // Não usar o próprio site da marca como \"referência externa\" (o título da fonte do Google é o domínio)\n    return !String(r.title).includes(ctx.marca.site);\n  })\n  .slice(0, 8)\n  .map((r, i) => ({\n    n: i + 1,\n    titulo: r.title,\n    url: r.url,\n    data: r.date || r.last_updated || '',\n    trecho: String(r.snippet || '').replace(/\\s+/g, ' ').slice(0, 900),\n  }));\n\nconst fontesTexto = fontes.length\n  ? fontes.map((f) => `[${f.n}] ${f.titulo} (${f.data || 'sem data'})\\n${f.url}\\n${f.trecho}`).join('\\n\\n')\n  : 'NENHUMA FONTE ENCONTRADA. Faça um post atemporal usando só os FATOS DA MARCA, sem números ou dados de mercado.';\n\nconst m = ctx.marca;\nconst guia = [\n  `MARCA: ${m.nome} (${m.site}) ${m.instagram}`,\n  `SEGMENTO: ${m.segmento}`,\n  `PÚBLICO: ${m.publico}`,\n  `POSICIONAMENTO: ${m.posicionamento}`,\n  `PERSONALIDADE: ${m.personalidade}`,\n  `TOM DE VOZ:\\n- ${m.voz.join('\\n- ')}`,\n  `ASSIM SIM:\\n- ${m.assim_sim.join('\\n- ')}`,\n  `ASSIM NÃO:\\n- ${m.assim_nao.join('\\n- ')}`,\n  `TAGLINES OFICIAIS:\\n- ${m.taglines.join('\\n- ')}`,\n  `FATOS DA MARCA (única fonte permitida sobre o produto, preços e prazos):\\n- ${m.fatos.join('\\n- ')}`,\n  `CTAs PERMITIDOS:\\n- ${m.ctas.join('\\n- ')}`,\n  `HASHTAGS BASE: ${m.hashtags_base.join(' ')}`,\n  `VISUAL: ${m.visual.conceito}\\nPaleta: ${m.visual.paleta}\\nDireção de imagem: ${m.visual.direcao}\\nProibido na imagem: ${m.visual.proibido}`,\n].join('\\n\\n');\n\n// Instruções de formato conforme o tipo de peça\nlet instrucoes;\nif (ctx.tipo === 'feed') {\n  instrucoes = [\n    'FORMATO: post de feed (imagem única 1080x1350) montado no TEMPLATE da marca. Preencha \"modelo\" e \"arte\".',\n    'Modelos: \"titulo\" (uma frase forte); \"lista\" (3 a 5 itens); \"numero\" (SÓ se houver um número nas referências ou nos fatos da marca); \"foto\" (quando uma cena real ajuda a contar; gera imagem com IA, use em no máximo 1 de cada 3 posts, veja os temas recentes).',\n    'arte.etiqueta: até 3 palavras. arte.titulo: até 9 palavras; marque no máximo UMA palavra-chave entre chaves, ex.: \"Cliente que espera {esfria}\". arte.apoio: até 22 palavras (opcional em lista/numero).',\n    'arte.itens (lista): cada item com \"titulo\" de até 6 palavras e \"detalhe\" de até 10 palavras. arte.numero: exatamente como aparece na fonte (ex.: \"78%\", \"R$ 0,00\"). arte.legenda: a frase que explica o número. arte.fonte: nome curto da fonte do número.',\n    'arte.cta: curto, até 5 palavras, tirado dos CTAs permitidos.',\n    'prompt_imagem (só no modelo foto): cena fotográfica SEM nenhum texto, letra ou logotipo, seguindo a direção de imagem da marca. A arte final é montada pelo template.',\n  ].join('\\n');\n} else if (ctx.motor === 'veo') {\n  instrucoes = [\n    'FORMATO: Reels de ~11 segundos. Um clipe de 8 segundos gerado pelo Veo, com legendas da marca por cima, e um cartão final com logo e CTA.',\n    'cenas: exatamente 2 cenas; \"texto\" de até 7 palavras cada (legenda sobre o vídeo). A primeira é o gancho.',\n    'prompt_veo: em INGLÊS, uma cena contínua de 8 segundos, vertical 9:16, seguindo a direção de imagem da marca: ambiente, ação, enquadramento, movimento de câmera, luz e som ambiente. Sem texto, letreiros legíveis, logotipos ou pessoas olhando para a câmera.',\n    'cta_video: até 5 palavras, tirado dos CTAs permitidos.',\n  ].join('\\n');\n} else {\n  instrucoes = [\n    'FORMATO: Reels animado de 10 a 15 segundos, só com a tipografia e os grafismos da marca (motion graphics).',\n    'cenas: 3 ou 4 cenas. \"texto\" de até 8 palavras e NO MÁXIMO 50 caracteres; a primeira é o gancho com até 6 palavras. Marque no máximo uma palavra por cena entre chaves para destaque. \"apoio\" opcional, até 14 palavras e NO MÁXIMO 80 caracteres. \"etiqueta\" opcional, até 3 palavras e NO MÁXIMO 24 caracteres. Texto acima do limite é recusado pelo render.',\n    'cta_video: até 5 palavras e NO MÁXIMO 24 caracteres, tirado dos CTAs permitidos.',\n  ].join('\\n');\n}\n\nreturn [{\n  json: {\n    ...ctx,\n    instrucoes_formato: instrucoes,\n    fontes,\n    fontes_texto: fontesTexto,\n    guia_marca: guia,\n    sem_fontes: fontes.length === 0,\n  },\n}];\n"
+      },
+      "id": "812b16da-d67b-43b6-98aa-cc81ca96cb9a",
+      "name": "Organizar fontes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Pilar de conteúdo de hoje: {{ $json.pilar }}\nPeça: {{ $json.tipo === 'reel' ? 'Reels (' + $json.motor + ')' : ($json.tipo === 'carrossel' ? 'carrossel' : 'post de feed') }}\nPublicação prevista para: {{ $json.marca.data_postagem }}\n\nREFERÊNCIAS PESQUISADAS AGORA (única base para dados de mercado):\n{{ $json.fontes_texto }}\n\nRADAR DA SEMANA (só inspiração de ângulo, formato e gancho observados em outras marcas; nunca fato do produto nem texto copiado):\n{{ $json.radar }}\n\nTEMAS RECENTES DA MARCA (não repetir):\n{{ $json.temas_recentes }}\n\nEscreva a peça para a marca {{ $json.marca.nome }}.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente.\n11. RADAR: use uma ideia do radar só se encaixar no pilar de hoje e no que a marca realmente faz; adapte o ângulo para a nossa voz. Nunca copie texto ou gancho, nunca cite concorrente e nunca trate algo do radar como fato da nossa marca (fatos do produto vêm só dos FATOS DA MARCA). Se nada encaixar, ignore o radar."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "cd47f705-ee84-4dfc-88ee-f31fa8be3f5c",
+      "name": "Redator da marca",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1380,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {
+          "maxOutputTokens": 8192,
+          "temperature": 0.7
+        }
+      },
+      "id": "1df8b766-75be-4a3b-8be3-ed2dfed5e193",
+      "name": "Gemini (redator)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        3100
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (texto, projeto gratuito)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tema\": {\n      \"type\": \"string\",\n      \"description\": \"Assunto da peça em uma frase\"\n    },\n    \"legenda\": {\n      \"type\": \"string\",\n      \"description\": \"Legenda do post, sem hashtags\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"alt_text\": {\n      \"type\": \"string\"\n    },\n    \"fontes_usadas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"URLs das referências usadas\"\n    },\n    \"modelo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para post de feed: nome exato de um modelo do catálogo\"\n    },\n    \"cenas\": {\n      \"type\": \"array\",\n      \"description\": \"Só para Reels\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"texto\": {\n            \"type\": \"string\"\n          },\n          \"apoio\": {\n            \"type\": \"string\"\n          },\n          \"etiqueta\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"texto\"\n        ]\n      }\n    },\n    \"cta_video\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels\"\n    },\n    \"prompt_veo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels com Veo, em inglês\"\n    },\n    \"textos\": {\n      \"type\": \"object\",\n      \"description\": \"Só para post de feed: campos do modelo escolhido, conforme o catálogo\",\n      \"additionalProperties\": true\n    }\n  },\n  \"required\": [\n    \"tema\",\n    \"legenda\",\n    \"hashtags\",\n    \"alt_text\",\n    \"fontes_usadas\"\n  ]\n}"
+      },
+      "id": "bb41900e-f667-406b-acb9-13aa8f608669",
+      "name": "Formato da peça",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1500,
+        3100
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed e carrossel').item.json.fontes_texto }}\n\nRADAR (inspiração, nunca fato):\n{{ $('Montar instruções de feed e carrossel').item.json.radar }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed e carrossel').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português, texto ou gancho copiado de uma referência ou do RADAR, e qualquer coisa do radar tratada como fato da nossa marca.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "4c732891-58ad-4346-84de-b6e20091e399",
+      "name": "Revisor editorial",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1740,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {
+          "maxOutputTokens": 8192,
+          "temperature": 0.2
+        }
+      },
+      "id": "c3acfbe8-a2ef-4cdc-9088-c2a8d5c4565a",
+      "name": "Gemini (revisor)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1700,
+        3100
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (texto, projeto gratuito)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"aprovado\": {\n      \"type\": \"boolean\"\n    },\n    \"nota\": {\n      \"type\": \"number\",\n      \"description\": \"0 a 10\"\n    },\n    \"problemas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"checagem_fatos\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"afirmacao\": {\n            \"type\": \"string\"\n          },\n          \"fonte\": {\n            \"type\": \"string\"\n          },\n          \"ok\": {\n            \"type\": \"boolean\"\n          }\n        },\n        \"required\": [\n          \"afirmacao\",\n          \"fonte\",\n          \"ok\"\n        ]\n      }\n    },\n    \"sugestoes\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"aprovado\",\n    \"nota\",\n    \"problemas\",\n    \"checagem_fatos\",\n    \"sugestoes\"\n  ]\n}"
+      },
+      "id": "4091e44a-d609-46f5-bc9a-9bee941f9ca4",
+      "name": "Formato da revisão",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1860,
+        3100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3ce2b351-b737-4af3-a1b6-6c37cb821d13",
+              "leftValue": "={{ $json.output.aprovado === true && Number($json.output.nota) >= $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "dbceaea9-4f36-4382-88fb-9cb80f324e02",
+      "name": "Aprovado na revisão?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2080,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed e carrossel').item.json.fontes_texto }}\n\nRADAR DA SEMANA (só inspiração, nunca fato):\n{{ $('Montar instruções de feed e carrossel').item.json.radar }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed e carrossel').item.json.temas_recentes }}\n\nPEÇA REPROVADA:\n{{ JSON.stringify($('Redator da marca').item.json.output, null, 2) }}\n\nREVISÃO (nota {{ $json.output.nota }}/10):\nProblemas: {{ ($json.output.problemas || []).join(' | ') }}\nSugestões: {{ $json.output.sugestoes }}\n\nReescreva a peça inteira corrigindo tudo.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é o redator de social media da marca descrita abaixo. Escreva como a marca escreve.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nREGRAS OBRIGATÓRIAS\n1. Português do Brasil, no tom de voz da marca. Siga os exemplos \"assim sim\" e fuja de tudo que pareça \"assim não\", jargão de agência ou promessa exagerada.\n2. Escolha, entre as referências pesquisadas, um assunto atual e útil para o público da marca e conecte com o que a marca resolve, sem forçar.\n3. Qualquer número, estatística, data ou afirmação sobre mercado precisa estar escrita nas referências. Liste em fontes_usadas as URLs que sustentam o texto. Se nada sustentar, não use número.\n4. Sobre o produto, preços, prazos e funcionalidades, use só os FATOS DA MARCA. Não invente recurso, cliente, depoimento nem resultado.\n5. Não cite concorrentes pelo nome. Não copie frases das referências: reescreva com a voz da marca.\n6. legenda (do post no Instagram): primeira linha é o gancho, com até 90 caracteres. Depois, parágrafos curtos. Total entre 300 e 1.500 caracteres. Termine com um dos CTAs permitidos. Sem hashtags dentro da legenda. No máximo 2 emojis.\n7. hashtags: de 3 a 6, minúsculas, sem acento, incluindo as hashtags base que fizerem sentido.\n8. alt_text: descrição da peça para acessibilidade, até 200 caracteres.\n9. Não repita o ângulo de nenhum tema recente.\n10. Você está reescrevendo uma peça reprovada. Corrija todos os problemas apontados pela revisão, mantendo o que estava bom.\n11. RADAR: use uma ideia do radar só se encaixar no pilar de hoje e no que a marca realmente faz; adapte o ângulo para a nossa voz. Nunca copie texto ou gancho, nunca cite concorrente e nunca trate algo do radar como fato da nossa marca (fatos do produto vêm só dos FATOS DA MARCA). Se nada encaixar, ignore o radar."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "43c4e958-f2d5-4847-8b05-6eeeb8453f66",
+      "name": "Reescrever com a revisão",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2320,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {
+          "maxOutputTokens": 8192,
+          "temperature": 0.7
+        }
+      },
+      "id": "70bc39db-c789-4d62-ba61-704ce14b4214",
+      "name": "Gemini (reescrita)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2280,
+        3400
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (texto, projeto gratuito)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"tema\": {\n      \"type\": \"string\",\n      \"description\": \"Assunto da peça em uma frase\"\n    },\n    \"legenda\": {\n      \"type\": \"string\",\n      \"description\": \"Legenda do post, sem hashtags\"\n    },\n    \"hashtags\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"alt_text\": {\n      \"type\": \"string\"\n    },\n    \"fontes_usadas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"URLs das referências usadas\"\n    },\n    \"modelo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para post de feed: nome exato de um modelo do catálogo\"\n    },\n    \"cenas\": {\n      \"type\": \"array\",\n      \"description\": \"Só para Reels\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"texto\": {\n            \"type\": \"string\"\n          },\n          \"apoio\": {\n            \"type\": \"string\"\n          },\n          \"etiqueta\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"texto\"\n        ]\n      }\n    },\n    \"cta_video\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels\"\n    },\n    \"prompt_veo\": {\n      \"type\": \"string\",\n      \"description\": \"Só para Reels com Veo, em inglês\"\n    },\n    \"textos\": {\n      \"type\": \"object\",\n      \"description\": \"Só para post de feed: campos do modelo escolhido, conforme o catálogo\",\n      \"additionalProperties\": true\n    }\n  },\n  \"required\": [\n    \"tema\",\n    \"legenda\",\n    \"hashtags\",\n    \"alt_text\",\n    \"fontes_usadas\"\n  ]\n}"
+      },
+      "id": "199fde8a-a339-4a36-8628-33e850df8fc0",
+      "name": "Formato da peça (reescrita)",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2440,
+        3400
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=REFERÊNCIAS:\n{{ $('Montar instruções de feed e carrossel').item.json.fontes_texto }}\n\nTEMAS RECENTES:\n{{ $('Montar instruções de feed e carrossel').item.json.temas_recentes }}\n\nPEÇA PARA REVISAR:\n{{ JSON.stringify($json.output, null, 2) }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é o revisor editorial e checador de fatos da marca abaixo. Seja exigente: só aprove o que você publicaria hoje no perfil oficial. Lembre que cada Reels com Veo gasta crédito: um roteiro fraco deve ser reprovado agora.\n\n{{ $('Montar instruções de feed e carrossel').item.json.guia_marca }}\n\n{{ $('Montar instruções de feed e carrossel').item.json.instrucoes_formato }}\n\nCHECKLIST\nA. Fatos: todo número, estatística ou afirmação de mercado aparece nas REFERÊNCIAS? Toda URL em fontes_usadas está na lista? Tudo sobre produto, preço e prazo bate com os FATOS DA MARCA? Qualquer falha aqui reprova.\nB. Voz: soa como os exemplos \"assim sim\"? Tem jargão, exagero ou algo parecido com \"assim não\"?\nC. Relevância: o assunto é útil e atual para o público da marca e não repete os temas recentes?\nD. Formato: segue as instruções de formato acima (modelo e campos de textos do modelo (limites do catálogo), limites de palavras, quantidade de cenas, gancho forte na primeira cena, prompt do Veo viável em 8 segundos e sem nada proibido pela direção de imagem).\nE. Legenda: gancho com até 90 caracteres; entre 300 e 1.500 caracteres; termina com CTA permitido; 3 a 6 hashtags.\nF. Riscos: promessa que a marca não pode cumprir, citação de concorrente, tema sensível, erro de português, texto ou gancho copiado de uma referência ou do RADAR.\n\nDê nota de 0 a 10. \"aprovado\" só pode ser true se a nota for maior ou igual a {{ $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }} e não houver nenhum problema nos itens A, D ou F. Em \"problemas\", escreva cada problema de forma acionável."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "a808d4dd-c201-4c5f-a42a-627b4b7e54ae",
+      "name": "Revisor final",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2680,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {
+          "maxOutputTokens": 8192,
+          "temperature": 0.2
+        }
+      },
+      "id": "1e8aff1d-55f6-46f9-9427-b93eea70b6de",
+      "name": "Gemini (revisor final)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        2640,
+        3400
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (texto, projeto gratuito)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"aprovado\": {\n      \"type\": \"boolean\"\n    },\n    \"nota\": {\n      \"type\": \"number\",\n      \"description\": \"0 a 10\"\n    },\n    \"problemas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"checagem_fatos\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"afirmacao\": {\n            \"type\": \"string\"\n          },\n          \"fonte\": {\n            \"type\": \"string\"\n          },\n          \"ok\": {\n            \"type\": \"boolean\"\n          }\n        },\n        \"required\": [\n          \"afirmacao\",\n          \"fonte\",\n          \"ok\"\n        ]\n      }\n    },\n    \"sugestoes\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"aprovado\",\n    \"nota\",\n    \"problemas\",\n    \"checagem_fatos\",\n    \"sugestoes\"\n  ]\n}"
+      },
+      "id": "f189275f-d0c2-4923-aee7-7b18d3453f92",
+      "name": "Formato da revisão final",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2800,
+        3400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "84b9576e-c365-49a3-bcbb-f47cafaed96f",
+              "leftValue": "={{ $json.output.aprovado === true && Number($json.output.nota) >= $('Montar instruções de feed e carrossel').item.json.marca.geral.nota_minima }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "86ee533b-ab52-4811-8007-b4cf8ef1e9c4",
+      "name": "Aprovado na 2ª revisão?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3040,
+        3180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pega a versão aprovada (1ª ou reescrita) e monta os dados para o renderizador da marca.\nconst reescrito = $('Reescrever com a revisão').isExecuted;\nconst post = reescrito ? $('Reescrever com a revisão').first().json.output : $('Redator da marca').first().json.output;\nconst revisao = reescrito ? $('Revisor final').first().json.output : $('Revisor editorial').first().json.output;\nconst ctx = $('Montar instruções de feed e carrossel').first().json;\nconst m = ctx.marca;\n\nconst hashtags = [...new Set((post.hashtags || []).map((h) => (String(h).startsWith('#') ? h : '#' + h)))].slice(0, 6);\nconst legendaFinal = `${post.legenda.trim()}\\n\\n${hashtags.join(' ')}`;\n\nlet modelo = null, dados_render, rota = 'feed-template', prompt_imagem = '', prompt_veo = '';\nif (ctx.tipo === 'feed' || ctx.tipo === 'carrossel') {\n  // o render valida o resto (campos, tamanhos, ícones); aqui só garante que o modelo existe no catálogo da marca\n  if (!(ctx.modelos_validos || []).includes(post.modelo)) throw new Error(`Modelo \"${post.modelo}\" não existe no catálogo de ${m.marca_id}. Válidos: ${(ctx.modelos_validos || []).join(', ')}`);\n  modelo = post.modelo;\n  dados_render = { marca: m.marca_id, modelo, textos: post.textos || {} };\n  if (ctx.tipo === 'carrossel') rota = 'carrossel';\n} else {\n  dados_render = { marca: m.marca_id, cenas: (post.cenas || []).slice(0, ctx.motor === 'veo' ? 2 : 4), cta: post.cta_video || '' };\n  rota = ctx.motor === 'veo' ? 'reel-veo' : 'reel-animacao';\n  if (ctx.motor === 'veo') {\n    prompt_veo = `${post.prompt_veo}\\nStyle notes: ${m.visual.direcao}\\nAvoid: ${m.visual.proibido}\\nNo on-screen text, no logos.`;\n  }\n}\n\nconst agora = $now.setZone(m.geral.fuso);\nconst ext = ctx.tipo === 'reel' ? 'mp4' : 'jpg';\n// carrossel: `arquivo` é só o prefixo; cada lâmina vira `${arquivo}-NN.jpg` no workflow 03\nconst arquivo = ctx.tipo === 'carrossel' ? `${m.marca_id}-carrossel-${agora.toFormat('yyyyLLdd-HHmmss')}` : `${m.marca_id}-${ctx.tipo}-${agora.toFormat('yyyyLLdd-HHmmss')}.${ext}`;\n\nreturn [{\n  json: {\n    marca: m,\n    tipo: ctx.tipo,\n    motor: ctx.tipo === 'reel' ? ctx.motor : ('template'),\n    rota,\n    modelo,\n    pilar: ctx.pilar,\n    tema: post.tema,\n    legenda: legendaFinal,\n    alt_text: post.alt_text,\n    dados_render,\n    dados_render_json: JSON.stringify(dados_render),\n    prompt_imagem: prompt_imagem.slice(0, 3800),\n    prompt_veo: prompt_veo.slice(0, 3800),\n    cenas_texto: (dados_render.cenas || []).map((c, i) => `${i + 1}. ${c.texto}${c.apoio ? ' — ' + c.apoio : ''}`).join('\\n'),\n    fontes_usadas: (post.fontes_usadas || []).join('\\n'),\n    nota_revisao: revisao.nota,\n    observacoes_revisao: (revisao.problemas || []).join('; '),\n    reescrito,\n    veo_no_mes: $('Escolher pilar e pesquisa').first().json.veo_no_mes,\n    arquivo,\n    pasta: `instagram/${m.marca_id}`,\n    midia_url: ctx.tipo === 'carrossel' ? '' : `${m.geral.url_publica_base}/instagram/${m.marca_id}/${arquivo}`,\n  },\n}];\n"
+      },
+      "id": "b0fbead1-5164-46ba-8ebb-b26b3eceff8b",
+      "name": "Consolidar post aprovado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        3980
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// A revisão automática reprovou a 2ª versão: monta o registro e segue para o workflow 05.\nconst ctx = $('Montar instruções de feed e carrossel').first().json;\nconst post = $('Reescrever com a revisão').first().json.output;\nconst rev = $('Revisor final').first().json.output;\nreturn [{ json: {\n  marca: ctx.marca.marca_id, nome_marca: ctx.marca.nome, telegram_chat_id: ctx.marca.geral.telegram_chat_id,\n  tipo: ctx.tipo, modelo: '', motor: 'nenhum', pilar: ctx.pilar, tema: post.tema, legenda: post.legenda, midia_url: '',\n  nota_revisao: Number(rev.nota) || 0, status: 'reprovado_ia',\n  erro: String('Revisão automática reprovou duas vezes: ' + (rev.problemas || []).join('; ')).slice(0, 1000),\n} }];\n"
+      },
+      "id": "fa5be3fc-0f4c-4b36-8a3f-763bce815c5e",
+      "name": "Montar reprovação (revisão automática)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        320,
+        4320
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ② Criar texto da peça\n**O que faz:** pesquisa, escreve, revisa (até 2 vezes) e deixa a peça pronta com a legenda e os dados do render.\n**Entra:** 1 item de marca: marca, tipo (feed, carrossel ou reel), motor, pilar.\n**Sai:** a **peça aprovada** → seção ③ (**Rota da peça**). Reprovou 2 vezes → seção ⑤ (**Receber reprovação**).\n\nFases abaixo: ① Pesquisar → ② Escrever → ③ Revisar → ④ Fechar a peça.",
+        "height": 330,
+        "width": 1500,
+        "color": 4
+      },
+      "id": "940bfff9-b2e2-4cb1-8267-f79f58296730",
+      "name": "Nota: 02 · Criar texto da peça",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1660
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ① Pesquisar\nHistórico da marca, teto do Veo, pilar do dia e fontes do mês.",
+        "height": 330,
+        "width": 1460,
+        "color": 6
+      },
+      "id": "df2d93b4-f11c-4a2f-986d-82c8aaa1cc4b",
+      "name": "Nota: ① Pesquisar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        2730
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ② Escrever\nRedator Gemini no tom da marca.",
+        "height": 550,
+        "width": 520,
+        "color": 5
+      },
+      "id": "60b86b96-8408-4f36-83a3-a6737e8f4366",
+      "name": "Nota: ② Escrever",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        2730
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ③ Revisar\nRevisor editorial; reprovou → reescreve uma vez → revisor final.",
+        "height": 850,
+        "width": 1700,
+        "color": 3
+      },
+      "id": "78226e82-65ba-408c-a2a2-5f13bc1d3a68",
+      "name": "Nota: ③ Revisar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1640,
+        2730
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ④ Fechar a peça\nJunta a versão aprovada, a legenda, as hashtags e os dados do render num único objeto (a **peça**) que viaja pelos próximos workflows.",
+        "height": 330,
+        "width": 540,
+        "color": 4
+      },
+      "id": "f1188593-18ec-4257-bcaf-59c701e2f1e3",
+      "name": "Nota: ④ Fechar a peça",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        3830
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Organizar fontes').first().json.marca.geral.render_url }}/modelos",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "marca",
+              "value": "={{ $('Organizar fontes').first().json.marca.marca_id }}"
+            },
+            {
+              "name": "formato",
+              "value": "={{ $('Organizar fontes').first().json.tipo === 'carrossel' ? 'carrossel' : 'feed' }}"
+            },
+            {
+              "name": "automatico",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "2cbc255b-b576-4b7a-a32e-df2a4c1d9df3",
+      "name": "Catálogo de modelos (render)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        3140
+      ],
+      "notes": "Pergunta ao serviço de render quais modelos a marca tem e o que cada um aceita (campos e limites).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta as instruções de formato do FEED a partir do catálogo real do serviço de render.\n// Para Reels, mantém as instruções que vieram de \"Organizar fontes\". Carrossel usa o catálogo de modelos de várias imagens.\nconst ctx = $('Organizar fontes').first().json;\nif (ctx.tipo !== 'feed' && ctx.tipo !== 'carrossel') return [{ json: { ...ctx, modelos_validos: [] } }];\n\nconst cat = ($input.first().json || {})[ctx.marca.marca_id] || {};\nconst nomes = Object.keys(cat);\nif (!nomes.length) throw new Error('O render não devolveu modelos de ' + ctx.tipo + ' para ' + ctx.marca.marca_id + '. Confira render_url e a credencial do render em \"Marcas e regras\".');\n\nconst campo = (n, d) => {\n  const obrig = d.obrigatorio ? '*' : '';\n  if (d.tipo === 'texto') return `${n}${obrig} (texto, máx ${d.max} caracteres${d.dica ? '; ' + d.dica : ''})`;\n  if (d.tipo === 'icone') return `${n}${obrig} (um de: ${d.enum.join(' | ')})`;\n  if (d.tipo === 'itens') return `${n}${obrig} (lista de ${d.min} a ${d.max} itens {icone, texto máx ${d.texto.max}})`;\n  if (d.tipo === 'sinais') return `${n}${obrig} (lista de ${d.min} itens {icone, titulo máx ${d.titulo.max}, apoio máx ${d.apoio.max}})`;\n  if (d.tipo === 'lista') return `${n}${obrig} (lista de ${d.min} a ${d.max} itens {${Object.entries(d.campos).map(([k, v]) => campo(k, v)).join(', ')}})`;\n  if (d.tipo === 'objeto') return `${n} (objeto {${Object.entries(d.campos).map(([k, v]) => campo(k, v)).join(', ')}})`;\n  return n;\n};\nconst linhas = nomes.map((nome) => `- \"${nome}\": ${cat[nome].descricao}\\n    campos: ${Object.entries(cat[nome].campos).map(([k, v]) => campo(k, v)).join('; ')}`);\n\nconst abertura = ctx.tipo === 'carrossel'\n  ? 'FORMATO: CARROSSEL de Instagram (várias lâminas 1080x1350 que a pessoa desliza), montado no TEMPLATE da marca. A lâmina 1 é o gancho (promessa clara, sem explicar tudo); cada lâmina seguinte traz UMA ideia; a última chama para a ação (CTA permitido). Escolha UM modelo do catálogo abaixo e preencha \"modelo\" (nome exato) e \"textos\" (objeto só com os campos desse modelo). Campo com * é obrigatório.'\n  : 'FORMATO: post de feed (imagem única 1080x1350) montado no TEMPLATE da marca. Escolha UM modelo do catálogo abaixo e preencha \"modelo\" (nome exato) e \"textos\" (objeto só com os campos desse modelo). Campo com * é obrigatório.';\nconst instrucoes = [\n  abertura,\n  'CATÁLOGO DE MODELOS DA MARCA:',\n  linhas.join('\\n'),\n  'REGRAS DA ARTE',\n  '- Respeite os limites de caracteres: texto maior que o limite é recusado e a peça não sai. Prefira frases curtas.',\n  '- Use só os campos que existem no modelo escolhido. Ícone: só os da lista, escolhendo o que acompanha a informação.',\n  '- Destaque de palavra com {chaves} só quando a descrição do modelo disser que aceita.',\n  '- Número ou percentual só se estiver nas referências ou nos FATOS DA MARCA. Modelos de exemplo (antes/depois, tela) são exemplos: não afirme que é resultado real de cliente.',\n  '- Modelos de \"novidade\" ou \"em breve\" só se os FATOS DA MARCA disserem em que estado o recurso está (no ar, liberado a poucos ou em breve). Sem isso, escolha outro modelo.',\n  '- Varie: olhe os temas recentes (aparecem como [tipo/modelo]) e não repita o mesmo modelo seguidamente.',\n].join('\\n');\n\nreturn [{ json: { ...ctx, instrucoes_formato: instrucoes, modelos_validos: nomes } }];\n"
+      },
+      "id": "60607c74-e776-466c-ae9a-fcd752a27c03",
+      "name": "Montar instruções de feed e carrossel",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        3140
+      ],
+      "notes": "Feed: troca as instruções de formato pelo catálogo real do render. Reels: não muda nada.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_referencias"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "marca",
+              "condition": "eq",
+              "keyValue": "={{ $('Início: produzir post').first().json.marca_id }}"
+            }
+          ]
+        },
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "createdAt",
+        "orderByDirection": "DESC"
+      },
+      "id": "9452ed61-754a-47c6-be11-93460139aec0",
+      "name": "Briefing do radar (semana)",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        610,
+        3030
+      ],
+      "alwaysOutputData": true,
+      "notes": "Última linha do radar (workflow 00) para esta marca. Se não houver, a peça sai sem radar.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "db1c68d0-1861-4591-a401-84c6e47753ca",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "feed-template",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "feed-template"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "d89dc7a8-6f61-4528-9006-3f2d1c6c98bb",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "feed-foto",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "feed-foto"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "99fea77a-5fc7-4272-b59e-3fc9043600a0",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "reel-animacao",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reel-animacao"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "143eb7d6-212c-4868-81a7-8c9ed6d1cb40",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "reel-veo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "reel-veo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "71395d96-9cbf-4b93-90bf-c875140c9690",
+                    "leftValue": "={{ $json.rota }}",
+                    "rightValue": "carrossel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "carrossel"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "cb747b41-1b5f-43d3-97f9-dd7ead7e758f",
+      "name": "Rota da peça",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        520,
+        7380
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Consolidar post aprovado').item.json.marca.geral.render_url }}/render?binario=1",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Consolidar post aprovado').item.json.dados_render_json }}"
+      },
+      "id": "9c4bf397-4d79-4d27-89c0-75b3e0b5efb6",
+      "name": "Renderizar post (template)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        7080
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "notes": "Chama o serviço de render (POST /render). Corpo: {marca, modelo, textos}. Devolve o JPG. Credencial Header Auth: Name = Authorization, Value = Bearer <RENDER_TOKEN>.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "generate",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3.1-flash-image-preview"
+        },
+        "prompt": "={{ $('Consolidar post aprovado').item.json.prompt_imagem }}",
+        "options": {}
+      },
+      "id": "563064e5-30c8-4c2b-9b1e-cb1f1539cf94",
+      "name": "Gerar foto (Nano Banana)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        7280
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "notes": "Rota dormente: o catálogo do render não oferece modelos com foto, então o redator não gera esta rota. Mantida para quando houver foto real.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Consolidar post aprovado').item.json.marca.geral.render_url }}/post",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "dados",
+              "value": "={{ $('Consolidar post aprovado').item.json.dados_render_json }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "midia",
+              "inputDataFieldName": "data"
+            }
+          ]
+        }
+      },
+      "id": "8d8313c9-481d-4131-820f-f0ab1b9e5e96",
+      "name": "Renderizar post com foto",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        7280
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "notes": "Rota dormente: o catálogo do render não oferece modelos com foto, então o redator não gera esta rota. Mantida para quando houver foto real.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Consolidar post aprovado').item.json.marca.geral.render_url }}/reel",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Consolidar post aprovado').item.json.dados_render_json }}"
+      },
+      "id": "1219961b-f810-4e5b-8811-510a59a20293",
+      "name": "Renderizar Reels (animação)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1060,
+        7480
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Consolidar post aprovado').item.json.marca.geral.telegram_chat_id }}",
+        "message": "=🎬 Roteiro de Reels com Veo · {{ $('Consolidar post aprovado').item.json.marca.nome }} · {{ $('Consolidar post aprovado').item.json.pilar }}\nTema: {{ $('Consolidar post aprovado').item.json.tema }}\nRevisão automática: {{ $('Consolidar post aprovado').item.json.nota_revisao }}/10\n\nLEGENDAS NO VÍDEO\n{{ $('Consolidar post aprovado').item.json.cenas_texto }}\n\nCENA PARA O VEO (8 s)\n{{ $('Consolidar post aprovado').item.json.prompt_veo }}\n\nVeo já usado este mês: {{ $('Consolidar post aprovado').item.json.veo_no_mes }} de {{ $('Consolidar post aprovado').item.json.marca.geral.veo_limite_mes }}.\nAprovar gasta 1 geração do Veo (~US$ 0,64 no Lite 1080p, dos seus créditos). Se recusar, nada é gasto.",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "✅ Gerar no Veo",
+            "disapproveLabel": "❌ Recusar"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 20,
+              "resumeUnit": "hours"
+            }
+          },
+          "appendAttribution": false
+        }
+      },
+      "id": "34a2218d-1da3-4362-99d0-7a14fea2ec9b",
+      "name": "Aprovar roteiro do Veo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        7680
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7c96d90c-6675-4b6d-8608-ba32db0efa53",
+              "leftValue": "={{ $json.data?.approved === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "01650441-c3f6-49e3-8f4b-432017da70fc",
+      "name": "Roteiro aprovado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        7680
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "generate",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "prompt": "={{ $('Consolidar post aprovado').item.json.prompt_veo }}",
+        "returnAs": "video",
+        "options": {
+          "sampleCount": 1,
+          "durationSeconds": 8,
+          "aspectRatio": "9:16",
+          "personGeneration": "allow_adult"
+        }
+      },
+      "id": "7ba04e49-c12f-478c-a0e6-6f1c5aedf8e8",
+      "name": "Gerar vídeo (Veo)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1260,
+        7640
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Consolidar post aprovado').item.json.marca.geral.render_url }}/reel",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "options": {
+          "timeout": 600000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        },
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "dados",
+              "value": "={{ $('Consolidar post aprovado').item.json.dados_render_json }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "midia",
+              "inputDataFieldName": "data"
+            }
+          ]
+        }
+      },
+      "id": "47878cad-6771-416b-a78e-c7f3dda20fac",
+      "name": "Renderizar Reels (Veo)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1500,
+        7640
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "bucketName": "={{ $('Consolidar post aprovado').item.json.marca.geral.bucket }}",
+        "fileName": "={{ $('Consolidar post aprovado').item.json.arquivo }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "parentFolderKey": "={{ $('Consolidar post aprovado').item.json.pasta }}"
+        },
+        "tagsUi": {}
+      },
+      "id": "377c0fdd-e307-4e87-a8dd-9e8cc908c124",
+      "name": "Hospedar mídia (S3/R2)",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1740,
+        7380
+      ],
+      "credentials": {
+        "s3": {
+          "id": "",
+          "name": "S3 / R2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta a peça com o que aconteceu aqui (o Veo foi gerado? o render do Veo deu certo? as lâminas do carrossel) para o workflow 04.\nconst p = $('Consolidar post aprovado').first().json;\nconst car = $('Juntar lâminas').isExecuted ? $('Juntar lâminas').first().json : null;\nconst midia = car ? { midia_url: car.midia_url, midia_urls: car.midia_urls } : { midia_urls: [p.midia_url] };\nreturn [{ json: { ...p, ...midia, veo_gerado: $('Gerar vídeo (Veo)').isExecuted, veo_ok: $('Renderizar Reels (Veo)').isExecuted } }];\n"
+      },
+      "id": "48b71202-cc67-4b36-a259-1d6d1986f7ac",
+      "name": "Fechar etapa de mídia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        7380
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Você recusou o roteiro do Veo (nenhum crédito gasto): monta o registro e segue para o workflow 05.\nconst p = $('Consolidar post aprovado').first().json;\nreturn [{ json: {\n  marca: p.marca.marca_id, nome_marca: p.marca.nome, telegram_chat_id: p.marca.geral.telegram_chat_id,\n  tipo: p.tipo, modelo: '', motor: 'nenhum', pilar: p.pilar, tema: p.tema, legenda: p.legenda, midia_url: '',\n  nota_revisao: Number(p.nota_revisao) || 0, status: 'reprovado',\n  erro: 'Roteiro do Veo recusado por você (nenhum crédito gasto).',\n} }];\n"
+      },
+      "id": "a13e8406-b357-4eda-9a9a-f9bc8c23cdcb",
+      "name": "Montar reprovação (roteiro do Veo)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        7940
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ③ Produzir mídia\n**O que faz:** transforma a peça em arquivo: feed pelo **template da marca**, **carrossel** (cada lâmina hospedada) ou **Reels** (animação; o Veo só depois que você aprova o roteiro e dentro do teto do mês). O arquivo é hospedado (S3/R2).\n**Entra:** a peça (do ②).\n**Sai:** a peça + `veo_gerado` / `veo_ok` → seção ④ (**Preparar prévia**). Roteiro do Veo recusado → seção ⑤.",
+        "height": 330,
+        "width": 1500,
+        "color": 4
+      },
+      "id": "7eef6c03-5d0e-41e7-9968-06880a1bc69b",
+      "name": "Nota: 03 · Produzir mídia",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        5020
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Consolidar post aprovado').item.json.marca.geral.render_url }}/render",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $('Consolidar post aprovado').item.json.dados_render_json }}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "id": "3c53e40a-8cdc-470a-80c7-bd5e425eda7d",
+      "name": "Renderizar carrossel (template)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        820,
+        8140
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "ezf-render (x-render-token)"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000,
+      "notes": "POST /render devolve JSON com a lista de lâminas (arquivos[].arquivo). Mesma credencial do render de imagem única.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Uma linha por lâmina, na ordem. O render devolve o nome do arquivo; baixamos pelo endereço interno do render.\nconst p = $('Consolidar post aprovado').first().json;\nconst r = $input.first().json;\nconst arq = (r.arquivos || []).sort((a, b) => a.ordem - b.ordem);\nif (arq.length < 2 || arq.length > 10) throw new Error('O render devolveu ' + arq.length + ' lâminas; o Instagram aceita de 2 a 10.');\nreturn arq.map((a, i) => ({ json: { ordem: i + 1, url_interna: `${p.marca.geral.render_url}/files/${a.arquivo}`, nome: `${p.arquivo}-${String(i + 1).padStart(2, '0')}.jpg` } }));\n"
+      },
+      "id": "6f5fd5b2-37e3-494d-9c5b-bec4cb3b1756",
+      "name": "Separar lâminas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        8140
+      ],
+      "notes": "De 1 resposta do render para N itens (um por lâmina).",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.url_interna }}",
+        "options": {
+          "timeout": 60000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "f73a3ef0-4fc5-4506-9975-d6ab0da49a07",
+      "name": "Baixar lâmina",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1300,
+        8140
+      ],
+      "retryOnFail": true,
+      "maxTries": 2
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "bucketName": "={{ $('Consolidar post aprovado').item.json.marca.geral.bucket }}",
+        "fileName": "={{ $('Separar lâminas').item.json.nome }}",
+        "binaryData": true,
+        "binaryPropertyName": "data",
+        "additionalFields": {
+          "parentFolderKey": "={{ $('Consolidar post aprovado').item.json.pasta }}"
+        },
+        "tagsUi": {}
+      },
+      "id": "b6d947af-75a9-4470-bc1f-0a8718c79c77",
+      "name": "Hospedar lâmina (S3/R2)",
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1540,
+        8140
+      ],
+      "credentials": {
+        "s3": {
+          "id": "",
+          "name": "S3 / R2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Volta a 1 item só: as URLs públicas das lâminas, na ordem. A 1ª lâmina é a \"capa\" (midia_url).\nconst p = $('Consolidar post aprovado').first().json;\nconst lam = $('Separar lâminas').all().map((i) => i.json).sort((a, b) => a.ordem - b.ordem);\nif ($input.all().length !== lam.length) throw new Error('Subiram ' + $input.all().length + ' de ' + lam.length + ' lâminas.');\nconst urls = lam.map((l) => `${p.marca.geral.url_publica_base}/${p.pasta}/${l.nome}`);\nreturn [{ json: { midia_url: urls[0], midia_urls: urls } }];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "8925293e-bb7e-428e-91b6-14ed7e79c52d",
+      "name": "Juntar lâminas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1780,
+        8140
+      ],
+      "notes": "De N itens para 1: lista de URLs das lâminas.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Junta tudo antes da prévia: qual motor foi usado de fato e se a peça passa pelo revisor visual.\nconst p = $('Fechar etapa de mídia').first().json;\nconst veoOk = !!p.veo_ok;\nlet motor = p.motor;\nif (p.tipo === 'reel') motor = veoOk ? 'veo' : 'animacao';\nconst veo_falhou = p.motor === 'veo' && !veoOk;\nconst revisao = p.rota === 'feed-foto' ? 'imagem' : (veoOk ? 'video' : 'nenhuma');\nconst veoUsados = p.veo_no_mes + (veoOk ? 1 : 0);\nreturn [{ json: { ...p, motor, revisao, veo_falhou, veo_no_mes: veoUsados, eh_video: p.tipo === 'reel' } }];\n"
+      },
+      "id": "44b3f9e0-9bb4-42ac-9178-092dbd4e0651",
+      "name": "Preparar prévia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        11200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ca7ba851-8325-4944-8449-138e9d3ae6ad",
+                    "leftValue": "={{ $json.revisao }}",
+                    "rightValue": "imagem",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "imagem"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "08ea11c5-415c-4f2f-8d80-2bfe123f0fa5",
+                    "leftValue": "={{ $json.revisao }}",
+                    "rightValue": "video",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "video"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "45305d08-f326-41bf-930d-a3db98fe9d50",
+                    "leftValue": "={{ $json.revisao }}",
+                    "rightValue": "nenhuma",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "nenhuma"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b217c1c9-8bcc-4fab-9120-9c0cce933cf0",
+      "name": "Revisão visual",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        520,
+        11200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "text": "=Você é o diretor de arte da marca {{ $('Preparar prévia').item.json.marca.nome }}. Avalie esta peça de Instagram já finalizada, antes de ir para aprovação.\nConceito: {{ $('Preparar prévia').item.json.marca.visual.conceito }}\nPaleta: {{ $('Preparar prévia').item.json.marca.visual.paleta }}\nDireção de imagem: {{ $('Preparar prévia').item.json.marca.visual.direcao }}\nProibido: {{ $('Preparar prévia').item.json.marca.visual.proibido }}\nTexto esperado na peça: {{ $('Preparar prévia').item.json.dados_render_json }}\n\nConfira: texto legível e sem erro de português; a imagem combina com a direção da marca e não tem nada proibido; nada de mãos, rostos ou objetos deformados, texto falso ou letreiro sem sentido gerado pela IA; composição limpa.\nResponda SOMENTE com JSON no formato {\"aprovado\": true ou false, \"problemas\": [\"...\"]}.",
+        "inputType": "url",
+        "imageUrls": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "simplify": true,
+        "options": {
+          "maxOutputTokens": 800
+        }
+      },
+      "id": "abdcda3f-405c-43bf-be7d-29a2e4d4ffd8",
+      "name": "Revisor visual (imagem)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        11100
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "text": "=Você é o diretor de arte da marca {{ $('Preparar prévia').item.json.marca.nome }}. Avalie esta peça de Instagram já finalizada, antes de ir para aprovação.\nConceito: {{ $('Preparar prévia').item.json.marca.visual.conceito }}\nPaleta: {{ $('Preparar prévia').item.json.marca.visual.paleta }}\nDireção de imagem: {{ $('Preparar prévia').item.json.marca.visual.direcao }}\nProibido: {{ $('Preparar prévia').item.json.marca.visual.proibido }}\nTexto esperado na peça: {{ $('Preparar prévia').item.json.dados_render_json }}\n\nConfira: texto legível e sem erro de português; a imagem combina com a direção da marca e não tem nada proibido; nada de mãos, rostos ou objetos deformados, texto falso ou letreiro sem sentido gerado pela IA; composição limpa.\nResponda SOMENTE com JSON no formato {\"aprovado\": true ou false, \"problemas\": [\"...\"]}.",
+        "inputType": "url",
+        "videoUrls": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "simplify": true,
+        "options": {
+          "maxOutputTokens": 800
+        }
+      },
+      "id": "2fffdd5e-5b6c-4b9b-9821-8d58c5ef7648",
+      "name": "Revisor visual (vídeo)",
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        11300
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (imagem e vídeo, projeto com faturamento)"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Lê o parecer do revisor visual (Gemini olhando a peça final).\nconst p = $('Preparar prévia').first().json;\nconst resp = $input.first().json || {};\nconst texto = (resp.content?.parts || []).map((x) => x.text || '').join('\\n') || JSON.stringify(resp);\nlet parecer = { aprovado: true, problemas: [] };\ntry {\n  const bruto = texto.replace(/```(json)?/g, '').trim();\n  const ini = bruto.indexOf('{'), fim = bruto.lastIndexOf('}');\n  parecer = JSON.parse(bruto.slice(ini, fim + 1));\n} catch (e) {\n  parecer = { aprovado: false, problemas: ['Não consegui ler o parecer do revisor visual: confira a peça com atenção.'] };\n}\nconst problemas = Array.isArray(parecer.problemas) ? parecer.problemas : [];\nreturn [{ json: { ...p, visual_aprovado: parecer.aprovado === true, visual_nota: parecer.aprovado === true\n  ? '✅ Revisor visual: sem problemas.'\n  : `⚠️ Revisor visual: ${problemas.join('; ') || 'reprovou sem detalhar'}` } }];\n"
+      },
+      "id": "ffc06bb5-9ead-4c73-876a-de984741ed0f",
+      "name": "Ler revisão visual",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        980,
+        11200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8e8eca10-6d2d-40da-8b22-2e8a097fb023",
+              "leftValue": "={{ $('Preparar prévia').item.json.eh_video }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d74b300e-109c-47ac-bef7-2a4610862348",
+      "name": "É vídeo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        11300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "binaryData": false,
+        "file": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "additionalFields": {
+          "caption": "=Prévia · {{ $('Preparar prévia').item.json.marca.nome }} · Reels ({{ $('Preparar prévia').item.json.motor }})"
+        }
+      },
+      "id": "7ea28934-e885-463e-8cad-fae50dbb6c15",
+      "name": "Prévia do vídeo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1420,
+        11200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendPhoto",
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "binaryData": false,
+        "file": "={{ $('Preparar prévia').item.json.midia_url }}",
+        "additionalFields": {
+          "caption": "=Prévia · {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.modelo }}{{ $('Preparar prévia').item.json.tipo === 'carrossel' ? ' · capa do carrossel (as outras lâminas estão na mensagem abaixo)' : '' }}"
+        }
+      },
+      "id": "b8a42cda-8516-42da-9567-642520871ab1",
+      "name": "Prévia da imagem",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1420,
+        11400
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "message": "=📝 {{ $('Preparar prévia').item.json.marca.nome }} · {{ $('Preparar prévia').item.json.tipo === 'reel' ? 'Reels (' + $('Preparar prévia').item.json.motor + ')' : ($('Preparar prévia').item.json.tipo === 'carrossel' ? 'Carrossel (' + $('Preparar prévia').item.json.modelo + ', ' + $('Preparar prévia').item.json.midia_urls.length + ' lâminas)' : 'Feed (' + $('Preparar prévia').item.json.modelo + ')') }} · {{ $('Preparar prévia').item.json.pilar }}\nTema: {{ $('Preparar prévia').item.json.tema }}\nRevisão automática: {{ $('Preparar prévia').item.json.nota_revisao }}/10{{ $('Preparar prévia').item.json.reescrito ? ' (reescrito após 1ª revisão)' : '' }}\n{{ $('Ler revisão visual').isExecuted ? $('Ler revisão visual').item.json.visual_nota : '' }}{{ $('Preparar prévia').item.json.veo_falhou ? '⚠️ O Veo falhou; o Reels saiu na versão animada.' : '' }}\nPublicação prevista: {{ $('Preparar prévia').item.json.marca.data_postagem }}\n{{ $('Preparar prévia').item.json.tipo === 'carrossel' ? '\\nLÂMINAS\\n' + $('Preparar prévia').item.json.midia_urls.join('\\n') + '\\n' : '' }}\nLEGENDA\n{{ $('Preparar prévia').item.json.legenda }}\n\nFONTES\n{{ $('Preparar prévia').item.json.fontes_usadas || '(peça atemporal, sem fontes externas)' }}\n\nObservações da revisão: {{ $('Preparar prévia').item.json.observacoes_revisao || 'nenhuma' }}",
+        "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "✅ Aprovar e agendar",
+            "disapproveLabel": "❌ Reprovar"
+          }
+        },
+        "options": {
+          "limitWaitTime": {
+            "values": {
+              "limitType": "afterTimeInterval",
+              "resumeAmount": 20,
+              "resumeUnit": "hours"
+            }
+          },
+          "appendAttribution": false
+        }
+      },
+      "id": "691db836-b87a-43c4-a462-55b13fbd4de2",
+      "name": "Aprovação humana",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1640,
+        11300
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5d15dc34-14c9-4cc1-b71a-e04abb602c71",
+              "leftValue": "={{ $json.data?.approved === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "495acc2d-a0e2-4a78-aceb-375a3c931755",
+      "name": "Você aprovou?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1860,
+        11300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Próximo horário de postagem da marca (feed ou Reels), a partir da data planejada e nunca no passado.\nconst p = $('Preparar prévia').first().json;\nconst m = p.marca;\nconst dias = p.tipo === 'reel' ? [m.reel_dia] : m.dias_postagem;\nconst [h, min] = (p.tipo === 'reel' ? m.horario_reel : m.horario).split(':').map(Number);\nconst agora = $now.setZone(m.geral.fuso);\n\nlet dia = DateTime.fromISO(m.data_postagem, { zone: m.geral.fuso }).set({ hour: h, minute: min, second: 0, millisecond: 0 });\nfor (let i = 0; i < 21; i++) {\n  if (dias.includes(dia.weekday) && dia > agora.plus({ minutes: 5 })) break;\n  dia = dia.plus({ days: 1 });\n}\nreturn [{ json: { ...p, agendado_para: dia.toISO(), agendado_legivel: dia.setLocale('pt-BR').toFormat(\"cccc, dd/LL 'às' HH:mm\") } }];\n"
+      },
+      "id": "f6b80f94-cc94-4c78-ae1e-519e5b1936f6",
+      "name": "Calcular horário",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2080,
+        11200
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "24bf7d22-5c30-45d8-8a4f-76ffcfa6edda",
+              "name": "marca",
+              "value": "={{ $json.marca.marca_id }}",
+              "type": "string"
+            },
+            {
+              "id": "8618b1e4-0242-405b-bb4b-9e6035202b33",
+              "name": "tipo",
+              "value": "={{ $json.tipo }}",
+              "type": "string"
+            },
+            {
+              "id": "32eaf81c-7557-44aa-95d8-bd9cf14948d7",
+              "name": "modelo",
+              "value": "={{ $json.modelo || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "027c10d4-b48a-4706-836e-85c6fdfe3d7b",
+              "name": "motor",
+              "value": "={{ $json.motor }}",
+              "type": "string"
+            },
+            {
+              "id": "031f26cf-343b-4c1f-a04d-da46125280d7",
+              "name": "pilar",
+              "value": "={{ $json.pilar }}",
+              "type": "string"
+            },
+            {
+              "id": "6fc380a2-2a98-4326-8293-2898cee53e56",
+              "name": "tema",
+              "value": "={{ $json.tema }}",
+              "type": "string"
+            },
+            {
+              "id": "5b96de90-3974-4f0a-9fc9-b697920c9b5c",
+              "name": "legenda",
+              "value": "={{ $json.legenda }}",
+              "type": "string"
+            },
+            {
+              "id": "2990ca56-93dd-4529-9c52-d4ed21c1999b",
+              "name": "midia_url",
+              "value": "={{ $json.midia_url }}",
+              "type": "string"
+            },
+            {
+              "id": "edbab370-b703-471a-b265-a2f35ddd8bce",
+              "name": "fontes",
+              "value": "={{ $json.fontes_usadas }}",
+              "type": "string"
+            },
+            {
+              "id": "61a6445a-7451-4f56-8b28-74d0e0d483c5",
+              "name": "nota_revisao",
+              "value": "={{ $json.nota_revisao }}",
+              "type": "number"
+            },
+            {
+              "id": "52b899b6-2f9c-42b7-aa83-0f069eb6aca8",
+              "name": "status",
+              "value": "agendado",
+              "type": "string"
+            },
+            {
+              "id": "65df143a-3f6a-4177-87f8-744d5e892c8a",
+              "name": "agendado_para",
+              "value": "={{ $json.agendado_para }}",
+              "type": "string"
+            },
+            {
+              "id": "1b91161f-c413-4ee7-a583-ea48f1cbed10",
+              "name": "ig_user_id",
+              "value": "={{ $json.marca.ig_user_id }}",
+              "type": "string"
+            },
+            {
+              "id": "38bce6c4-fb08-4672-b67d-05839fffc96b",
+              "name": "midia_urls",
+              "value": "={{ JSON.stringify($json.midia_urls || [$json.midia_url]) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c6077d81-c52e-4a57-aa4d-54e701af6776",
+      "name": "Linha agendada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2300,
+        11200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "56364db5-386c-4888-b503-2aa9dbe32e91",
+      "name": "Salvar na fila",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2520,
+        11200
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Preparar prévia').item.json.marca.geral.telegram_chat_id }}",
+        "text": "=📅 Agendado: {{ $('Calcular horário').item.json.marca.nome }} ({{ $('Calcular horário').item.json.tipo }}), {{ $('Calcular horário').item.json.agendado_legivel }}.\nTema: {{ $('Calcular horário').item.json.tema }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d3eaea1d-1981-47b8-aa3d-c07dc956c67f",
+      "name": "Confirmar agendamento",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2740,
+        11200
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Você reprovou a peça final no Telegram (ou não respondeu no prazo): monta o registro e segue para o workflow 05.\nconst p = $('Preparar prévia').first().json;\nreturn [{ json: {\n  marca: p.marca.marca_id, nome_marca: p.marca.nome, telegram_chat_id: p.marca.geral.telegram_chat_id,\n  tipo: p.tipo, modelo: p.modelo || '', motor: p.veo_gerado ? 'veo' : p.motor, pilar: p.pilar, tema: p.tema, legenda: p.legenda, midia_url: p.midia_url,\n  nota_revisao: Number(p.nota_revisao) || 0, status: 'reprovado',\n  erro: 'Peça final reprovada por você no Telegram (ou sem resposta no prazo).',\n} }];\n"
+      },
+      "id": "9995f358-2caa-4177-aa81-4a0a26906197",
+      "name": "Montar reprovação (você reprovou)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2120,
+        11560
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ④ Aprovar e agendar\n**O que faz:** um revisor visual confere a foto/vídeo, você recebe a prévia no Telegram e aprova ou reprova. Aprovou → calcula o próximo horário da marca e **grava na fila** (`instagram_posts`).\n**Entra:** a peça com a mídia pronta (do ③).\n**Sai:** linha `agendado` na fila (quem publica é o workflow **Publicador**). Reprovou → seção ⑤.",
+        "height": 330,
+        "width": 1500,
+        "color": 4
+      },
+      "id": "d45db189-0267-43cd-9383-79227c3a0caa",
+      "name": "Nota: 04 · Aprovar e agendar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        8840
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ① Revisão visual\nFoto e vídeo passam por revisor; o feed de template segue direto.",
+        "height": 530,
+        "width": 1260,
+        "color": 6
+      },
+      "id": "a29e8205-efd7-42aa-968e-0061e0809170",
+      "name": "Nota: ① Revisão visual",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        240,
+        10950
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ② Você aprova\nPrévia + botões no Telegram. Sem resposta no prazo = reprovado.",
+        "height": 530,
+        "width": 800,
+        "color": 5
+      },
+      "id": "bc4fe9c1-030b-4f02-8f54-1b45209d8d4d",
+      "name": "Nota: ② Você aprova",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        11050
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### ③ Agendar\nPróximo horário da marca → fila.",
+        "height": 330,
+        "width": 1020,
+        "color": 3
+      },
+      "id": "a6fc8181-4082-4add-b264-e47f87146121",
+      "name": "Nota: ③ Agendar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2020,
+        11050
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f3721a98-5de7-48bb-a217-62c3259841be",
+              "name": "marca",
+              "value": "={{ $json.marca }}",
+              "type": "string"
+            },
+            {
+              "id": "a58ecc6d-db75-4144-98d1-b233105b8c04",
+              "name": "tipo",
+              "value": "={{ $json.tipo }}",
+              "type": "string"
+            },
+            {
+              "id": "d321407c-e063-472c-bc5f-ea960a067a29",
+              "name": "modelo",
+              "value": "={{ $json.modelo }}",
+              "type": "string"
+            },
+            {
+              "id": "4b98959f-148c-4f1d-ae2b-94ebbf4962f4",
+              "name": "motor",
+              "value": "={{ $json.motor }}",
+              "type": "string"
+            },
+            {
+              "id": "0ddcc072-e658-479c-9d55-036aeadf9364",
+              "name": "pilar",
+              "value": "={{ $json.pilar }}",
+              "type": "string"
+            },
+            {
+              "id": "7eb63bf9-87bd-40a5-982e-fcaa84d54bba",
+              "name": "tema",
+              "value": "={{ $json.tema }}",
+              "type": "string"
+            },
+            {
+              "id": "137a8554-6035-406a-9f60-699bc14473ea",
+              "name": "legenda",
+              "value": "={{ $json.legenda }}",
+              "type": "string"
+            },
+            {
+              "id": "1178bb42-b3d6-4c17-a501-11da59129df6",
+              "name": "midia_url",
+              "value": "={{ $json.midia_url }}",
+              "type": "string"
+            },
+            {
+              "id": "6f6c4920-afaf-4929-b6a4-7b813e3ba124",
+              "name": "nota_revisao",
+              "value": "={{ $json.nota_revisao }}",
+              "type": "number"
+            },
+            {
+              "id": "26677316-5b2d-4b80-ab98-ce1da2438b98",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "45e4f8cf-e8d0-4e11-a9f1-275815dc0357",
+              "name": "erro",
+              "value": "={{ $json.erro }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "36f9da44-0347-4e10-9f3b-d949945f2f11",
+      "name": "Linha reprovada",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        300,
+        14840
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "3ec7b3fc-8623-43f0-8ff4-84926dbfae9f",
+      "name": "Registrar reprovação",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        520,
+        14840
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Receber reprovação').first().json.telegram_chat_id }}",
+        "text": "=🚫 {{ $('Receber reprovação').item.json.nome_marca }}: peça não agendada.\nTema: {{ $('Receber reprovação').item.json.tema }}\nMotivo: {{ $('Receber reprovação').item.json.erro }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "30b348a8-94a4-40e0-8ab2-c0b3f1445b09",
+      "name": "Avisar reprovação",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        740,
+        14840
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ⑤ Registrar reprovação\n**O que faz:** toda peça que não vai ao ar passa por aqui: grava na tabela `instagram_posts` (status `reprovado` ou `reprovado_ia`, com o motivo) e avisa no Telegram.\n**Entra (de ②, ③ ou ④):** `marca, nome_marca, telegram_chat_id, tipo, modelo, motor, pilar, tema, legenda, midia_url, nota_revisao, status, erro`.\n**Sai:** nada. É o fim da linha para a peça.",
+        "height": 330,
+        "width": 1100,
+        "color": 4
+      },
+      "id": "84846cf8-577b-4a48-8cb5-7f2cae68fac7",
+      "name": "Nota: 05 · Registrar reprovação",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        12260
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "13920336-4b8e-432c-9978-2ed601c262b6",
+      "name": "Quando algum workflow falhar",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        60,
+        15840
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "PREENCHER_CHAT_ID",
+        "text": "=⚠️ Erro no n8n\nWorkflow: {{ $json.workflow.name }}\nNó: {{ $json.execution.lastNodeExecuted }}\nMotivo: {{ $json.execution.error.message }}\nExecução: {{ $json.execution.url }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a26f5ac8-f7d9-46b5-b564-71d15ad7720f",
+      "name": "Avisar erro no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        360,
+        15840
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ⑥ Alerta de erro\n**O que faz:** avisa no Telegram qual workflow e qual nó falharam.\n**Como ligar:** em cada workflow (Produção, Publicador e Radar) → ⋯ → Configurações → **Error workflow** → escolha **este mesmo workflow de Produção**.\nTroque `PREENCHER_CHAT_ID` e a credencial do Telegram.",
+        "height": 220,
+        "width": 700,
+        "color": 4
+      },
+      "id": "b69085a6-fb46-4366-a670-4c1d8f58a4f5",
+      "name": "Nota: 07 · Alerta de erro",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        15540
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "3f2b1313-d4cf-4793-8563-36780b253439",
+      "name": "Receber reprovação",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        40,
+        14840
+      ],
+      "notes": "Os três caminhos de reprovação (revisão automática, roteiro do Veo e você no Telegram) passam por aqui.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "content": "# Produção de posts (Tábua, Puka e ezf.tech)\nUm workflow com 6 seções, de cima para baixo: **① Orquestrador → ② Criar texto → ③ Produzir mídia → ④ Aprovar e agendar → ⑤ Registrar reprovação**, mais **⑥ Alerta de erro**.\nEle chama a si mesmo uma vez por marca (nó *Produzir peça de cada marca* → gatilho *Início: produzir post*), por isso **não precisa ligar outros workflows**.\nQuem publica no Instagram é o workflow **Publicador**; o **Radar** é opcional.",
+        "height": 260,
+        "width": 900,
+        "color": 5
+      },
+      "id": "8926c1bd-6b9e-4a96-98ad-b363741b411c",
+      "name": "Nota: Produção",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "Agenda de produção (16h)": {
+      "main": [
+        [
+          {
+            "node": "Marcas e regras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testar feed (todas as marcas)": {
+      "main": [
+        [
+          {
+            "node": "Marcas e regras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testar Reels (todas as marcas)": {
+      "main": [
+        [
+          {
+            "node": "Marcas e regras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcas e regras": {
+      "main": [
+        [
+          {
+            "node": "Produzir peça de cada marca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testar carrossel (todas as marcas)": {
+      "main": [
+        [
+          {
+            "node": "Marcas e regras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (redator)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Redator da marca",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato da peça": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Redator da marca",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (revisor)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Revisor editorial",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato da revisão": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Revisor editorial",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (reescrita)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reescrever com a revisão",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato da peça (reescrita)": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Reescrever com a revisão",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (revisor final)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Revisor final",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato da revisão final": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Revisor final",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Início: produzir post": {
+      "main": [
+        [
+          {
+            "node": "Histórico da marca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Histórico da marca": {
+      "main": [
+        [
+          {
+            "node": "Veo usados no mês",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Veo usados no mês": {
+      "main": [
+        [
+          {
+            "node": "Briefing do radar (semana)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escolher pilar e pesquisa": {
+      "main": [
+        [
+          {
+            "node": "Buscar referências (Gemini + Google)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Organizar fontes": {
+      "main": [
+        [
+          {
+            "node": "Catálogo de modelos (render)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redator da marca": {
+      "main": [
+        [
+          {
+            "node": "Revisor editorial",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisor editorial": {
+      "main": [
+        [
+          {
+            "node": "Aprovado na revisão?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aprovado na revisão?": {
+      "main": [
+        [
+          {
+            "node": "Consolidar post aprovado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reescrever com a revisão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reescrever com a revisão": {
+      "main": [
+        [
+          {
+            "node": "Revisor final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisor final": {
+      "main": [
+        [
+          {
+            "node": "Aprovado na 2ª revisão?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aprovado na 2ª revisão?": {
+      "main": [
+        [
+          {
+            "node": "Consolidar post aprovado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar reprovação (revisão automática)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Catálogo de modelos (render)": {
+      "main": [
+        [
+          {
+            "node": "Montar instruções de feed e carrossel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar referências (Gemini + Google)": {
+      "main": [
+        [
+          {
+            "node": "Organizar fontes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar instruções de feed e carrossel": {
+      "main": [
+        [
+          {
+            "node": "Redator da marca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Briefing do radar (semana)": {
+      "main": [
+        [
+          {
+            "node": "Escolher pilar e pesquisa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rota da peça": {
+      "main": [
+        [
+          {
+            "node": "Renderizar post (template)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Gerar foto (Nano Banana)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Renderizar Reels (animação)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aprovar roteiro do Veo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Renderizar carrossel (template)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar foto (Nano Banana)": {
+      "main": [
+        [
+          {
+            "node": "Renderizar post com foto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aprovar roteiro do Veo": {
+      "main": [
+        [
+          {
+            "node": "Roteiro aprovado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Roteiro aprovado?": {
+      "main": [
+        [
+          {
+            "node": "Gerar vídeo (Veo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar reprovação (roteiro do Veo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gerar vídeo (Veo)": {
+      "main": [
+        [
+          {
+            "node": "Renderizar Reels (Veo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Renderizar Reels (animação)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar post (template)": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar post com foto": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Reels (animação)": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar Reels (Veo)": {
+      "main": [
+        [
+          {
+            "node": "Hospedar mídia (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hospedar mídia (S3/R2)": {
+      "main": [
+        [
+          {
+            "node": "Fechar etapa de mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Renderizar carrossel (template)": {
+      "main": [
+        [
+          {
+            "node": "Separar lâminas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar lâminas": {
+      "main": [
+        [
+          {
+            "node": "Baixar lâmina",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Baixar lâmina": {
+      "main": [
+        [
+          {
+            "node": "Hospedar lâmina (S3/R2)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hospedar lâmina (S3/R2)": {
+      "main": [
+        [
+          {
+            "node": "Juntar lâminas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Juntar lâminas": {
+      "main": [
+        [
+          {
+            "node": "Fechar etapa de mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar prévia": {
+      "main": [
+        [
+          {
+            "node": "Revisão visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisão visual": {
+      "main": [
+        [
+          {
+            "node": "Revisor visual (imagem)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Revisor visual (vídeo)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É vídeo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisor visual (imagem)": {
+      "main": [
+        [
+          {
+            "node": "Ler revisão visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revisor visual (vídeo)": {
+      "main": [
+        [
+          {
+            "node": "Ler revisão visual",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ler revisão visual": {
+      "main": [
+        [
+          {
+            "node": "É vídeo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É vídeo?": {
+      "main": [
+        [
+          {
+            "node": "Prévia do vídeo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prévia da imagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prévia do vídeo": {
+      "main": [
+        [
+          {
+            "node": "Aprovação humana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prévia da imagem": {
+      "main": [
+        [
+          {
+            "node": "Aprovação humana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aprovação humana": {
+      "main": [
+        [
+          {
+            "node": "Você aprovou?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Você aprovou?": {
+      "main": [
+        [
+          {
+            "node": "Calcular horário",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Montar reprovação (você reprovou)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular horário": {
+      "main": [
+        [
+          {
+            "node": "Linha agendada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linha agendada": {
+      "main": [
+        [
+          {
+            "node": "Salvar na fila",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar na fila": {
+      "main": [
+        [
+          {
+            "node": "Confirmar agendamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linha reprovada": {
+      "main": [
+        [
+          {
+            "node": "Registrar reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar reprovação": {
+      "main": [
+        [
+          {
+            "node": "Avisar reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quando algum workflow falhar": {
+      "main": [
+        [
+          {
+            "node": "Avisar erro no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consolidar post aprovado": {
+      "main": [
+        [
+          {
+            "node": "Rota da peça",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fechar etapa de mídia": {
+      "main": [
+        [
+          {
+            "node": "Preparar prévia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar reprovação (revisão automática)": {
+      "main": [
+        [
+          {
+            "node": "Receber reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar reprovação (roteiro do Veo)": {
+      "main": [
+        [
+          {
+            "node": "Receber reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Montar reprovação (você reprovou)": {
+      "main": [
+        [
+          {
+            "node": "Receber reprovação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receber reprovação": {
+      "main": [
+        [
+          {
+            "node": "Linha reprovada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

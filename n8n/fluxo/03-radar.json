@@ -1,0 +1,764 @@
+{
+  "name": "Radar semanal de referências",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "e4a8ca65-6298-45a7-be50-243ff3338624",
+      "name": "Radar semanal (segunda 7h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "1cfe10d6-05cf-4654-aee5-b8c10f992bfa",
+      "name": "Testar radar agora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// RADAR DE REFERÊNCIAS: o que pesquisar por marca.\n// Troque os PREENCHER. Alvos que começam com PREENCHER são ignorados (o fluxo roda sem quebrar).\n// ig_user_id: o mesmo do fluxo principal (id da conta Business de cada marca).\n// ============================================================\nconst ano = String($now.setZone('America/Sao_Paulo').year);\nconst MARCAS = [\n  {\n    marca_id: 'tabua', nome: 'Tábua', ig_user_id: 'PREENCHER_IG_USER_ID_TABUA',\n    modelos: ['anuncio', 'dica', 'antes_depois', 'tela_cardapio', 'enquete', 'novidade', 'carrossel_continuo'],\n    perfis: ['goomer_br', 'cardapio.web', 'olaclickbrasil', 'instadelivery.com.br'], // concorrentes diretos (cardápio digital), confirmados\n    adjacentes: ['menudinobr'], // plataforma de delivery: outro segmento, só referência de linguagem com o dono de restaurante\n    hashtags: ['cardapiodigital', 'donoderestaurante', 'gestaoderestaurante'],\n    consultas: [\n      `conteúdo Instagram restaurantes e bares tendências ${ano}`,\n      `cardápio digital novidades recursos plataformas Brasil ${ano}`,\n      `o que donos de restaurante mais pesquisam delivery próprio comissão ${ano}`,\n    ],\n  },\n  {\n    marca_id: 'puka', nome: 'Puka', ig_user_id: 'PREENCHER_IG_USER_ID_PUKA',\n    modelos: ['frase', 'antes_depois', 'numero', 'lista', 'tela', 'enquete', 'novidade', 'em_breve', 'carrossel_noite_dia', 'carrossel_conversa'],\n    perfis: ['PREENCHER_CONCORRENTE_1', 'PREENCHER_CONCORRENTE_2', 'PREENCHER_CONCORRENTE_3', 'PREENCHER_MARCA_SIMILAR_1'],\n    hashtags: ['atendimentowhatsapp', 'crm', 'whatsappbusiness'],\n    consultas: [\n      `conteúdo Instagram CRM e atendimento WhatsApp tendências ${ano}`,\n      `CRM com IA no WhatsApp novidades recursos plataformas Brasil ${ano}`,\n      `o que donos de academias e clínicas mais pesquisam sobre atendimento ${ano}`,\n    ],\n  },\n  {\n    marca_id: 'ezf', nome: 'ezf.tech', ig_user_id: 'PREENCHER_IG_USER_ID_EZF',\n    modelos: ['lista_recebe', 'numero', 'pergunta_cliente', 'antes_depois', 'carrossel_escopo'],\n    perfis: ['PREENCHER_CONCORRENTE_1', 'PREENCHER_CONCORRENTE_2', 'PREENCHER_MARCA_SIMILAR_1'],\n    hashtags: ['sitesprofissionais', 'automacaowhatsapp', 'pequenasempresas'],\n    consultas: [\n      `conteúdo Instagram desenvolvedor freelancer sites e automação para negócios locais ${ano}`,\n      `pequenas empresas site próprio automação WhatsApp tendências ${ano}`,\n    ],\n  },\n];\n\nconst ok = (v) => v && !String(v).startsWith('PREENCHER');\nconst itens = [];\nfor (const m of MARCAS) {\n  const base = { marca_id: m.marca_id, nome: m.nome, ig_user_id: m.ig_user_id, modelos: m.modelos };\n  for (const p of m.perfis) if (ok(p) && ok(m.ig_user_id)) itens.push({ json: { ...base, tipo: 'perfil', grupo: 'direto', alvo: String(p).replace(/^@/, '') } });\n  for (const p of (m.adjacentes || [])) if (ok(p) && ok(m.ig_user_id)) itens.push({ json: { ...base, tipo: 'perfil', grupo: 'adjacente', alvo: String(p).replace(/^@/, '') } });\n  for (const h of m.hashtags) if (ok(m.ig_user_id)) itens.push({ json: { ...base, tipo: 'hashtag', alvo: h } });\n  for (const q of m.consultas) itens.push({ json: { ...base, tipo: 'web', alvo: q, consulta: q } });\n}\nreturn itens;\n"
+      },
+      "id": "13777169-c0fb-44c4-baae-149830ed24d0",
+      "name": "Alvos do radar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "e2cab13b-73ad-498a-baee-3764fcb7b325",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "perfil",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "perfil"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "57bb5b3f-b698-4985-befc-eecd81eed3d6",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "hashtag",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "hashtag"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "65a54c2e-326c-4c2c-94a8-16d60f309ee6",
+                    "leftValue": "={{ $json.tipo }}",
+                    "rightValue": "web",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "web"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d117f981-0348-4621-8011-42a71b5f0ed7",
+      "name": "Tipo de alvo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        480,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "GET",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $json.ig_user_id }}",
+        "edge": "",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "={{ 'business_discovery.username(' + $json.alvo + '){username,followers_count,media_count,media.limit(25){caption,media_type,like_count,comments_count,timestamp,permalink}}' }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f5799d7d-6eae-4dd3-97b0-991f7943734b",
+      "name": "Perfil concorrente (Business Discovery)",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -60
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Normaliza o retorno do Business Discovery (ou o erro: conta pessoal, inexistente, limite).\nconst ctx = $('Alvos do radar').item.json;\nconst j = $input.item.json || {};\nconst bd = j.business_discovery;\nif (!bd) {\n  return { json: { marca_id: ctx.marca_id, fonte: 'perfil', grupo: ctx.grupo, alvo: ctx.alvo, erro: String(j.message || j.error?.message || 'sem dados (conta pessoal ou não encontrada)').slice(0, 200), posts: [] } };\n}\nconst seguidores = Number(bd.followers_count) || 0;\nconst posts = (bd.media?.data || []).map((p) => ({\n  tipo: p.media_type, // IMAGE | VIDEO | CAROUSEL_ALBUM\n  data: p.timestamp,\n  link: p.permalink,\n  legenda: String(p.caption || '').replace(/\\s+/g, ' ').slice(0, 400),\n  curtidas: p.like_count ?? null, // vem vazio quando o perfil esconde curtidas\n  comentarios: Number(p.comments_count) || 0,\n}));\nreturn { json: { marca_id: ctx.marca_id, fonte: 'perfil', grupo: ctx.grupo, alvo: ctx.alvo, seguidores, total_posts: Number(bd.media_count) || 0, posts } };\n"
+      },
+      "id": "353cdbf1-1a03-4b10-b136-255603e83e0f",
+      "name": "Normalizar perfil",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        -60
+      ]
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "GET",
+        "graphApiVersion": "v25.0",
+        "node": "ig_hashtag_search",
+        "edge": "",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "user_id",
+                "value": "={{ $json.ig_user_id }}"
+              },
+              {
+                "name": "q",
+                "value": "={{ $json.alvo }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "6f5ba870-0a6c-4c26-9eff-8cdc9226f437",
+      "name": "Buscar hashtag",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        720,
+        110
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "GET",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $json.data?.[0]?.id ?? 'sem_id' }}",
+        "edge": "top_media",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "user_id",
+                "value": "={{ $('Alvos do radar').item.json.ig_user_id }}"
+              },
+              {
+                "name": "fields",
+                "value": "id,caption,media_type,like_count,comments_count,permalink,timestamp"
+              },
+              {
+                "name": "limit",
+                "value": "25"
+              }
+            ]
+          }
+        }
+      },
+      "id": "6d3ff9cd-d934-43fa-83c7-52f44d113b1e",
+      "name": "Posts em destaque da hashtag",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        960,
+        110
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 3000
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const ctx = $('Alvos do radar').item.json;\nconst j = $input.item.json || {};\nconst lista = Array.isArray(j.data) ? j.data : [];\nif (!lista.length) return { json: { marca_id: ctx.marca_id, fonte: 'hashtag', alvo: '#' + ctx.alvo, erro: String(j.message || j.error?.message || 'sem posts').slice(0, 200), posts: [] } };\nconst posts = lista.map((p) => ({\n  tipo: p.media_type, data: p.timestamp, link: p.permalink,\n  legenda: String(p.caption || '').replace(/\\s+/g, ' ').slice(0, 400),\n  curtidas: p.like_count ?? null, comentarios: Number(p.comments_count) || 0,\n}));\nreturn { json: { marca_id: ctx.marca_id, fonte: 'hashtag', alvo: '#' + ctx.alvo, posts } };\n"
+      },
+      "id": "e64c1a07-09b0-4230-a9d0-0f89fdec3c9d",
+      "name": "Normalizar hashtag",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        110
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googlePalmApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'Pesquise na web, em português do Brasil, conteúdo dos últimos 30 dias sobre: ' + $json.consulta + '. Responda em até 8 tópicos curtos. Cada tópico: o que aconteceu ou o que está em alta e por que importa para conteúdo de Instagram de uma marca pequena. Não invente: se não encontrar, diga que não encontrou.' }] }], tools: [{ google_search: {} }], generationConfig: { temperature: 0.2, maxOutputTokens: 2048 } }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "e433c16f-433f-4436-8ae7-e919140b1cc2",
+      "name": "Buscar na web (Gemini + Google)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        280
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (texto, projeto gratuito)"
+        }
+      },
+      "onError": "continueRegularOutput",
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const ctx = $('Alvos do radar').item.json;\nconst j = $input.item.json || {};\nconst cand = (j.candidates || [])[0] || {};\nconst resumo = ((cand.content || {}).parts || []).map((p) => p.text || '').join('\\n').replace(/\\s+/g, ' ').trim();\nconst fontes = ((cand.groundingMetadata || {}).groundingChunks || []).map((c) => c.web).filter((x) => x && x.uri);\nconst vistos = new Set();\nconst unicas = fontes.filter((f) => (vistos.has(f.uri) ? false : vistos.add(f.uri)));\nconst resultados = unicas.slice(0, 8).map((f, i) => ({ titulo: f.title || f.uri, url: f.uri, data: '', trecho: i === 0 ? resumo.slice(0, 1500) : '(ver resumo na 1ª fonte)' }));\nif (!resultados.length && resumo) resultados.push({ titulo: 'Resumo da busca (sem fontes)', url: '', data: '', trecho: resumo.slice(0, 1500) });\nreturn { json: { marca_id: ctx.marca_id, fonte: 'web', alvo: ctx.alvo, erro: resultados.length ? undefined : (j.error && j.error.message) || 'sem resultados', resultados } };\n"
+      },
+      "id": "88afff4a-ca6f-4602-9067-961f9ebf7cec",
+      "name": "Normalizar web",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "2698f311-386c-4927-a39a-32b3e5e266ac",
+      "name": "Juntar coletas",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        1440,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Agrupa por marca, calcula engajamento por post e monta o texto que o analista vai ler.\nconst MARCAS = {};\nfor (const it of $input.all()) {\n  const d = it.json; if (!d.marca_id) continue;\n  (MARCAS[d.marca_id] ||= []).push(d);\n}\nconst semana = $now.setZone('America/Sao_Paulo').toFormat(\"kkkk-'S'WW\");\nconst out = [];\nfor (const [marca_id, coletas] of Object.entries(MARCAS)) {\n  const posts = [];\n  const web = [];\n  const erros = [];\n  for (const c of coletas) {\n    if (c.erro) erros.push(`${c.fonte}:${c.alvo} (${c.erro})`);\n    if (c.fonte === 'web') web.push(...(c.resultados || []).map((r) => ({ ...r, consulta: c.alvo })));\n    else for (const p of c.posts || []) {\n      const interacoes = (p.curtidas ?? 0) + p.comentarios;\n      // engajamento relativo ao tamanho do perfil; em hashtag não há perfil, então vale a interação bruta\n      const taxa = c.seguidores ? (interacoes / c.seguidores) * 100 : null;\n      posts.push({ origem: c.fonte === 'perfil' ? '@' + c.alvo + ' (' + (c.grupo || 'direto') + ')' : c.alvo, fonte: c.fonte, grupo: c.grupo || null, ...p, interacoes, taxa: taxa === null ? null : Math.round(taxa * 100) / 100, curtidas_ocultas: p.curtidas === null });\n    }\n  }\n  const nota = (p) => (p.taxa !== null ? p.taxa : p.interacoes / 100);\n  const top = [...posts].sort((a, b) => nota(b) - nota(a)).slice(0, 15);\n  const mix = {};\n  for (const p of top) mix[p.tipo] = (mix[p.tipo] || 0) + 1;\n  const linhas = top.map((p, i) => `${i + 1}. [${p.origem} · ${p.tipo} · ${String(p.data || '').slice(0, 10)}] ${p.taxa !== null ? 'engaj. ' + p.taxa + '% · ' : ''}${p.interacoes} interações${p.curtidas_ocultas ? ' (curtidas ocultas)' : ''}\\n   ${p.legenda}\\n   ${p.link}`).join('\\n');\n  const linhasWeb = web.slice(0, 20).map((r, i) => `${i + 1}. ${r.titulo} (${r.data || 'sem data'})\\n   ${r.url}\\n   ${r.trecho}`).join('\\n');\n  out.push({ json: {\n    marca_id, semana, total_posts_analisados: posts.length, total_web: web.length, erros,\n    mix_formatos_top: JSON.stringify(mix),\n    texto_posts: linhas || '(nenhum post coletado: confira os perfis e o token)',\n    texto_web: linhasWeb || '(nenhum resultado de busca)',\n    urls_validas: [...top.map((p) => p.link), ...web.map((r) => r.url)].filter(Boolean),\n  } });\n}\nreturn out;\n"
+      },
+      "id": "f90a5a93-0542-41ac-85db-1fc1e74f72bf",
+      "name": "Calcular engajamento por marca",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=MARCA: {{ $json.marca_id }}\nSEMANA: {{ $json.semana }}\nMODELOS DISPONÍVEIS: {{ ($('Alvos do radar').all().find((i) => i.json.marca_id === $json.marca_id)?.json.modelos || []).join(', ') }}\nFORMATOS NO TOPO DO ENGAJAMENTO: {{ $json.mix_formatos_top }}\nCOLETAS COM ERRO: {{ ($json.erros || []).join(' | ') || 'nenhuma' }}\n\nPOSTS DE REFERÊNCIA (ordenados por engajamento):\n{{ $json.texto_posts }}\n\nBUSCA NA WEB:\n{{ $json.texto_web }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Você é o analista de conteúdo de social media da marca {{ $('Alvos do radar').all().find((i) => i.json.marca_id === $json.marca_id)?.json.nome }}.\nReceba o que a concorrência e o mercado publicaram e devolva um briefing PARA A MARCA, não um resumo do que os outros fizeram.\n\nREGRAS OBRIGATÓRIAS\n1. Extraia padrões (ângulo, gancho, formato, estrutura). Nunca copie legenda, frase ou ideia visual protegida: reescreva o conceito.\n2. Nunca cite concorrente ou marca similar pelo nome nas ideias.\n3. Não afirme nada sobre o produto da marca a partir de uma referência. Recurso de concorrente é só contexto, nunca fato da nossa marca.\n4. Dados de mercado só se aparecerem nas referências de busca; guarde a URL em \"fonte\".\n5. Aponte LACUNAS: assuntos úteis para o público que os posts analisados não cobrem.\n6. Cada ideia deve indicar um modelo da lista disponível, sem inventar modelo.\n7. Evite o que já cansa: promessa genérica, \"revolucione\", trocadilho forçado.\n8. Perfis marcados (direto) são concorrentes do mesmo produto; (adjacente) são plataformas de outro segmento que falam com o mesmo público. Use os adjacentes só como referência de linguagem e formato, nunca para comparar produto.\n9. Se os dados vieram vazios ou com muitos erros, diga isso em \"alertas\" em vez de inventar tendência."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "340b1ed9-4004-41ee-bf65-28d9479388ee",
+      "name": "Analista de referências",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1880,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3-flash-preview",
+        "options": {
+          "maxOutputTokens": 8192,
+          "temperature": 0.4
+        }
+      },
+      "id": "212ea7a5-8c91-4e51-a2c5-6805573ea616",
+      "name": "Gemini (analista)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1840,
+        310
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "Gemini (texto, projeto gratuito)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"resumo\": {\n      \"type\": \"string\",\n      \"description\": \"3 a 5 frases: o que está funcionando no segmento esta semana\"\n    },\n    \"padroes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"padrao\": {\n            \"type\": \"string\"\n          },\n          \"formato\": {\n            \"type\": \"string\"\n          },\n          \"por_que_funciona\": {\n            \"type\": \"string\"\n          },\n          \"exemplo_url\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"padrao\",\n          \"por_que_funciona\"\n        ]\n      }\n    },\n    \"ganchos\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"Estruturas de gancho observadas, reescritas sem copiar\"\n    },\n    \"lacunas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    },\n    \"ideias\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"titulo\": {\n            \"type\": \"string\"\n          },\n          \"angulo\": {\n            \"type\": \"string\"\n          },\n          \"modelo\": {\n            \"type\": \"string\"\n          },\n          \"formato\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"feed\",\n              \"carrossel\",\n              \"reel\",\n              \"story\"\n            ]\n          },\n          \"inspirado_em\": {\n            \"type\": \"string\",\n            \"description\": \"URL da referência (só para consulta interna)\"\n          },\n          \"observacao\": {\n            \"type\": \"string\"\n          }\n        },\n        \"required\": [\n          \"titulo\",\n          \"angulo\",\n          \"modelo\",\n          \"formato\"\n        ]\n      }\n    },\n    \"alertas\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"resumo\",\n    \"padroes\",\n    \"lacunas\",\n    \"ideias\",\n    \"alertas\"\n  ]\n}"
+      },
+      "id": "89a59300-4553-465a-b2e7-58a352f2d56c",
+      "name": "Formato do briefing",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2000,
+        310
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c7106a36-6b51-4acc-b8ab-e3f41ef457a3",
+              "name": "marca",
+              "value": "={{ $('Calcular engajamento por marca').item.json.marca_id }}",
+              "type": "string"
+            },
+            {
+              "id": "c729cab6-1a2b-40bd-9e1f-bbbfae489ec9",
+              "name": "semana",
+              "value": "={{ $('Calcular engajamento por marca').item.json.semana }}",
+              "type": "string"
+            },
+            {
+              "id": "1ddbfcce-dce0-4c20-8510-004d02dfb27f",
+              "name": "briefing",
+              "value": "={{ JSON.stringify($json.output) }}",
+              "type": "string"
+            },
+            {
+              "id": "b1523756-7144-4278-a0f3-e48df40992b1",
+              "name": "posts_analisados",
+              "value": "={{ $('Calcular engajamento por marca').item.json.total_posts_analisados }}",
+              "type": "number"
+            },
+            {
+              "id": "d2b1e591-6024-44fc-a937-b8ab9457ab9b",
+              "name": "erros",
+              "value": "={{ ($('Calcular engajamento por marca').item.json.erros || []).join(' | ').slice(0, 900) }}",
+              "type": "string"
+            },
+            {
+              "id": "a1fea12f-f549-49c3-b730-fd48eb177a6e",
+              "name": "urls_validas",
+              "value": "={{ ($('Calcular engajamento por marca').item.json.urls_validas || []).join('\\n') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "777c660d-d3dc-4240-9332-40e44f7ba317",
+      "name": "Linha do briefing",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2240,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "insert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_referencias"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "368aac33-aeea-44b9-b9f9-f383cbdadf1c",
+      "name": "Salvar briefing",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2460,
+        90
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "PREENCHER_CHAT_ID",
+        "text": "=🔎 Radar semanal · {{ $json.marca }} · {{ $json.semana }}\nPosts analisados: {{ $json.posts_analisados }}\n{{ $json.erros ? '⚠️ Coletas com erro: ' + $json.erros + '\\n' : '' }}\n{{ JSON.parse($json.briefing).resumo }}\n\nIdeias:\n{{ JSON.parse($json.briefing).ideias.slice(0, 5).map((i, n) => (n + 1) + '. [' + i.formato + '/' + i.modelo + '] ' + i.titulo).join('\\n') }}\n\nLacunas: {{ JSON.parse($json.briefing).lacunas.slice(0, 3).join('; ') }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b0124af3-18b8-41b5-a23f-7def20e9caef",
+      "name": "Avisar no Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2680,
+        90
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Radar de referências (semanal)\nPara cada marca: lê posts recentes de concorrentes e marcas similares (Business Discovery), posts em destaque de hashtags e a web (Gemini com busca no Google); calcula engajamento; o Gemini devolve padrões, lacunas e ideias; salva em `instagram_referencias` e avisa no Telegram.\n\n**Antes de ativar:** preencha os PREENCHER do nó *Alvos do radar* e crie a Data Table `instagram_referencias` (marca, semana, briefing, erros, urls_validas: texto · posts_analisados: número). Perfis precisam ser contas **Business/Creator** públicas. Nunca copie legenda ou imagem; use só o ângulo.",
+        "height": 320,
+        "width": 760,
+        "color": 4
+      },
+      "id": "eb6ba3d0-714d-4c63-b862-589d423d4585",
+      "name": "Nota: radar",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    }
+  ],
+  "connections": {
+    "Radar semanal (segunda 7h)": {
+      "main": [
+        [
+          {
+            "node": "Alvos do radar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Testar radar agora": {
+      "main": [
+        [
+          {
+            "node": "Alvos do radar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alvos do radar": {
+      "main": [
+        [
+          {
+            "node": "Tipo de alvo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tipo de alvo": {
+      "main": [
+        [
+          {
+            "node": "Perfil concorrente (Business Discovery)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar hashtag",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Buscar na web (Gemini + Google)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Perfil concorrente (Business Discovery)": {
+      "main": [
+        [
+          {
+            "node": "Normalizar perfil",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar hashtag": {
+      "main": [
+        [
+          {
+            "node": "Posts em destaque da hashtag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Posts em destaque da hashtag": {
+      "main": [
+        [
+          {
+            "node": "Normalizar hashtag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar perfil": {
+      "main": [
+        [
+          {
+            "node": "Juntar coletas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar hashtag": {
+      "main": [
+        [
+          {
+            "node": "Juntar coletas",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Normalizar web": {
+      "main": [
+        [
+          {
+            "node": "Juntar coletas",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Juntar coletas": {
+      "main": [
+        [
+          {
+            "node": "Calcular engajamento por marca",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calcular engajamento por marca": {
+      "main": [
+        [
+          {
+            "node": "Analista de referências",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini (analista)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Analista de referências",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formato do briefing": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Analista de referências",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analista de referências": {
+      "main": [
+        [
+          {
+            "node": "Linha do briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linha do briefing": {
+      "main": [
+        [
+          {
+            "node": "Salvar briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Salvar briefing": {
+      "main": [
+        [
+          {
+            "node": "Avisar no Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar na web (Gemini + Google)": {
+      "main": [
+        [
+          {
+            "node": "Normalizar web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

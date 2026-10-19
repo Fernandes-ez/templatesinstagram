@@ -1,0 +1,897 @@
+{
+  "name": "Publicador no Instagram (a cada 15 min)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "c77dcddd-3cdf-46ec-9092-a27cdae755b1",
+      "name": "A cada 15 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        2600
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "agendado"
+            },
+            {
+              "keyName": "agendado_para",
+              "condition": "lte",
+              "keyValue": "={{ $now.toISO() }}"
+            }
+          ]
+        },
+        "limit": 1,
+        "orderBy": true,
+        "orderByColumn": "agendado_para",
+        "orderByDirection": "ASC"
+      },
+      "id": "fc7deeba-e15e-4536-bda3-2b72d3bcfb82",
+      "name": "Próximo post na hora",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        2600
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3df62f25-197d-4cd0-b23f-788523724c06",
+              "name": "status",
+              "value": "publicando",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8e0089d4-4df4-48a8-87b2-9d389dff839b",
+      "name": "Status publicando",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        440,
+        2600
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Próximo post na hora').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "65abfa94-1610-4aeb-b1fa-65132ea57068",
+      "name": "Marcar como publicando",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        660,
+        2600
+      ]
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $('Próximo post na hora').item.json.ig_user_id }}",
+        "edge": "media",
+        "options": {
+          "queryParametersJson": "={{ JSON.stringify($('Próximo post na hora').item.json.tipo === 'reel' ? { media_type: 'REELS', video_url: $('Próximo post na hora').item.json.midia_url, caption: $('Próximo post na hora').item.json.legenda, share_to_feed: 'true' } : { image_url: $('Próximo post na hora').item.json.midia_url, caption: $('Próximo post na hora').item.json.legenda }) }}"
+        }
+      },
+      "id": "7cf6f517-1dc8-4ffd-8cb1-5171e27d7b88",
+      "name": "Criar contêiner de mídia",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        880,
+        2600
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "id": "bd29cd59-8368-446f-9794-85f40e1555f6",
+      "name": "Aguardar processamento",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1100,
+        2480
+      ]
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "GET",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $('Contêiner a publicar').first().json.container_id }}",
+        "edge": "",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "status_code"
+              }
+            ]
+          }
+        }
+      },
+      "id": "d7f785a7-b8fa-45b2-81b7-0cc6d8e610fc",
+      "name": "Status do contêiner",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1320,
+        2480
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "dcc75af3-1180-406a-9760-7a3610b9c538",
+              "leftValue": "={{ $json.status_code === 'FINISHED' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "c04eb48e-74dd-4978-a729-eda8e344cdd1",
+      "name": "Pronto para publicar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1540,
+        2480
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3718c9e2-3eea-4dbd-8919-66d5d34fdc97",
+              "leftValue": "={{ $json.status_code === 'IN_PROGRESS' && $runIndex < 15 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "d1bd397e-c6cb-4e30-abe8-25a8e89f3bc8",
+      "name": "Ainda processando?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        2640
+      ]
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $('Próximo post na hora').item.json.ig_user_id }}",
+        "edge": "media_publish",
+        "options": {
+          "queryParameters": {
+            "parameter": [
+              {
+                "name": "creation_id",
+                "value": "={{ $('Contêiner a publicar').first().json.container_id }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "c23ba7c7-c776-415a-a422-6cd633486e76",
+      "name": "Publicar no Instagram",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        2380
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1b91394-65ab-4be3-b70b-6930797751f7",
+              "name": "status",
+              "value": "publicado",
+              "type": "string"
+            },
+            {
+              "id": "70c70ac5-efa1-481f-bc3a-2262e6317a16",
+              "name": "ig_media_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "da55b299-8d2b-4972-aae6-17faeabccabc",
+              "name": "erro",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "775f6427-d81c-4660-ae71-beac03b05cf8",
+      "name": "Marcar publicado",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1980,
+        2380
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e329fdf7-f69c-4cde-adc4-2396aa949a9f",
+              "name": "status",
+              "value": "erro",
+              "type": "string"
+            },
+            {
+              "id": "37f865cc-bd0c-4723-8310-8090952c6407",
+              "name": "erro",
+              "value": "={{ ($json.message || $json.error_user_msg || ($json.status_code ? 'Contêiner da Meta com status ' + $json.status_code : JSON.stringify($json))).slice(0, 1000) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "29e01565-6022-460e-80ac-18f89bec63b6",
+      "name": "Marcar erro",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1980,
+        2760
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "instagram_posts"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $('Próximo post na hora').item.json.id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "cfec4340-5518-46cd-b2cc-49fff508fa03",
+      "name": "Atualizar status",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2200,
+        2600
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "PREENCHER_CHAT_ID",
+        "text": "={{ $json.status === 'publicado' ? '✅ Publicado' : '⚠️ Falhou ao publicar' }} · {{ $json.marca }} ({{ $json.tipo }})\nTema: {{ $json.tema }}{{ $json.erro ? '\\nErro: ' + $json.erro : '' }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "68c3573f-6631-4208-a329-216e62f439ae",
+      "name": "Avisar resultado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2420,
+        2600
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "",
+          "name": "Telegram (bot de aprovação)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 06 · Publicar no Instagram (15 em 15 min)\n**O que faz:** olha a fila, pega o próximo post cuja hora chegou, cria o contêiner de mídia no Instagram (imagem, Reels ou **carrossel**: um contêiner por lâmina e um para o carrossel), espera processar e publica. Atualiza o status (`publicado` ou `erro`) e avisa no Telegram.\n**Entra:** relógio (15 min) + linhas `agendado` da tabela `instagram_posts`.\n**Sai:** post publicado e aviso.\n\n**Atenção:** troque o chat do Telegram em **Avisar resultado**.",
+        "height": 340,
+        "width": 1100,
+        "color": 4
+      },
+      "id": "53edd369-4bc1-4193-a5ac-f4c22f22a25c",
+      "name": "Nota: 06 · Publicar no Instagram (15 em 15 min",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cd0f9bb7-9979-43c4-bb5c-f19b5a85cb88",
+              "leftValue": "={{ $('Próximo post na hora').first().json.tipo === 'carrossel' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "3815e49b-6d35-48a0-bfc3-305cabe5ca6d",
+      "name": "É carrossel?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        2800
+      ],
+      "notes": "Imagem única e Reels seguem por cima (como antes). Carrossel desce para criar os contêineres das lâminas.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Uma linha por lâmina, na ordem em que o post foi aprovado.\nconst p = $('Próximo post na hora').first().json;\nconst urls = JSON.parse(p.midia_urls || '[]');\nif (urls.length < 2 || urls.length > 10) throw new Error('Carrossel precisa de 2 a 10 imagens; a fila tem ' + urls.length + '.');\nreturn urls.map((u, i) => ({ json: { ig_user_id: p.ig_user_id, image_url: u, ordem: i + 1 } }));\n"
+      },
+      "id": "ed75eede-e633-435e-a3e9-405ebddb7a24",
+      "name": "Separar lâminas do post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        2960
+      ]
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $json.ig_user_id }}",
+        "edge": "media",
+        "options": {
+          "queryParametersJson": "={{ JSON.stringify({ image_url: $json.image_url, is_carousel_item: 'true' }) }}"
+        }
+      },
+      "id": "bc4895f1-b3e1-4b4e-a818-016faa27529a",
+      "name": "Criar contêiner da lâmina",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        2960
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "notes": "Um contêiner por lâmina (is_carousel_item). Roda uma vez por lâmina.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// IDs dos contêineres das lâminas, na ordem, separados por vírgula (formato que a Meta pede em \"children\").\nconst ids = $input.all().map((i) => i.json.id).filter(Boolean);\nconst esperado = JSON.parse($('Próximo post na hora').first().json.midia_urls || '[]').length;\nif (ids.length !== esperado) throw new Error('Só ' + ids.length + ' de ' + esperado + ' lâminas viraram contêiner.');\nreturn [{ json: { children: ids.join(',') } }];\n",
+        "mode": "runOnceForAllItems"
+      },
+      "id": "89bf785e-59c7-4908-9d42-4a74c3ea773d",
+      "name": "Juntar contêineres",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        2960
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 20,
+        "unit": "seconds"
+      },
+      "id": "9a75bd55-6b09-4c05-910b-d519240cb13e",
+      "name": "Aguardar lâminas",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        2960
+      ],
+      "notes": "Dá tempo da Meta processar as imagens antes de montar o carrossel.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "POST",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $('Próximo post na hora').first().json.ig_user_id }}",
+        "edge": "media",
+        "options": {
+          "queryParametersJson": "={{ JSON.stringify({ media_type: 'CAROUSEL', children: $('Juntar contêineres').first().json.children, caption: $('Próximo post na hora').first().json.legenda }) }}"
+        }
+      },
+      "id": "6489231d-0c9d-4aa2-8246-5c66acf5f63b",
+      "name": "Criar contêiner do carrossel",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        2960
+      ],
+      "credentials": {
+        "facebookGraphApi": {
+          "id": "",
+          "name": "Meta Graph API (Instagram)"
+        }
+      },
+      "onError": "continueErrorOutput",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "notes": "Contêiner do carrossel, com a legenda. Daqui segue o mesmo caminho: esperar, checar status, publicar.",
+      "notesInFlow": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Um só ponto para os dois caminhos (imagem/Reels e carrossel): o ID do contêiner que será checado e publicado.\nconst veioCarrossel = $('Criar contêiner do carrossel').isExecuted;\nconst id = veioCarrossel ? $('Criar contêiner do carrossel').first().json.id : $('Criar contêiner de mídia').first().json.id;\nreturn [{ json: { container_id: id } }];\n"
+      },
+      "id": "86f0fc53-71cf-42f8-8f4c-66d1e7719536",
+      "name": "Contêiner a publicar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        2600
+      ]
+    }
+  ],
+  "connections": {
+    "A cada 15 minutos": {
+      "main": [
+        [
+          {
+            "node": "Próximo post na hora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Próximo post na hora": {
+      "main": [
+        [
+          {
+            "node": "Status publicando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status publicando": {
+      "main": [
+        [
+          {
+            "node": "Marcar como publicando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar como publicando": {
+      "main": [
+        [
+          {
+            "node": "É carrossel?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar contêiner de mídia": {
+      "main": [
+        [
+          {
+            "node": "Contêiner a publicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar processamento": {
+      "main": [
+        [
+          {
+            "node": "Status do contêiner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Status do contêiner": {
+      "main": [
+        [
+          {
+            "node": "Pronto para publicar?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pronto para publicar?": {
+      "main": [
+        [
+          {
+            "node": "Publicar no Instagram",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ainda processando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ainda processando?": {
+      "main": [
+        [
+          {
+            "node": "Aguardar processamento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Publicar no Instagram": {
+      "main": [
+        [
+          {
+            "node": "Marcar publicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar publicado": {
+      "main": [
+        [
+          {
+            "node": "Atualizar status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar erro": {
+      "main": [
+        [
+          {
+            "node": "Atualizar status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Atualizar status": {
+      "main": [
+        [
+          {
+            "node": "Avisar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É carrossel?": {
+      "main": [
+        [
+          {
+            "node": "Separar lâminas do post",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Criar contêiner de mídia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar lâminas do post": {
+      "main": [
+        [
+          {
+            "node": "Criar contêiner da lâmina",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar contêiner da lâmina": {
+      "main": [
+        [
+          {
+            "node": "Juntar contêineres",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Juntar contêineres": {
+      "main": [
+        [
+          {
+            "node": "Aguardar lâminas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aguardar lâminas": {
+      "main": [
+        [
+          {
+            "node": "Criar contêiner do carrossel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Criar contêiner do carrossel": {
+      "main": [
+        [
+          {
+            "node": "Contêiner a publicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar erro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contêiner a publicar": {
+      "main": [
+        [
+          {
+            "node": "Aguardar processamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
