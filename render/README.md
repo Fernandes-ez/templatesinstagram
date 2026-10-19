@@ -4,7 +4,11 @@ Recebe `{marca, modelo, textos}` e devolve o JPG do post (ou as 5 fatias de um c
 
 Marcas: **ezf** (10 modelos), **Tábua** (11) e **Puka** (10). Fora do serviço, de propósito, os modelos que exigem foto real (Puka `foto`; Tábua `depoimento`, `prato do dia` e `foto com título`). Veja `GET /modelos` para campos e limites de cada um.
 
-## Rodar
+## Instalar na VM (jeito rápido)
+
+Na VM, depois de conectar por SSH: `git clone -b claude/gallant-brown-2pj3gi https://github.com/Fernandes-ez/templatesinstagram.git ~/templatesinstagram && bash ~/templatesinstagram/render/instalar-vm.sh`. O script instala Node 22, as dependências das três marcas, cria o serviço systemd, gera o token, roda os testes e mostra o que colocar no n8n. O serviço escuta só dentro da VM (ou na ponte do Docker, se o n8n roda em Docker): **não precisa de domínio nem de porta aberta**, porque o n8n hospeda as imagens no bucket (S3/R2) e o Instagram lê de lá.
+
+## Rodar à mão
 
 ```bash
 cd ezf && npm install && cd ..
