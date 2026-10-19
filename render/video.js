@@ -20,7 +20,7 @@ function rodar(args, entrada) {
 }
 
 /** @param reel { largura, altura, fps, duracao, quadro(t) } @returns Buffer MP4 */
-async function renderizarVideo(reel, { estilo = "suave", seed = 7 } = {}) {
+async function renderizarVideo(reel, { estilo = "pulso", seed = 7 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "reel-"));
   const wav = path.join(dir, "musica.wav");
   const mp4 = path.join(dir, "reel.mp4");

@@ -52,7 +52,7 @@ function faixaPath(x, y, w, h) {
 
 async function reelAnimado({ cenas, cta = "Teste grátis", site = "tabua.app.br" }) {
   const tl = R.linhaDoTempo(cenas);
-  const logo = await png(lerSvg(B.logo.principalCor), 620);
+  const logoNeg = await png(lerSvg(B.logo.principalNegativo), 680);
   const ladrilho = await png(lerSvg(B.padrao.verde), 140);
   const canvas = createCanvas(W, H);
   const ctx = canvas.getContext("2d");
@@ -144,38 +144,35 @@ async function reelAnimado({ cenas, cta = "Teste grátis", site = "tabua.app.br"
       ctx.globalAlpha = 1;
     }
 
-    // cartão final: Cal, gesto verde gigante, logo, botão de placa e endereço
+    // cartão final: continua no Verde-boteco com azulejo; logo em negativo, botão de placa e endereço
     const cort = easeInOut((t - (fimT - 0.1)) / 0.5);
     if (cort > 0) {
       ctx.globalAlpha = 1;
-      ctx.fillStyle = K.cal;
-      ctx.fillRect(0, H * (1 - cort), W, H * cort);
-      const q = easeOut((t - fimT - 0.25) / 0.7);
-      if (q > 0) {
-        // gesto (o traço do acento do logo), grande e sangrando no canto
-        const s = 1100 / GESTO_BOX.w;
-        ctx.save();
-        ctx.globalAlpha = clamp(q) * 0.95;
-        ctx.translate(W - 130 + (1 - q) * 200, 480);
-        ctx.rotate((-12 * Math.PI) / 180);
-        ctx.scale(s, s);
-        ctx.translate(-GESTO_BOX.x - GESTO_BOX.w / 2, -GESTO_BOX.y - GESTO_BOX.h / 2);
-        ctx.fillStyle = K.verdeBoteco;
-        ctx.fill(new Path2D(GESTO_D));
-        ctx.restore();
-        const p2 = easeOut((t - fimT - 0.55) / 0.5);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, H * (1 - cort), W, H * cort); // uma cortina sobe e troca o fundo, sem mudar de cor
+      ctx.clip();
+      ctx.drawImage(fundo, 0, 0);
+      ctx.restore();
+      const p2 = easeOut((t - fimT - 0.3) / 0.6);
+      if (p2 > 0) {
+        const lw = 680;
+        const lh = (logoNeg.height / logoNeg.width) * lw;
+        const y0 = 760 + (1 - clamp(p2)) * 40;
         ctx.globalAlpha = clamp(p2);
-        ctx.drawImage(logo, (W - 620) / 2, 1000 + (1 - clamp(p2)) * 30, 620, (logo.height / logo.width) * 620);
+        ctx.drawImage(logoNeg, (W - lw) / 2, y0, lw, lh);
+        const p3 = easeOut((t - fimT - 0.85) / 0.5);
+        ctx.globalAlpha = clamp(p3);
         fonte(ctx, "corpoBold", 44, 0);
         const bw = Math.min(W - 2 * M, ctx.measureText(cta).width + 112);
         const bx = (W - bw) / 2;
-        const by = 1000 + (logo.height / logo.width) * 620 + 60;
+        const by = y0 + lh + 70 + (1 - clamp(p3)) * 24;
         ctx.fillStyle = K.amareloOvo;
         ctx.fill(placaPath(bx, by, bw, 116));
         ctx.fillStyle = K.tinta;
         ctx.fillText(cta, bx + 56, by + 116 / 2 + 15);
-        fonte(ctx, "corpo", 36, 0);
-        ctx.fillStyle = K.tinta;
+        fonte(ctx, "corpo", 38, 0);
+        ctx.fillStyle = K.cal;
         ctx.fillText(site, (W - ctx.measureText(site).width) / 2, by + 190);
         ctx.globalAlpha = 1;
       }

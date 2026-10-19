@@ -12,7 +12,7 @@ servidor.listen(0, "127.0.0.1", async () => {
   const post = (corpo) => fetch(`${base}/reel`, { method: "POST", headers: h, body: JSON.stringify(corpo) });
   const cenas = [{ texto: "Seu site {perde} cliente?", etiqueta: "// sinal 1" }, { texto: "Abre devagar no celular.", apoio: "Passou de 3 segundos, o cliente fecha." }, { texto: "Ninguém acha o contato.", apoio: "WhatsApp na primeira tela." }];
   try {
-    const r = await post({ marca: "ezf", cenas, cta: "Me chama no WhatsApp", musica: "pulso" });
+    const r = await post({ marca: "ezf", cenas, cta: "Me chama no WhatsApp", musica: "codigo" });
     assert.equal(r.status, 200);
     assert.equal(r.headers.get("content-type"), "video/mp4");
     const buf = Buffer.from(await r.arrayBuffer());
