@@ -20,7 +20,14 @@ servidor.listen(0, "127.0.0.1", async () => {
     fs.writeFileSync(f, buf);
     const p = spawnSync("ffprobe", ["-v", "error", "-show_entries", "stream=codec_name,width,height", "-of", "csv=p=0", f], { encoding: "utf8" }).stdout;
     assert.match(p, /h264,1080,1920/); assert.match(p, /aac/);
-    let x = await post({ marca: "tabua", cenas });
+    for (const marca of ["puka", "tabua"]) {
+      const m = await post({ marca, cenas, cta: "Teste grátis" });
+      assert.equal(m.status, 200, `${marca}: ${m.status}`);
+      const b = Buffer.from(await m.arrayBuffer());
+      fs.writeFileSync(require("node:os").tmpdir() + `/reel-${marca}.mp4`, b);
+      assert.ok(b.length > 100000, `${marca}: vídeo pequeno demais`);
+    }
+    let x = await post({ marca: "outra", cenas });
     assert.equal(x.status, 422); assert.match((await x.json()).erro, /Reels ainda não existe/);
     x = await post({ marca: "ezf", cenas: [{ texto: "só uma" }] });
     assert.equal(x.status, 422);

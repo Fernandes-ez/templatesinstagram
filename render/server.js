@@ -88,7 +88,7 @@ async function renderReel(corpo) {
   const seed = [...JSON.stringify(resto.cenas)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
   return emFila(async () => {
     const reel = await m.fn(resto);
-    return renderizarVideo(reel, { estilo: musica || "suave", seed });
+    return renderizarVideo(reel, { estilo: musica || m.musicaPadrao || "suave", seed });
   });
 }
 

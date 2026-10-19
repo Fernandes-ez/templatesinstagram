@@ -28,7 +28,7 @@ Todas as rotas, menos `/health` e `/files/*`, pedem `Authorization: Bearer <REND
 | `GET /modelos` | Lista modelos, campos, limites de tamanho e os ícones aceitos. Use no prompt da IA. Filtros: `?marca=puka&formato=feed&automatico=1` (formato: `feed`, `story`, `lamina`, `carrossel`; `automatico=1` esconde modelos de conteúdo fixo, como o do cliente Aqua Fit). |
 | `POST /render` | Gera o post. Corpo: `{"marca":"ezf","modelo":"miolo_carrossel","textos":{...}}` |
 | `POST /render?binario=1` | Igual, mas devolve o JPG direto (só modelos de 1 imagem). |
-| `POST /reel` | Reels animado (MP4 1080×1920, 30 fps, H.264 + AAC) com trilha original. Corpo: `{"marca":"ezf","cenas":[{texto,apoio?,etiqueta?}],"cta":"…","musica":"suave\|pulso\|brisa"}`. Devolve o vídeo direto. Só a ezf por enquanto; o clipe do Veo (multipart) ainda não. Precisa de `ffmpeg` na VM (o script de instalação instala). |
+| `POST /reel` | Reels animado (MP4 1080×1920, 30 fps, H.264 + AAC) com trilha original. Corpo: `{"marca":"ezf","cenas":[{texto,apoio?,etiqueta?}],"cta":"…","musica":"suave\|pulso\|brisa"}`. Devolve o vídeo direto. Para ezf, Puka e Tábua, cada uma no seu estilo; o clipe do Veo (multipart) ainda não. Precisa de `ffmpeg` na VM (o script de instalação instala). |
 | `GET /files/<id>.jpg` | Baixa a imagem (URL pública, nome aleatório, apaga após 48 h). |
 
 Resposta do `/render`: `{ marca, modelo, arquivos: [{ordem, url}], avisos, ms }`. O carrossel devolve 5 arquivos, na ordem de publicação.

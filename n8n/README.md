@@ -83,7 +83,7 @@ O carrossel usa o mesmo horário de feed da marca. Para mudar a frequência, edi
 
 ## Reels
 
-O render faz **Reels animado da ezf** (rota `/reel`, com trilha original). Tábua e Puka ainda não têm Reels (`reels_disponivel: false` em "Marcas e regras"), e o Veo está desligado (`veo_limite_mes: 0`) até o render montar o clipe do Veo.
+O render faz **Reels animado das três marcas** (rota `/reel`, com trilha original e cada animação no estilo da marca). O Veo está desligado (`veo_limite_mes: 0`) até o render montar o clipe do Veo por cima das legendas. Para desligar Reels de uma marca, use `reels_disponivel: false` em "Marcas e regras".
 
 ## O que ainda não está alinhado (próximo passo)
 
